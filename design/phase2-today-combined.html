@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kal — Today screen · combined</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --canvas: #F7F6F3;
+    --surface: #FFFFFF;
+    --surface-2: #F9F9F8;
+    --ink: #1F2421;
+    --ink-soft: #2F3437;
+    --muted: #787774;
+    --faint: #9B9A96;
+    --border: #EAEAEA;
+
+    --seg-empty: #F0EFEC;
+    --protein: #9F2F2D;
+    --carbs:   #8A6A1F;
+    --fat:     #1F6C9F;
+
+    --green-bg: #EDF3EC;  --green-tx: #346538;
+    --blue-bg:  #E1F3FE;  --blue-tx:  #1F6C9F;
+
+    --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+    --serif: 'Newsreader', 'Lyon Text', Georgia, serif;
+    --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans); background: var(--canvas); color: var(--ink);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; padding: 64px 24px 96px;
+  }
+
+  .page-head { max-width: 860px; margin: 0 auto 52px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 14px; }
+  .page-head h1 { font-family: var(--serif); font-weight: 500; font-size: 42px; line-height: 1.08; letter-spacing: -0.03em; margin-bottom: 16px; }
+  .page-head p { color: var(--muted); max-width: 62ch; font-size: 15.5px; }
+
+  .stage { display: flex; gap: 56px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+  .col { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+  .col-cap { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+
+  /* phone */
+  .phone {
+    width: 384px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 28px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  }
+  .statusbar { display: flex; justify-content: space-between; align-items: center; padding: 13px 24px 0; font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .statusbar .dots { display: flex; gap: 4px; }
+  .statusbar .dots i { width: 5px; height: 5px; border-radius: 9999px; background: #D8D7D3; }
+  .screen { padding: 22px 22px 28px; }
+
+  .kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+
+  /* header row */
+  .head-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+  .head-row h2 { font-family: var(--serif); font-weight: 500; font-size: 24px; letter-spacing: -0.02em; }
+  .head-row .date { font-family: var(--mono); font-size: 10.5px; color: var(--faint); letter-spacing: 0.06em; margin-top: 3px; }
+  .head-row .meals-count {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.07em; text-transform: uppercase;
+    background: var(--green-bg); color: var(--green-tx); border-radius: 9999px; padding: 4px 10px;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .head-row .meals-count .dot { width: 5px; height: 5px; border-radius: 9999px; background: currentColor; }
+
+  /* ring hero */
+  .ring-block { display: flex; flex-direction: column; align-items: center; padding: 6px 0 22px; }
+  .ring-wrap { position: relative; }
+  .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring-center b { font-family: var(--mono); font-size: 34px; font-weight: 500; color: var(--ink); line-height: 1; letter-spacing: -0.01em; }
+  .ring-center small { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-top: 6px; }
+  .ring-foot { margin-top: 14px; font-size: 12.5px; color: var(--muted); }
+  .ring-foot b { font-family: var(--mono); color: var(--ink-soft); font-weight: 500; }
+
+  .rule { height: 1px; background: var(--border); margin: 4px 0 22px; }
+
+  /* segmented macro rows (matches reference) */
+  .macros { margin-bottom: 8px; }
+  .mrow { display: grid; grid-template-columns: 78px 1fr auto; align-items: center; gap: 16px; padding: 8px 0 18px; }
+  .mrow .ml b { font-family: var(--mono); font-size: 19px; font-weight: 500; color: var(--ink); display: block; line-height: 1; letter-spacing: -0.01em; }
+  .mrow .ml small { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); display: block; margin-top: 6px; }
+  .seg { display: flex; gap: 5px; }
+  .seg i { flex: 1; height: 9px; border-radius: 3px; background: var(--seg-empty); }
+  .mrow .mtarget { font-family: var(--mono); font-size: 13px; color: var(--faint); white-space: nowrap; }
+
+  /* meals checklist */
+  .meals-head { display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .meals-head .hint { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
+  .checklist { list-style: none; }
+  .checklist li { display: flex; align-items: center; gap: 13px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .checklist li:last-child { border-bottom: none; }
+  .box {
+    width: 23px; height: 23px; border-radius: 7px; border: 1px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fff; cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .box.done { background: var(--green-bg); border-color: var(--green-bg); }
+  .box.done svg { stroke: var(--green-tx); }
+  .box.now { border-color: var(--blue-tx); box-shadow: 0 0 0 3px var(--blue-bg); }
+  .ct { flex: 1; }
+  .ct .n { font-size: 14.5px; color: var(--ink-soft); }
+  .ct .n.done { color: var(--faint); }
+  .ct small { display: block; font-family: var(--mono); font-size: 10px; color: var(--faint); margin-top: 1px; }
+  .ck { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+
+  /* sunday weigh-in card */
+  .weigh {
+    margin-top: 22px; padding: 16px 18px; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .weigh .wl .kicker { margin-bottom: 4px; }
+  .weigh .wl b { font-family: var(--mono); font-size: 16px; color: var(--ink-soft); font-weight: 500; }
+  .weigh .wl b span { color: var(--faint); font-size: 11px; }
+  .weigh form { display: flex; gap: 7px; }
+  .weigh input { width: 64px; font-family: var(--mono); font-size: 14px; text-align: right; border: 1px solid var(--border); border-radius: 6px; padding: 9px 10px; background: #fff; color: var(--ink); }
+  .weigh input:focus { outline: none; border-color: #cfcfcf; }
+  .btn-dark { font-family: var(--sans); font-size: 13px; font-weight: 500; background: var(--ink); color: #fff; border: none; border-radius: 6px; padding: 9px 15px; cursor: pointer; transition: transform .15s, background .2s; }
+  .btn-dark:active { transform: scale(0.98); background: #333; }
+
+  .annot { width: 384px; font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .annot b { color: var(--ink-soft); font-weight: 500; }
+
+  .footer-note { max-width: 860px; margin: 60px auto 0; padding-top: 26px; border-top: 1px solid var(--border); color: var(--faint); font-size: 13px; line-height: 1.6; }
+  .footer-note code { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+  <header class="page-head">
+    <div class="eyebrow">Kal · Phase 2 · Today screen · combined</div>
+    <h1>Today, combined</h1>
+    <p>Calorie ring on top, the segmented macro bars you liked underneath, then a per-meal checklist — tap a box to mark the meal eaten (fill-the-gaps logs its items). Weigh-in is hidden on weekdays and only appears on Sundays. Left phone is a normal weekday; right shows the Sunday state.</p>
+  </header>
+
+  <div class="stage">
+
+    <!-- ===== WEEKDAY (no weigh-in) ===== -->
+    <div class="col">
+      <div class="col-cap">Weekday — Thu Jun 18</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="screen">
+          <div class="head-row">
+            <div>
+              <h2>Today</h2>
+              <div class="date">THURSDAY · JUN 18</div>
+            </div>
+            <span class="meals-count"><span class="dot"></span>2 / 5 eaten</span>
+          </div>
+
+          <!-- ring -->
+          <div class="ring-block">
+            <div class="ring-wrap">
+              <svg width="172" height="172" viewBox="0 0 172 172">
+                <circle cx="86" cy="86" r="74" fill="none" stroke="#EFEEEB" stroke-width="11"/>
+                <circle cx="86" cy="86" r="74" fill="none" stroke="#1F2421" stroke-width="11"
+                        stroke-linecap="round" stroke-dasharray="464.96"
+                        stroke-dashoffset="222.4" transform="rotate(-90 86 86)"/>
+              </svg>
+              <div class="ring-center"><b>1,703</b><small>kcal left</small></div>
+            </div>
+            <div class="ring-foot"><b>1,857</b> of 3,560 eaten · 52%</div>
+          </div>
+
+          <div class="rule"></div>
+
+          <!-- segmented macros -->
+          <div class="macros">
+            <div class="mrow">
+              <div class="ml"><b>95g</b><small>Protein</small></div>
+              <div class="seg"><i style="background:var(--protein)"></i><i style="background:var(--protein)"></i><i style="background:var(--protein)"></i><i style="background:var(--protein)"></i><i style="background:var(--protein)"></i><i></i><i></i><i></i><i></i></div>
+              <div class="mtarget">/ 212</div>
+            </div>
+            <div class="mrow">
+              <div class="ml"><b>203g</b><small>Carbs</small></div>
+              <div class="seg"><i style="background:var(--carbs)"></i><i style="background:var(--carbs)"></i><i style="background:var(--carbs)"></i><i style="background:var(--carbs)"></i><i style="background:var(--carbs)"></i><i></i><i></i><i></i><i></i></div>
+              <div class="mtarget">/ 421</div>
+            </div>
+            <div class="mrow">
+              <div class="ml"><b>62g</b><small>Fat</small></div>
+              <div class="seg"><i style="background:var(--fat)"></i><i style="background:var(--fat)"></i><i style="background:var(--fat)"></i><i style="background:var(--fat)"></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="mtarget">/ 124</div>
+            </div>
+          </div>
+
+          <div class="rule"></div>
+
+          <!-- meals -->
+          <div class="meals-head">
+            <div class="kicker">Meals</div>
+            <div class="hint">tap to mark eaten</div>
+          </div>
+          <ul class="checklist">
+            <li>
+              <div class="box done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>
+              <div class="ct"><span class="n done">Breakfast</span></div>
+              <span class="ck">815</span>
+            </li>
+            <li>
+              <div class="box done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>
+              <div class="ct"><span class="n done">Lunch</span></div>
+              <span class="ck">1,042</span>
+            </li>
+            <li>
+              <div class="box now"></div>
+              <div class="ct"><span class="n">Snack</span><small>afternoon</small></div>
+              <span class="ck">355</span>
+            </li>
+            <li>
+              <div class="box"></div>
+              <div class="ct"><span class="n">Dinner</span><small>post-soccer ~11pm</small></div>
+              <span class="ck">1,042</span>
+            </li>
+            <li>
+              <div class="box"></div>
+              <div class="ct"><span class="n">Peanuts</span><small>graze</small></div>
+              <span class="ck">248</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <p class="annot">No weigh-in card — it stays out of the way Mon–Sat. Macro bars deplete as you eat (filled = consumed so far).</p>
+    </div>
+
+    <!-- ===== SUNDAY (weigh-in due) ===== -->
+    <div class="col">
+      <div class="col-cap">Sunday — weigh-in due</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="screen">
+          <div class="head-row">
+            <div>
+              <h2>Today</h2>
+              <div class="date">SUNDAY · JUN 21</div>
+            </div>
+            <span class="meals-count" style="background:var(--surface-2); color:var(--muted); border:1px solid var(--border);">0 / 5 eaten</span>
+          </div>
+
+          <div class="ring-block">
+            <div class="ring-wrap">
+              <svg width="172" height="172" viewBox="0 0 172 172">
+                <circle cx="86" cy="86" r="74" fill="none" stroke="#EFEEEB" stroke-width="11"/>
+                <circle cx="86" cy="86" r="74" fill="none" stroke="#1F2421" stroke-width="11"
+                        stroke-linecap="round" stroke-dasharray="464.96"
+                        stroke-dashoffset="464.96" transform="rotate(-90 86 86)"/>
+              </svg>
+              <div class="ring-center"><b>3,560</b><small>kcal left</small></div>
+            </div>
+            <div class="ring-foot"><b>0</b> of 3,560 eaten · fresh day</div>
+          </div>
+
+          <div class="rule"></div>
+
+          <div class="macros">
+            <div class="mrow">
+              <div class="ml"><b>212g</b><small>Protein</small></div>
+              <div class="seg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="mtarget">/ 212</div>
+            </div>
+            <div class="mrow">
+              <div class="ml"><b>421g</b><small>Carbs</small></div>
+              <div class="seg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="mtarget">/ 421</div>
+            </div>
+            <div class="mrow">
+              <div class="ml"><b>124g</b><small>Fat</small></div>
+              <div class="seg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="mtarget">/ 124</div>
+            </div>
+          </div>
+
+          <!-- weigh-in only shows here -->
+          <div class="weigh">
+            <div class="wl">
+              <div class="kicker">Weekly weigh-in</div>
+              <b>Last 162.0 <span>lb · Jun 14</span></b>
+            </div>
+            <form onsubmit="return false">
+              <input type="text" placeholder="161.4" aria-label="Weight" />
+              <button class="btn-dark">Log</button>
+            </form>
+          </div>
+
+          <div class="rule" style="margin-top:22px;"></div>
+
+          <div class="meals-head">
+            <div class="kicker">Meals</div>
+            <div class="hint">tap to mark eaten</div>
+          </div>
+          <ul class="checklist">
+            <li><div class="box now"></div><div class="ct"><span class="n">Breakfast</span><small>morning</small></div><span class="ck">815</span></li>
+            <li><div class="box"></div><div class="ct"><span class="n">Lunch</span></div><span class="ck">1,042</span></li>
+            <li><div class="box"></div><div class="ct"><span class="n">Snack</span></div><span class="ck">355</span></li>
+            <li><div class="box"></div><div class="ct"><span class="n">Dinner</span><small>post-soccer ~11pm</small></div><span class="ck">1,042</span></li>
+            <li><div class="box"></div><div class="ct"><span class="n">Peanuts</span><small>graze</small></div><span class="ck">248</span></li>
+          </ul>
+        </div>
+      </div>
+      <p class="annot">Only on Sundays (or when the week's weigh-in is missing), the quick-add card appears just below the macros.</p>
+    </div>
+
+  </div>
+
+  <p class="footer-note">
+    Ring + macros come straight from <code>getDaySummary()</code> (targets − consumed = remaining). Each checklist box maps to <code>set_meal_status('eaten')</code> with fill-the-gaps logging. The whole screen works with zero LLM. Open question for build: should checking a box be instant, or expand to confirm/adjust the meal's items first?
+  </p>
+
+</body>
+</html>

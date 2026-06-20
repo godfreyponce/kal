@@ -30,9 +30,38 @@ this file is the quick-resume summary).
 
 ---
 
-## Current status: Phase 1 COMPLETE ✅
+## Current status: Phase 2 COMPLETE ✅ (Today screen + REST)
 
-Verified with passing tests (`npm test` → 5/5).
+Verified: `npm test` → 8/8, `tsc --noEmit` clean, Today screen renders against live DB,
+REST endpoints exercised via curl (mark-eaten → undo → weigh-in upsert), DB left pristine.
+
+- **Design**: `design/phase2-today-variants.html` (3 variants) + `design/phase2-today-combined.html`
+  (the approved one). Owner picked: calorie **ring** + segmented **macro bars** (big number =
+  *remaining*, filled segments = *consumed*) + per-meal **checklist** (tap = log instantly, re-tap
+  = undo) + weigh-in **only on Sundays**. Warm-monochrome minimalist (NOT the plan's "dark/dense"
+  note — superseded by owner's pick).
+- **`lib/meal-status.ts`** — `setMealStatus(date, mealId, status)`. `'eaten'` fills the gaps
+  (auto-logs only planned items not already logged for `(date,meal_id)`, shared `write_batch_id`);
+  `'pending'` undoes (reverts that batch + status row). Tested: no-double-count + undo
+  (`lib/meal-status.test.ts`, sentinel date **2099-02-02** to avoid day-summary's 2099-01-01).
+  NB: neon-http has no interactive txns → sequential statements (fine for single-user).
+- **`lib/today.ts`** — `getTodayView(date)`: summary + meals (planned kcal, status, which is "now")
+  + latest weigh-in + `weighInDue` (Sunday & none logged). One read, no LLM.
+- **REST**: `POST /api/meals/[id]/status` ({status, date?}) and `POST /api/weigh-ins`
+  ({weightLb, date?, note?}, upsert by unique date). Share the same lib the Phase 3 chat tools will.
+- **UI**: `app/page.tsx` (server component, reads lib directly — initial paint; mutations go via
+  REST per the swappable-brain rule), `app/meal-list.tsx` + `app/weigh-in.tsx` (client, optimistic
+  + `router.refresh()`). Fonts: Newsreader + JetBrains Mono via `next/font`; tokens in `globals.css`.
+
+### Not built (intentionally deferred)
+- Arbitrary/freeform food-logging UI (the approved Today design has no such control; chat covers it).
+- `is_estimated` flag + grocery section → Phase 6 per plan roadmap.
+
+---
+
+## Phase 1 (prior): schema, seed, time, day-summary — COMPLETE ✅
+
+Verified with passing tests.
 
 - **Schema** (`db/schema.ts`) — 9 tables: profile, foods, meals, meal_items, log_entries
   (snapshot macros + `source` + `write_batch_id`), meal_status (unique `date,meal_id` + `write_batch_id`),
@@ -66,19 +95,22 @@ db/seed.ts            Seed (meal plan v1)      db/env.ts      dotenv loader for 
 db/migrations/        Generated SQL            drizzle.config.ts
 lib/time.ts (+test)   todayInAppTz()
 lib/day-summary.ts (+test)  remaining-macros query
-app/                 Next.js App Router (default scaffold so far)
+lib/meal-status.ts (+test)  fill-the-gaps 'eaten' + undo (write_batch_id)
+lib/today.ts          getTodayView() — everything the Today screen renders
+app/page.tsx          Today screen (server component)
+app/meal-list.tsx     per-meal checklist (client, optimistic log/undo)
+app/weigh-in.tsx      Sunday weigh-in quick-add (client)
+app/api/meals/[id]/status/route.ts   POST set/undo meal status
+app/api/weigh-ins/route.ts           POST weigh-in upsert
+design/phase2-today-*.html           Today design variants (combined = approved)
 ```
 
 ---
 
 ## Roadmap (each phase ≈ its own session)
 
-- **Phase 2 — REST + Today screen (NEXT).** Starts by generating an HTML file with **3 design
-  variants for the Today screen** for the owner to pick (design preference: 3 variants/section
-  before any React; lean on `minimalist-ui` skill). Then: log/status CRUD incl. fill-the-gaps
-  `eaten`; Today UI (macro rings/bars, meal status chips, weigh-in quick-add). App must be fully
-  useful with zero LLM. Verify: mark-eaten after a manual log does NOT double-count.
-- **Phase 3 — Chat route.** System-prompt assembly (incl. memory facts), tool loop (max 8 iters),
+- **Phase 2 — REST + Today screen. DONE ✅** (see Current status above.)
+- **Phase 3 — Chat route (NEXT).** System-prompt assembly (incl. memory facts), tool loop (max 8 iters),
   SSE streaming, persistence, batch-Undo ids. Tools: get_day_summary, log_food, set_meal_status,
   search_foods, log_weigh_in, get_weight_trend, add_memory_fact. Verify via curl.
 - **Phase 4 — Chat UI.** First 3 HTML variants for the Chat section. Then fresh-session chat,

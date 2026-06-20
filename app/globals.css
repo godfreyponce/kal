@@ -1,26 +1,339 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans-stack);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --font-sans-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+
+  --canvas: #f7f6f3;
+  --surface-2: #f0efeb;
+  --ink: #1f2421;
+  --ink-soft: #2f3437;
+  --muted: #787774;
+  --faint: #9b9a96;
+  --border: #e6e4df;
+
+  --seg-empty: #e9e7e1;
+  --ring-track: #e7e5df;
+  --protein: #9f2f2d;
+  --carbs: #8a6a1f;
+  --fat: #1f6c9f;
+
+  --green-bg: #e6efe5;
+  --green-tx: #346538;
+  --blue-bg: #dceffb;
+  --blue-tx: #1f6c9f;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans-stack);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Today screen ---- */
+.app {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 28px 22px 48px;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.rule {
+  height: 1px;
+  background: var(--border);
+  margin: 22px 0;
+}
+
+/* header */
+.head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.head-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.head-date {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--faint);
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+.meals-count {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  padding: 5px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green-bg);
+  color: var(--green-tx);
+  white-space: nowrap;
+}
+.meals-count.none {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.meals-count .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: currentColor;
+}
+
+/* ring */
+.ring-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 18px;
+}
+.ring-wrap {
+  position: relative;
+}
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ring-center b {
+  font-family: var(--font-mono);
+  font-size: 36px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.ring-center small {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-top: 7px;
+}
+.ring-foot {
+  margin-top: 15px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.ring-foot b {
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+/* segmented macro rows */
+.macros {
+  margin-bottom: 4px;
+}
+.mrow {
+  display: grid;
+  grid-template-columns: 78px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0 18px;
+}
+.mrow .ml b {
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--ink);
+  display: block;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.mrow .ml small {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  display: block;
+  margin-top: 6px;
+}
+.seg {
+  display: flex;
+  gap: 5px;
+}
+.seg i {
+  flex: 1;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--seg-empty);
+}
+.mrow .mtarget {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+/* meals checklist */
+.meals-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+.meals-head .hint {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.checklist li {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+.checklist li:last-child {
+  border-bottom: none;
+}
+.box {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.box:disabled {
+  cursor: default;
+}
+.box.done {
+  background: var(--green-bg);
+  border-color: var(--green-bg);
+}
+.box.done svg {
+  stroke: var(--green-tx);
+}
+.box.now {
+  border-color: var(--blue-tx);
+  box-shadow: 0 0 0 3px var(--blue-bg);
+}
+.ct {
+  flex: 1;
+  min-width: 0;
+}
+.ct .n {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+}
+.ct .n.done {
+  color: var(--faint);
+}
+.ct small {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint);
+  margin-top: 1px;
+}
+.ck {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--faint);
+}
+
+/* weigh-in (Sunday) */
+.weigh {
+  margin-top: 22px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.weigh .wl b {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+.weigh .wl b span {
+  color: var(--faint);
+  font-size: 11px;
+}
+.weigh form {
+  display: flex;
+  gap: 8px;
+}
+.weigh input {
+  width: 72px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-align: right;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: #fff;
+  color: var(--ink);
+}
+.weigh input:focus {
+  outline: none;
+  border-color: #c9c7c1;
+}
+.btn-dark {
+  font-family: var(--font-sans-stack);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 15px;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s, opacity 0.2s;
+}
+.btn-dark:active {
+  transform: scale(0.98);
+  background: #333;
+}
+.btn-dark:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
