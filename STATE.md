@@ -30,7 +30,40 @@ this file is the quick-resume summary).
 
 ---
 
-## Current status: Phase 2 COMPLETE ✅ (Today screen + REST)
+## Current status: Phase 3 COMPLETE ✅ (Chat route)
+
+Verified: `tsc --noEmit` clean; tools + system-prompt smoke-tested against live DB;
+chat route driven via curl — "I ate my whole breakfast, what's left?" → model called
+`set_meal_status('eaten')` (4 items, write_batch_id) then `get_day_summary`, streamed
+correct totals (consumed 815/48/80/40, remaining 2745/164/341/83.6), persisted 4 turns to
+`chat_messages`. Test state reverted.
+
+- **`@anthropic-ai/sdk`** added. **`lib/anthropic.ts`** — lazy client, `ANTHROPIC_MODEL`
+  (default `claude-haiku-4-5`, cheapest-capable), `MAX_TOOL_ITERATIONS=8`. Haiku → no
+  thinking/effort params (those 400 on Haiku).
+- **`lib/tools.ts`** — 7 tools (`get_day_summary`, `search_foods`, `log_food`,
+  `set_meal_status`, `log_weigh_in`, `get_weight_trend`, `add_memory_fact`). Snake_case
+  inputs, `date` defaults to `todayInAppTz()`. Reuses `getDaySummary`/`setMealStatus`.
+  Write tools return `write_batch_id` for Undo (where a batch exists). `log_food` accepts
+  an existing `food_id`×qty OR a new free-form food (name+per-serving macros → adds to
+  library then logs). `runTool` returns `{forModel, summary, writeBatchId}`.
+- **`lib/system-prompt.ts`** — `assembleSystemPrompt(date)`: profile, targets, today
+  consumed/remaining, meal plan **with meal-ids** + per-meal status, recent weight, memory
+  facts, rules. Assembled fresh per request.
+- **`app/api/chat/route.ts`** — `POST {sessionId, message}`. Loads session history (cap 30,
+  head-trimmed so it never starts on a dangling tool_result), manual tool loop (max 8),
+  streams SSE events `{type: text|tool_use|tool_result|done|error}` (tool_result carries
+  `summary` + `writeBatchId` for Phase-4 cards), persists every turn to `chat_messages`.
+- **Env**: `ANTHROPIC_API_KEY` now required in `.env.local` (git-ignored; added manually,
+  not yet in Vercel). `ANTHROPIC_MODEL` optional.
+
+### Not built (intentionally deferred)
+- Chat UI (Phase 4). History summarization beyond the hard 30-cap (v1.5).
+- REST CRUD for `/api/foods`, `/api/profile`, `/api/memory-facts` (Plan screen / later).
+
+---
+
+## Phase 2 (prior): REST + Today screen — COMPLETE ✅
 
 Verified: `npm test` → 8/8, `tsc --noEmit` clean, Today screen renders against live DB,
 REST endpoints exercised via curl (mark-eaten → undo → weigh-in upsert), DB left pristine.
@@ -103,6 +136,10 @@ app/weigh-in.tsx      Sunday weigh-in quick-add (client)
 app/api/meals/[id]/status/route.ts   POST set/undo meal status
 app/api/weigh-ins/route.ts           POST weigh-in upsert
 design/phase2-today-*.html           Today design variants (combined = approved)
+lib/anthropic.ts      Anthropic client + model/iteration config
+lib/tools.ts          7 chat tools + runTool() executor
+lib/system-prompt.ts  assembleSystemPrompt(date)
+app/api/chat/route.ts POST chat: tool loop + SSE stream + persistence
 ```
 
 ---
@@ -110,11 +147,10 @@ design/phase2-today-*.html           Today design variants (combined = approved)
 ## Roadmap (each phase ≈ its own session)
 
 - **Phase 2 — REST + Today screen. DONE ✅** (see Current status above.)
-- **Phase 3 — Chat route (NEXT).** System-prompt assembly (incl. memory facts), tool loop (max 8 iters),
-  SSE streaming, persistence, batch-Undo ids. Tools: get_day_summary, log_food, set_meal_status,
-  search_foods, log_weigh_in, get_weight_trend, add_memory_fact. Verify via curl.
-- **Phase 4 — Chat UI.** First 3 HTML variants for the Chat section. Then fresh-session chat,
-  streaming render, tool cards + batch Undo.
+- **Phase 3 — Chat route. DONE ✅** (see Current status above.)
+- **Phase 4 — Chat UI (NEXT).** First 3 HTML variants for the Chat section. Then fresh-session chat,
+  streaming render (consume the SSE `text`/`tool_use`/`tool_result`/`done` events), tool cards +
+  batch Undo (needs an undo endpoint that reverts a `write_batch_id`).
 - **Phase 5 — Auth + PWA.** Password gate (iron-session), manifest, icons, deploy to Vercel.
 - **Phase 6 / v1.5+ — Phase 2 deferrals:** `is_estimated` flag, grocery-logging section, trends
   screen, history summarization.
