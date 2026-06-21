@@ -49,6 +49,10 @@ reverted a batch (`{revertedEntries:4}`, also clears meal_status). Today left cl
   renders bubbles + tool cards (Undo) + remaining stat strip + typing indicator.
 - **Nav**: "Chat →" link on Today header; "‹ Today" on chat header. Chat styles in
   `globals.css` (scoped under `.chat`).
+- **Model + cost tracker**: chat meta bar shows `CHAT_MODEL` (passed from server page) and a
+  running `$cost · N tok` readout. Route accumulates per-turn Anthropic `usage` and emits a
+  `usage` SSE event; `usageCostUsd()` prices it from a per-model table in `lib/anthropic.ts`
+  (Haiku 1/5 per MTok). Resets on "+ New". No prompt caching yet (cacheRead 0).
 - **Dev-server note**: another local project ("Glass") squats :3000; run Kal dev on a
   dedicated port (`PORT=3100 npm run dev`) and keep it backgrounded so it persists.
 

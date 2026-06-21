@@ -197,7 +197,7 @@ export function Chat({ model }: { model: string }) {
       </div>
 
       <div className="composer">
-        <div className="box">
+        <div className="composer-box">
           <input
             placeholder="Message Kal…"
             value={input}

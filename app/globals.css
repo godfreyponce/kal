@@ -27,6 +27,8 @@
   --green-tx: #346538;
   --blue-bg: #dceffb;
   --blue-tx: #1f6c9f;
+
+  --accent: #d97757; /* Claude terracotta */
 }
 
 body {
@@ -39,6 +41,7 @@ body {
 
 /* ---- Today screen ---- */
 .app {
+  width: 100%;
   max-width: 440px;
   margin: 0 auto;
   padding: 28px 22px 48px;
@@ -340,6 +343,7 @@ body {
 
 /* ---- Chat screen ---- */
 .chat {
+  width: 100%;
   max-width: 440px;
   margin: 0 auto;
   height: 100dvh;
@@ -401,7 +405,7 @@ body {
   font-size: 10px;
   letter-spacing: 0.04em;
 }
-.chat-meta .cm-model { color: var(--muted); }
+.chat-meta .cm-model { color: var(--accent); }
 .chat-meta .cm-cost { color: var(--faint); }
 
 .chat-thread {
@@ -595,7 +599,7 @@ body {
   border-top: 1px solid var(--border);
   padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
 }
-.composer .box {
+.composer-box {
   display: flex;
   align-items: center;
   gap: 10px;
