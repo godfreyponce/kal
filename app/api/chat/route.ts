@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { chatMessages } from "@/db/schema";
-import { CHAT_MODEL, MAX_TOOL_ITERATIONS, getAnthropic } from "@/lib/anthropic";
+import { CHAT_MODEL, MAX_TOOL_ITERATIONS, getAnthropic, usageCostUsd } from "@/lib/anthropic";
 import { assembleSystemPrompt } from "@/lib/system-prompt";
 import { TOOLS, runTool } from "@/lib/tools";
 import { todayInAppTz } from "@/lib/time";
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
 
+      const acc = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
       try {
         for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
           const ms = client.messages.stream({
@@ -90,6 +91,10 @@ export async function POST(req: NextRequest) {
           }
 
           const final = await ms.finalMessage();
+          acc.input += final.usage.input_tokens ?? 0;
+          acc.output += final.usage.output_tokens ?? 0;
+          acc.cacheRead += final.usage.cache_read_input_tokens ?? 0;
+          acc.cacheWrite += final.usage.cache_creation_input_tokens ?? 0;
           await persist(sessionId, "assistant", final.content);
           messages.push({ role: "assistant", content: final.content });
 
@@ -108,6 +113,8 @@ export async function POST(req: NextRequest) {
               name: tu.name,
               summary: run.summary,
               writeBatchId: run.writeBatchId,
+              card: run.card ?? null,
+              remaining: run.remaining ?? null,
             });
             results.push({ type: "tool_result", tool_use_id: tu.id, content: run.forModel });
           }
@@ -119,6 +126,16 @@ export async function POST(req: NextRequest) {
             send({ type: "error", message: "Reached tool-iteration limit." });
           }
         }
+        send({
+          type: "usage",
+          tokens: acc,
+          costUsd: usageCostUsd(CHAT_MODEL, {
+            input_tokens: acc.input,
+            output_tokens: acc.output,
+            cache_read_input_tokens: acc.cacheRead,
+            cache_creation_input_tokens: acc.cacheWrite,
+          }),
+        });
         send({ type: "done" });
       } catch (e) {
         send({ type: "error", message: e instanceof Error ? e.message : "chat failed" });

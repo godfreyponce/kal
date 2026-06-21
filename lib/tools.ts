@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type Anthropic from "@anthropic-ai/sdk";
 import { and, asc, desc, eq, gte, ilike } from "drizzle-orm";
 import { db } from "../db";
-import { foods, logEntries, memoryFacts, weighIns } from "../db/schema";
+import { foods, logEntries, meals, memoryFacts, weighIns } from "../db/schema";
 import { getDaySummary } from "./day-summary";
 import { setMealStatus, type MealStatusValue } from "./meal-status";
 import { todayInAppTz } from "./time";
@@ -109,13 +109,20 @@ export const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
+export type ToolCard = { label: string; title: string; detail: string };
+export type Macros = { kcal: number; proteinG: number; carbsG: number; fatG: number };
+
 export type ToolRun = {
   /** JSON string handed back to the model as the tool_result content. */
   forModel: string;
-  /** One-line human summary for the chat tool card. */
+  /** One-line human summary (fallback / logging). */
   summary: string;
   /** Batch id for Undo, when this write created a revertable batch. */
   writeBatchId: string | null;
+  /** Structured card for write tools — drives the chat tool card. */
+  card?: ToolCard | null;
+  /** Remaining macros — set by get_day_summary so the UI can show the stat strip. */
+  remaining?: Macros | null;
 };
 
 type Input = Record<string, unknown>;
@@ -133,10 +140,16 @@ function shiftDate(date: string, deltaDays: number): string {
 /** Execute one tool call. Errors are returned as a result string, not thrown. */
 export async function runTool(name: string, input: Input): Promise<ToolRun> {
   const today = todayInAppTz();
-  const ok = (result: unknown, summary: string, writeBatchId: string | null = null): ToolRun => ({
+  const ok = (
+    result: unknown,
+    summary: string,
+    extra: { writeBatchId?: string | null; card?: ToolCard | null; remaining?: Macros | null } = {},
+  ): ToolRun => ({
     forModel: JSON.stringify(result),
     summary,
-    writeBatchId,
+    writeBatchId: extra.writeBatchId ?? null,
+    card: extra.card ?? null,
+    remaining: extra.remaining ?? null,
   });
   const err = (message: string): ToolRun => ({
     forModel: JSON.stringify({ error: message }),
@@ -148,7 +161,7 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
     case "get_day_summary": {
       const date = str(input.date) ?? today;
       const summary = await getDaySummary(date);
-      return ok(summary, `Read day summary for ${date}`);
+      return ok(summary, `Read day summary for ${date}`, { remaining: summary.remaining });
     }
 
     case "search_foods": {
@@ -226,7 +239,14 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
       return ok(
         { logged: { name: per.name, quantity: qty, kcal: entry.kcal }, writeBatchId },
         `Logged ${qty} × ${per.name} (${entry.kcal} kcal)`,
-        writeBatchId,
+        {
+          writeBatchId,
+          card: {
+            label: "Food logged",
+            title: qty === 1 ? per.name : `${per.name} · ${qty}×`,
+            detail: `${entry.kcal} kcal · ${entry.proteinG}P · ${entry.carbsG}C · ${entry.fatG}F`,
+          },
+        },
       );
     }
 
@@ -236,10 +256,32 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
       if (mealId === undefined || !status) return err("meal_id and status are required.");
       const date = str(input.date) ?? today;
       const result = await setMealStatus(date, mealId, status);
+
+      const [meal] = await db.select({ name: meals.name }).from(meals).where(eq(meals.id, mealId));
+      const mealName = meal?.name ?? `Meal ${mealId}`;
+      let card: ToolCard;
+      if (status === "eaten") {
+        let kcal = 0;
+        if (result.writeBatchId) {
+          const rows = await db
+            .select({ kcal: logEntries.kcal })
+            .from(logEntries)
+            .where(eq(logEntries.writeBatchId, result.writeBatchId));
+          kcal = rows.reduce((a, r) => a + r.kcal, 0);
+        }
+        card = {
+          label: "Meal eaten",
+          title: mealName,
+          detail: `${result.loggedFoodIds.length} items · ${kcal} kcal`,
+        };
+      } else {
+        card = { label: `Meal ${status}`, title: mealName, detail: "" };
+      }
+
       return ok(
         result,
         `Set meal ${mealId} → ${status} (${result.loggedFoodIds.length} items logged)`,
-        result.writeBatchId,
+        { writeBatchId: result.writeBatchId, card },
       );
     }
 
@@ -252,7 +294,9 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
         .insert(weighIns)
         .values({ date, weightLb: weight.toFixed(2), note })
         .onConflictDoUpdate({ target: weighIns.date, set: { weightLb: weight.toFixed(2), note } });
-      return ok({ date, weightLb: weight }, `Logged weigh-in ${weight} lb on ${date}`);
+      return ok({ date, weightLb: weight }, `Logged weigh-in ${weight} lb on ${date}`, {
+        card: { label: "Weigh-in", title: `${weight} lb`, detail: date },
+      });
     }
 
     case "get_weight_trend": {
@@ -291,7 +335,9 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
       const content = str(input.content);
       if (!content) return err("content is required.");
       const [row] = await db.insert(memoryFacts).values({ content }).returning({ id: memoryFacts.id });
-      return ok({ id: row.id, content }, `Remembered: "${content}"`);
+      return ok({ id: row.id, content }, `Remembered: "${content}"`, {
+        card: { label: "Remembered", title: content, detail: "" },
+      });
     }
 
     default:

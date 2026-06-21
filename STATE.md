@@ -30,7 +30,35 @@ this file is the quick-resume summary).
 
 ---
 
-## Current status: Phase 3 COMPLETE ✅ (Chat route)
+## Current status: Phase 4 COMPLETE ✅ (Chat UI)
+
+Verified: `tsc --noEmit` clean; `/chat` + `/` render 200; chat SSE emits enriched
+`tool_result` events (card `{label,title,detail}` + `remaining` macros); Undo endpoint
+reverted a batch (`{revertedEntries:4}`, also clears meal_status). Today left clean.
+
+- **Design**: `design/phase4-chat-variants.html` (3) + `design/phase4-chat-combined.html`
+  (approved). Owner picked **Variant B (bubbles + cards)** + Variant C's remaining-today
+  **4-up stat strip** under Kal's replies; "Meal eaten" tool card kept, with Undo.
+- **`lib/undo.ts`** `revertWriteBatch(batchId)` + **`POST /api/undo`** {writeBatchId} —
+  deletes the batch's log_entries + clears its meal_status row. Powers card Undo.
+- **Enriched SSE**: `runTool` now returns optional `card` (write tools) and `remaining`
+  (get_day_summary); chat route emits both in the `tool_result` event so the UI renders
+  from authoritative data, not parsed text. Stat strip shows whenever get_day_summary ran.
+- **`app/chat/`** — `page.tsx` → `chat.tsx` (client). Fresh `crypto.randomUUID()` session
+  per open (`+ New` resets), composer (Enter to send), parses the SSE via fetch reader,
+  renders bubbles + tool cards (Undo) + remaining stat strip + typing indicator.
+- **Nav**: "Chat →" link on Today header; "‹ Today" on chat header. Chat styles in
+  `globals.css` (scoped under `.chat`).
+- **Dev-server note**: another local project ("Glass") squats :3000; run Kal dev on a
+  dedicated port (`PORT=3100 npm run dev`) and keep it backgrounded so it persists.
+
+### Not built (intentionally deferred)
+- Optimistic remaining-update after Undo (card greys to "Undone"; numbers refresh on next ask).
+- REST CRUD for `/api/foods`, `/api/profile`, `/api/memory-facts` (Plan screen, later).
+
+---
+
+## Phase 3 (prior): Chat route — COMPLETE ✅
 
 Verified: `tsc --noEmit` clean; tools + system-prompt smoke-tested against live DB;
 chat route driven via curl — "I ate my whole breakfast, what's left?" → model called
@@ -140,6 +168,10 @@ lib/anthropic.ts      Anthropic client + model/iteration config
 lib/tools.ts          7 chat tools + runTool() executor
 lib/system-prompt.ts  assembleSystemPrompt(date)
 app/api/chat/route.ts POST chat: tool loop + SSE stream + persistence
+lib/undo.ts           revertWriteBatch(batchId)
+app/api/undo/route.ts POST undo a write batch
+app/chat/page.tsx + chat.tsx   Chat screen (client, streaming)
+design/phase4-chat-*.html      Chat design variants (combined = approved)
 ```
 
 ---
@@ -148,10 +180,9 @@ app/api/chat/route.ts POST chat: tool loop + SSE stream + persistence
 
 - **Phase 2 — REST + Today screen. DONE ✅** (see Current status above.)
 - **Phase 3 — Chat route. DONE ✅** (see Current status above.)
-- **Phase 4 — Chat UI (NEXT).** First 3 HTML variants for the Chat section. Then fresh-session chat,
-  streaming render (consume the SSE `text`/`tool_use`/`tool_result`/`done` events), tool cards +
-  batch Undo (needs an undo endpoint that reverts a `write_batch_id`).
-- **Phase 5 — Auth + PWA.** Password gate (iron-session), manifest, icons, deploy to Vercel.
+- **Phase 4 — Chat UI. DONE ✅** (see Current status above.)
+- **Phase 5 — Auth + PWA (NEXT).** Password gate (iron-session), manifest, icons, deploy to Vercel.
+  Add `ANTHROPIC_API_KEY` (+ optional `ANTHROPIC_MODEL`), `APP_PASSWORD`, `SESSION_SECRET` to Vercel.
 - **Phase 6 / v1.5+ — Phase 2 deferrals:** `is_estimated` flag, grocery-logging section, trends
   screen, history summarization.
 

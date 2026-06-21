@@ -1,0 +1,220 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+
+type Remaining = { kcal: number; proteinG: number; carbsG: number; fatG: number };
+type Card = { label: string; title: string; detail: string };
+
+type Item =
+  | { id: string; kind: "user"; text: string }
+  | { id: string; kind: "ai"; text: string; error?: boolean }
+  | { id: string; kind: "card"; card: Card; writeBatchId: string | null; undone?: boolean }
+  | { id: string; kind: "rstrip"; remaining: Remaining };
+
+const n = (x: number) => Math.round(x).toLocaleString("en-US");
+
+function SendIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+export function Chat({ model }: { model: string }) {
+  const [sessionId, setSessionId] = useState("");
+  const [items, setItems] = useState<Item[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [costUsd, setCostUsd] = useState(0);
+  const [tokens, setTokens] = useState(0);
+  const [costKnown, setCostKnown] = useState(true);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const counter = useRef(0);
+  const nid = () => `${counter.current++}`;
+
+  useEffect(() => setSessionId(crypto.randomUUID()), []);
+  useEffect(() => {
+    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
+  }, [items]);
+
+  function newSession() {
+    setItems([]);
+    setSessionId(crypto.randomUUID());
+    setCostUsd(0);
+    setTokens(0);
+    setCostKnown(true);
+  }
+
+  async function undo(itemId: string, batchId: string) {
+    await fetch("/api/undo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ writeBatchId: batchId }),
+    }).catch(() => {});
+    setItems((p) => p.map((it) => (it.id === itemId && it.kind === "card" ? { ...it, undone: true } : it)));
+  }
+
+  async function send() {
+    const text = input.trim();
+    if (!text || sending || !sessionId) return;
+    setInput("");
+    setItems((p) => [...p, { id: nid(), kind: "user", text }]);
+    setSending(true);
+
+    let aiId: string | null = null; // current streaming bubble; reset by any non-text event
+    const appendText = (delta: string) => {
+      if (aiId === null) {
+        aiId = nid();
+        const id = aiId;
+        setItems((p) => [...p, { id, kind: "ai", text: "" }]);
+      }
+      const id = aiId;
+      setItems((p) => p.map((it) => (it.id === id && it.kind === "ai" ? { ...it, text: it.text + delta } : it)));
+    };
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, message: text }),
+      });
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buf.indexOf("\n\n")) >= 0) {
+          const chunk = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 2);
+          if (!chunk.startsWith("data:")) continue;
+          const evt = JSON.parse(chunk.slice(5).trim());
+
+          if (evt.type === "text") {
+            appendText(evt.text);
+          } else if (evt.type === "tool_result") {
+            aiId = null; // next text starts a fresh bubble
+            if (evt.remaining) {
+              setItems((p) => [...p, { id: nid(), kind: "rstrip", remaining: evt.remaining }]);
+            }
+            if (evt.card) {
+              setItems((p) => [
+                ...p,
+                { id: nid(), kind: "card", card: evt.card, writeBatchId: evt.writeBatchId ?? null },
+              ]);
+            }
+          } else if (evt.type === "usage") {
+            setTokens((t) => t + (evt.tokens?.input ?? 0) + (evt.tokens?.output ?? 0));
+            if (evt.costUsd == null) setCostKnown(false);
+            else setCostUsd((c) => c + evt.costUsd);
+          } else if (evt.type === "error") {
+            aiId = null;
+            setItems((p) => [...p, { id: nid(), kind: "ai", text: evt.message, error: true }]);
+          }
+          // tool_use and done need no rendering
+        }
+      }
+    } catch (e) {
+      setItems((p) => [
+        ...p,
+        { id: nid(), kind: "ai", text: e instanceof Error ? e.message : "Something went wrong.", error: true },
+      ]);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <main className="chat">
+      <header className="chat-head">
+        <Link href="/" className="home">‹ Today</Link>
+        <div style={{ textAlign: "center" }}>
+          <h1>Kal</h1>
+          <div className="sub">Ephemeral · not saved</div>
+        </div>
+        <button className="newbtn" onClick={newSession}>+ New</button>
+      </header>
+
+      <div className="chat-meta">
+        <span className="cm-model">{model}</span>
+        <span className="cm-cost">
+          {costKnown ? `$${costUsd.toFixed(4)}` : "cost n/a"} · {tokens.toLocaleString("en-US")} tok
+        </span>
+      </div>
+
+      <div className="chat-thread" ref={threadRef}>
+        {items.length === 0 && (
+          <div className="chat-empty">
+            <div className="big">Ask Kal</div>
+            Log meals, check what's left, or record a weigh-in.
+          </div>
+        )}
+
+        {items.map((it) => {
+          if (it.kind === "user") return <div key={it.id} className="bub-user">{it.text}</div>;
+          if (it.kind === "ai")
+            return (
+              <div key={it.id} className={`bub-ai${it.error ? " err" : ""}`}>
+                {it.text || <span className="typing"><i /><i /><i /></span>}
+              </div>
+            );
+          if (it.kind === "rstrip")
+            return (
+              <div key={it.id} className="rstrip">
+                <div className="kicker">Remaining today</div>
+                <div className="grid">
+                  <div className="stat"><b>{n(it.remaining.kcal)}</b><small>kcal</small></div>
+                  <div className="stat"><b>{n(it.remaining.proteinG)}</b><small>prot</small></div>
+                  <div className="stat"><b>{n(it.remaining.carbsG)}</b><small>carb</small></div>
+                  <div className="stat"><b>{n(it.remaining.fatG)}</b><small>fat</small></div>
+                </div>
+              </div>
+            );
+          // card
+          return (
+            <div key={it.id} className={`tool-card${it.undone ? " undone" : ""}`}>
+              <div className="tc-top">
+                <span className="chip"><span className="d" />{it.undone ? "Undone" : it.card.label}</span>
+              </div>
+              <div className="tc-title">{it.card.title}</div>
+              {it.card.detail && <div className="tc-detail">{it.card.detail}</div>}
+              {it.writeBatchId && (
+                <div className="tc-foot">
+                  <button className="tc-undo" disabled={it.undone} onClick={() => undo(it.id, it.writeBatchId!)}>
+                    {it.undone ? "Undone" : "Undo"}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="composer">
+        <div className="box">
+          <input
+            placeholder="Message Kal…"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            disabled={sending}
+          />
+          <button className="send" onClick={send} disabled={sending || input.trim() === ""} aria-label="Send">
+            <SendIcon />
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { todayInAppTz } from "@/lib/time";
 import { getTodayView } from "@/lib/today";
 import { MealList } from "./meal-list";
@@ -66,10 +67,13 @@ export default async function TodayPage() {
           <h1 className="head-title">Today</h1>
           <div className="head-date">{headerDate(date)}</div>
         </div>
-        <span className={`meals-count${eatenCount === 0 ? " none" : ""}`}>
-          {eatenCount > 0 && <span className="dot" />}
-          {eatenCount} / {meals.length} eaten
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+          <Link href="/chat" className="chat-link">Chat →</Link>
+          <span className={`meals-count${eatenCount === 0 ? " none" : ""}`}>
+            {eatenCount > 0 && <span className="dot" />}
+            {eatenCount} / {meals.length} eaten
+          </span>
+        </div>
       </div>
 
       {/* calorie ring */}
