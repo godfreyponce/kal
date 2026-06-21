@@ -30,7 +30,37 @@ this file is the quick-resume summary).
 
 ---
 
-## Current status: Phase 4 COMPLETE ✅ (Chat UI)
+## Current status: Phase 5 COMPLETE ✅ (Auth + PWA + deployed) — v1 SHIPPED 🚀
+
+Live: **https://kal-delta.vercel.app** (Vercel project `kal`, team godfreyps-projects).
+Verified live: unauth page → 307 /login, unauth API → 401, wrong password → 401,
+manifest/icon/apple-icon serve. Log in with `APP_PASSWORD` to use it.
+
+- **Auth (iron-session)**: `proxy.ts` gates all routes except `/login` + `/api/auth/*`
+  (pages redirect, API → 401; logged-in users bounced off /login). `lib/session.ts`
+  (config, no next/headers — safe for proxy), `lib/auth.ts` (`getSession` via cookies()).
+  `POST /api/auth/login` checks `APP_PASSWORD`; `/api/auth/logout` destroys; Sign-out on
+  Today header (`app/sign-out.tsx`).
+- **PWA**: `app/manifest.ts` (standalone, theme/bg bone), `public/icon.svg` (bone-on-ink K),
+  `app/apple-icon.tsx` (iOS PNG via `next/og` ImageResponse), `appleWebApp` + `themeColor`
+  in `app/layout.tsx`. Installable.
+- **Vercel env (Production)**: added `ANTHROPIC_API_KEY`, `SESSION_SECRET`, `APP_PASSWORD`
+  (DB vars were already there). Deployed via `vercel --prod`.
+- **Local env**: `.env.local` `APP_PASSWORD` swapped to the production value (pulled from
+  Vercel) so local login matches prod. `SESSION_SECRET` differs (local-only, fine).
+- **Dev-server gotcha**: Next dev hot-reloads `.env.local` changes (no restart needed); but
+  background `npm run dev` keeps dying between turns — run on `PORT=3100` and don't start
+  duplicates (EADDRINUSE).
+
+### Deferred to v1.5 / Phase 6
+- Prompt caching on the chat system-prompt/tools prefix (~10× cheaper repeat turns).
+- `is_estimated` provenance flag, grocery-logging section, trends/weight-chart screen,
+  chat history summarization (currently hard 30-cap).
+- Plan screen: REST CRUD for foods/profile/meals + memory-facts editor.
+
+---
+
+## Phase 4 (prior): Chat UI — COMPLETE ✅
 
 Verified: `tsc --noEmit` clean; `/chat` + `/` render 200; chat SSE emits enriched
 `tool_result` events (card `{label,title,detail}` + `remaining` macros); Undo endpoint
@@ -176,6 +206,13 @@ lib/undo.ts           revertWriteBatch(batchId)
 app/api/undo/route.ts POST undo a write batch
 app/chat/page.tsx + chat.tsx   Chat screen (client, streaming)
 design/phase4-chat-*.html      Chat design variants (combined = approved)
+proxy.ts              auth gate (was "middleware" pre-Next16)
+lib/session.ts        iron-session config (proxy-safe)
+lib/auth.ts           getSession() for routes/components
+app/api/auth/login|logout/route.ts
+app/login/page.tsx    password login screen
+app/sign-out.tsx      sign-out button (Today header)
+app/manifest.ts + public/icon.svg + app/apple-icon.tsx   PWA
 ```
 
 ---
@@ -185,8 +222,7 @@ design/phase4-chat-*.html      Chat design variants (combined = approved)
 - **Phase 2 — REST + Today screen. DONE ✅** (see Current status above.)
 - **Phase 3 — Chat route. DONE ✅** (see Current status above.)
 - **Phase 4 — Chat UI. DONE ✅** (see Current status above.)
-- **Phase 5 — Auth + PWA (NEXT).** Password gate (iron-session), manifest, icons, deploy to Vercel.
-  Add `ANTHROPIC_API_KEY` (+ optional `ANTHROPIC_MODEL`), `APP_PASSWORD`, `SESSION_SECRET` to Vercel.
+- **Phase 5 — Auth + PWA + deploy. DONE ✅ (v1 shipped).** Live at https://kal-delta.vercel.app.
 - **Phase 6 / v1.5+ — Phase 2 deferrals:** `is_estimated` flag, grocery-logging section, trends
   screen, history summarization.
 
