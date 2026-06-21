@@ -644,6 +644,62 @@ body {
   cursor: default;
 }
 
+/* login */
+.login {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.login-card {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+}
+.login-mark {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 36px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.login-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 8px 0 24px;
+}
+.login form {
+  display: flex;
+  gap: 8px;
+}
+.login input {
+  flex: 1;
+  font-family: var(--font-sans-stack);
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 13px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.login input:focus {
+  outline: none;
+  border-color: #c9c7c1;
+}
+.login input.err {
+  border-color: #9f2f2d;
+}
+.login .btn-dark {
+  padding: 11px 18px;
+}
+.login-err {
+  color: #9f2f2d;
+  font-size: 12.5px;
+  margin-top: 14px;
+  font-family: var(--font-mono);
+}
+
 /* nav link on Today header */
 .chat-link {
   font-family: var(--font-mono);

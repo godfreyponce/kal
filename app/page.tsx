@@ -3,6 +3,7 @@ import { todayInAppTz } from "@/lib/time";
 import { getTodayView } from "@/lib/today";
 import { MealList } from "./meal-list";
 import { WeighIn } from "./weigh-in";
+import { SignOut } from "./sign-out";
 
 const SEGMENTS = 9;
 const RING_R = 74;
@@ -68,7 +69,10 @@ export default async function TodayPage() {
           <div className="head-date">{headerDate(date)}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-          <Link href="/chat" className="chat-link">Chat →</Link>
+          <div style={{ display: "flex", gap: 8 }}>
+            <SignOut />
+            <Link href="/chat" className="chat-link">Chat →</Link>
+          </div>
           <span className={`meals-count${eatenCount === 0 ? " none" : ""}`}>
             {eatenCount > 0 && <span className="dot" />}
             {eatenCount} / {meals.length} eaten
