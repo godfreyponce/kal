@@ -28,33 +28,36 @@ export type TodayView = {
 
 /** Everything the Today screen renders, in one read. No LLM involved. */
 export async function getTodayView(date: string): Promise<TodayView> {
-  const summary = await getDaySummary(date);
+  // All five reads are independent — fire them in one parallel batch so the
+  // page (and every router.refresh after a log) pays one round-trip, not five.
+  const [summary, items, mealRows, statusRows, latestRows] = await Promise.all([
+    getDaySummary(date),
+    db
+      .select({ mealId: mealItems.mealId, kcal: foods.kcal, quantity: mealItems.quantity })
+      .from(mealItems)
+      .innerJoin(foods, eq(mealItems.foodId, foods.id)),
+    db
+      .select({ id: meals.id, name: meals.name, timeHint: meals.timeHint })
+      .from(meals)
+      .orderBy(asc(meals.sortOrder)),
+    db
+      .select({ mealId: mealStatus.mealId, status: mealStatus.status })
+      .from(mealStatus)
+      .where(eq(mealStatus.date, date)),
+    db
+      .select({ date: weighIns.date, weightLb: weighIns.weightLb })
+      .from(weighIns)
+      .orderBy(desc(weighIns.date))
+      .limit(1),
+  ]);
 
   // Planned kcal per meal = sum(food.kcal * quantity) over its items.
-  const items = await db
-    .select({
-      mealId: mealItems.mealId,
-      kcal: foods.kcal,
-      quantity: mealItems.quantity,
-    })
-    .from(mealItems)
-    .innerJoin(foods, eq(mealItems.foodId, foods.id));
-
   const plannedKcal = new Map<number, number>();
   for (const it of items) {
     const add = Math.round(it.kcal * Number(it.quantity));
     plannedKcal.set(it.mealId, (plannedKcal.get(it.mealId) ?? 0) + add);
   }
 
-  const mealRows = await db
-    .select({ id: meals.id, name: meals.name, timeHint: meals.timeHint })
-    .from(meals)
-    .orderBy(asc(meals.sortOrder));
-
-  const statusRows = await db
-    .select({ mealId: mealStatus.mealId, status: mealStatus.status })
-    .from(mealStatus)
-    .where(eq(mealStatus.date, date));
   const statusByMeal = new Map(statusRows.map((s) => [s.mealId, s.status as MealStatusValue]));
 
   let nowAssigned = false;
@@ -72,11 +75,7 @@ export async function getTodayView(date: string): Promise<TodayView> {
     };
   });
 
-  const [latest] = await db
-    .select({ date: weighIns.date, weightLb: weighIns.weightLb })
-    .from(weighIns)
-    .orderBy(desc(weighIns.date))
-    .limit(1);
+  const [latest] = latestRows;
 
   const isSunday = new Date(`${date}T00:00:00Z`).getUTCDay() === 0;
   const weighInDue = isSunday && latest?.date !== date;

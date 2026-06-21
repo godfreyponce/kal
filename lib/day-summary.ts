@@ -16,17 +16,20 @@ export type DaySummary = {
  * One query, no LLM math. The single source of "what's left today".
  */
 export async function getDaySummary(date: string): Promise<DaySummary> {
-  const [p] = await db.select().from(profile).where(eq(profile.id, 1));
-
-  const [consumed] = await db
-    .select({
-      kcal: sql<number>`coalesce(sum(${logEntries.kcal}), 0)`.mapWith(Number),
-      proteinG: sql<number>`coalesce(sum(${logEntries.proteinG}), 0)`.mapWith(Number),
-      carbsG: sql<number>`coalesce(sum(${logEntries.carbsG}), 0)`.mapWith(Number),
-      fatG: sql<number>`coalesce(sum(${logEntries.fatG}), 0)`.mapWith(Number),
-    })
-    .from(logEntries)
-    .where(eq(logEntries.date, date));
+  // Independent queries — run them in one parallel batch (neon-http does one
+  // HTTP round-trip per query, so sequential awaits stack latency).
+  const [[p], [consumed]] = await Promise.all([
+    db.select().from(profile).where(eq(profile.id, 1)),
+    db
+      .select({
+        kcal: sql<number>`coalesce(sum(${logEntries.kcal}), 0)`.mapWith(Number),
+        proteinG: sql<number>`coalesce(sum(${logEntries.proteinG}), 0)`.mapWith(Number),
+        carbsG: sql<number>`coalesce(sum(${logEntries.carbsG}), 0)`.mapWith(Number),
+        fatG: sql<number>`coalesce(sum(${logEntries.fatG}), 0)`.mapWith(Number),
+      })
+      .from(logEntries)
+      .where(eq(logEntries.date, date)),
+  ]);
 
   const targets: Macros = {
     kcal: p.targetKcal,

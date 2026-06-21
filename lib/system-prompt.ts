@@ -18,29 +18,36 @@ function shiftDate(date: string, deltaDays: number): string {
  * on real numbers rather than inventing them.
  */
 export async function assembleSystemPrompt(date: string): Promise<string> {
-  const [p] = await db.select().from(profile).where(eq(profile.id, 1));
-  const summary = await getDaySummary(date);
+  const since = shiftDate(date, -30);
 
-  // Meal plan with items, in plan order.
-  const mealRows = await db.select().from(meals).orderBy(asc(meals.sortOrder));
-  const items = await db
-    .select({
-      mealId: mealItems.mealId,
-      quantity: mealItems.quantity,
-      foodName: foods.name,
-    })
-    .from(mealItems)
-    .innerJoin(foods, eq(mealItems.foodId, foods.id));
+  // All reads are independent — one parallel batch instead of seven sequential
+  // round-trips (neon-http does one HTTP request per query).
+  const [[p], summary, mealRows, items, statusRows, weights, facts] = await Promise.all([
+    db.select().from(profile).where(eq(profile.id, 1)),
+    getDaySummary(date),
+    db.select().from(meals).orderBy(asc(meals.sortOrder)),
+    db
+      .select({ mealId: mealItems.mealId, quantity: mealItems.quantity, foodName: foods.name })
+      .from(mealItems)
+      .innerJoin(foods, eq(mealItems.foodId, foods.id)),
+    db
+      .select({ mealId: mealStatus.mealId, status: mealStatus.status })
+      .from(mealStatus)
+      .where(eq(mealStatus.date, date)),
+    db
+      .select({ date: weighIns.date, weightLb: weighIns.weightLb })
+      .from(weighIns)
+      .where(gte(weighIns.date, since))
+      .orderBy(desc(weighIns.date))
+      .limit(10),
+    db.select({ content: memoryFacts.content }).from(memoryFacts).orderBy(asc(memoryFacts.createdAt)),
+  ]);
   const itemsByMeal = new Map<number, string[]>();
   for (const it of items) {
     const list = itemsByMeal.get(it.mealId) ?? [];
     list.push(`${Number(it.quantity)}× ${it.foodName}`);
     itemsByMeal.set(it.mealId, list);
   }
-  const statusRows = await db
-    .select({ mealId: mealStatus.mealId, status: mealStatus.status })
-    .from(mealStatus)
-    .where(eq(mealStatus.date, date));
   const statusByMeal = new Map(statusRows.map((s) => [s.mealId, s.status]));
 
   const planLines = mealRows.map((meal) => {
@@ -49,14 +56,6 @@ export async function assembleSystemPrompt(date: string): Promise<string> {
     return `  - [id ${meal.id}] ${meal.name} [${status}]: ${itemList}`;
   });
 
-  // Recent weight.
-  const since = shiftDate(date, -30);
-  const weights = await db
-    .select({ date: weighIns.date, weightLb: weighIns.weightLb })
-    .from(weighIns)
-    .where(gte(weighIns.date, since))
-    .orderBy(desc(weighIns.date))
-    .limit(10);
   let weightLine = "No weigh-ins on record.";
   if (weights.length > 0) {
     const latest = weights[0];
@@ -66,10 +65,6 @@ export async function assembleSystemPrompt(date: string): Promise<string> {
     weightLine = `Latest ${Number(latest.weightLb)} lb on ${latest.date}` + (avg ? `; 7-day avg ${avg} lb.` : ".");
   }
 
-  const facts = await db
-    .select({ content: memoryFacts.content })
-    .from(memoryFacts)
-    .orderBy(asc(memoryFacts.createdAt));
   const memoryBlock = facts.length
     ? facts.map((f) => `  - ${f.content}`).join("\n")
     : "  (none yet)";

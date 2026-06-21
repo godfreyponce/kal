@@ -53,23 +53,24 @@ export async function setMealStatus(
 
   const writeBatchId = randomUUID();
 
-  const planned = await db
-    .select({
-      foodId: mealItems.foodId,
-      quantity: mealItems.quantity,
-      kcal: foods.kcal,
-      proteinG: foods.proteinG,
-      carbsG: foods.carbsG,
-      fatG: foods.fatG,
-    })
-    .from(mealItems)
-    .innerJoin(foods, eq(mealItems.foodId, foods.id))
-    .where(eq(mealItems.mealId, mealId));
-
-  const existing = await db
-    .select({ foodId: logEntries.foodId })
-    .from(logEntries)
-    .where(and(eq(logEntries.date, date), eq(logEntries.mealId, mealId)));
+  const [planned, existing] = await Promise.all([
+    db
+      .select({
+        foodId: mealItems.foodId,
+        quantity: mealItems.quantity,
+        kcal: foods.kcal,
+        proteinG: foods.proteinG,
+        carbsG: foods.carbsG,
+        fatG: foods.fatG,
+      })
+      .from(mealItems)
+      .innerJoin(foods, eq(mealItems.foodId, foods.id))
+      .where(eq(mealItems.mealId, mealId)),
+    db
+      .select({ foodId: logEntries.foodId })
+      .from(logEntries)
+      .where(and(eq(logEntries.date, date), eq(logEntries.mealId, mealId))),
+  ]);
   const alreadyLogged = new Set(existing.map((e) => e.foodId));
 
   const gaps = planned.filter((p) => !alreadyLogged.has(p.foodId));

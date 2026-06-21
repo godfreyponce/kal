@@ -36,12 +36,10 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
         body: JSON.stringify({ status: next, date }),
       });
       if (!res.ok) throw new Error(await res.text());
-      // Re-read the server truth (ring + macros + counts), then drop the override.
+      // Re-read server truth (ring + macros + counts). Keep the optimistic value
+      // — it matches the server now, so dropping it here would flash the checkbox
+      // back until the refresh lands.
       startTransition(() => router.refresh());
-      setOptimistic((o) => {
-        const { [m.id]: _, ...rest } = o;
-        return rest;
-      });
     } catch {
       setOptimistic((o) => {
         const { [m.id]: _, ...rest } = o;
