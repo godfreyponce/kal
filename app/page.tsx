@@ -4,6 +4,7 @@ import { getTodayView } from "@/lib/today";
 import { MealList } from "./meal-list";
 import { WeighIn } from "./weigh-in";
 import { SignOut } from "./sign-out";
+import { RefreshOnFocus } from "./refresh-on-focus";
 
 const SEGMENTS = 9;
 const RING_R = 74;
@@ -63,6 +64,7 @@ export default async function TodayPage() {
 
   return (
     <main className="app">
+      <RefreshOnFocus />
       <div className="head-row">
         <div>
           <h1 className="head-title">Today</h1>
@@ -120,7 +122,7 @@ export default async function TodayPage() {
 
       <div className="rule" />
 
-      <MealList meals={meals} date={date} />
+      <MealList key={date} meals={meals} date={date} />
     </main>
   );
 }
