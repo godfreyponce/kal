@@ -6,6 +6,11 @@ import { WeighIn } from "./weigh-in";
 import { SignOut } from "./sign-out";
 import { RefreshOnFocus } from "./refresh-on-focus";
 
+// Today reflects live DB state + the current civil day, so it must be rendered
+// per request. Without this, Next prerenders it static at build time and every
+// router.refresh() refetches that frozen snapshot (stale date, 0 consumed).
+export const dynamic = "force-dynamic";
+
 const SEGMENTS = 9;
 const RING_R = 74;
 const RING_C = 2 * Math.PI * RING_R; // circumference
