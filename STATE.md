@@ -9,14 +9,56 @@ this file is the quick-resume summary).
 
 ---
 
+## ⏩ NEW AGENT — START HERE
+
+*Last updated: 2026-06-22 · v1 shipped.*
+
+**What's done:** Phases 1–5 all complete. v1 is **live and deployed**:
+**https://kal-delta.vercel.app** (Vercel project `kal`, team godfreyps-projects).
+Today screen (rings + macro bars + meal checklist + Sunday weigh-in), Chat (streaming
+tool-loop, tool cards w/ Undo, model+cost tracker), password gate (iron-session),
+installable PWA. Stack & locked design decisions are below; per-phase detail is the
+archive further down.
+
+**How to run / verify (do this first):**
+```bash
+PORT=3100 npm run dev    # :3000 is taken by another local project ("Glass"); use 3100
+npm test                 # vitest 8/8 (needs DATABASE_URL; hits live Neon w/ sentinel dates)
+npx tsc --noEmit         # must stay clean
+```
+Run the dev server backgrounded and DON'T start a duplicate (EADDRINUSE on 3100). Next dev
+hot-reloads `.env.local` (no restart needed for env changes). To verify a change in the real
+app, exercise routes with `curl` against `localhost:3100` (see phase sections for examples).
+
+**🟢 Upcoming / backlog (nothing in progress right now — confirm with owner before starting):**
+1. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
+2. **Plan screen** — REST CRUD for foods/profile/meals + the memory-facts editor.
+3. **Trends screen** — weight chart + weekly adherence (v1.5).
+4. **`is_estimated` provenance flag** on foods (carried on log_entries) + grocery-logging section.
+5. **Chat history summarization** — currently a hard 30-message cap; summarize-and-truncate later.
+6. **Optimistic remaining-update after chat Undo** — card greys to "Undone"; numbers refresh next ask.
+
+**⚠️ Gotchas that have bitten before:** Next 16 renamed `middleware`→`proxy` & made `params`
+a Promise; `RouteContext` only exists after typegen (use explicit `params: Promise<…>`);
+neon-http has no interactive txns & one HTTP round-trip per query (batch independent reads
+with `Promise.all`); Haiku rejects `thinking`/`effort` params; vitest files run in parallel
+so each integration test needs its OWN sentinel date.
+
+**📋 Maintenance protocol (REQUIRED):** After each feature is built **and the owner confirms
+it's good**, update this file in the same change: bump the *Last updated* date, move the item
+out of backlog, add/refresh its phase section, and adjust the roadmap. Commit STATE.md with
+the feature. (This rule is also in `AGENTS.md` so it survives across sessions.)
+
+---
+
 ## Stack
 
 - Next.js **16** (App Router) — note: newer than the spec's "15"; read
   `node_modules/next/dist/docs/` before writing routes/UI (its `AGENTS.md` flags breaking changes).
 - Neon Postgres + Drizzle ORM (driver: `@neondatabase/serverless`)
 - Tailwind CSS v4, TypeScript, Vitest
-- Anthropic API (model TBD; cheapest-capable principle, env `ANTHROPIC_MODEL`, default Haiku) — not wired yet
-- Deploys to Vercel project `kal` (Phase 5)
+- Anthropic API via `@anthropic-ai/sdk` (cheapest-capable; env `ANTHROPIC_MODEL`, default `claude-haiku-4-5`)
+- iron-session password gate; deployed to Vercel project `kal` (live at kal-delta.vercel.app)
 
 ## Key v1 design decisions (locked)
 
