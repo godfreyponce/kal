@@ -3,11 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { GroceryView } from "@/lib/groceries";
+import { toGrams } from "@/lib/units";
 
 type WeightUnit = "g" | "oz" | "lb";
-const OZ = 28.3495;
-const LB = 453.592;
-const toG = (v: number, u: WeightUnit) => (u === "oz" ? v * OZ : u === "lb" ? v * LB : v);
 
 type FormState = {
   id: number | null;
@@ -81,13 +79,13 @@ export function GroceriesList({ initial }: { initial: GroceryView[] }) {
       store: form.store || null,
       link: form.link || null,
       category: form.category || null,
-      servingGrams: toG(serving, form.servingUnit),
+      servingGrams: toGrams(serving, form.servingUnit),
       kcal,
       proteinG: Number(form.proteinG) || 0,
       carbsG: Number(form.carbsG) || 0,
       fatG: Number(form.fatG) || 0,
-      purchaseWeightG: form.purchase ? toG(Number(form.purchase), form.purchaseUnit) : null,
-      price: form.price ? Number(form.price) : null,
+      purchaseWeightG: form.purchase.trim() === "" ? null : toGrams(Number(form.purchase), form.purchaseUnit),
+      price: form.price.trim() === "" ? null : Number(form.price),
     };
     try {
       const res = await fetch(form.id ? `/api/groceries/${form.id}` : "/api/groceries", {

@@ -7,7 +7,7 @@ import { getDaySummary } from "./day-summary";
 import { setMealStatus, type MealStatusValue } from "./meal-status";
 import { todayInAppTz } from "./time";
 import { createGrocery } from "./groceries";
-import { toGrams } from "./units";
+import { toGrams, weightToServings } from "./units";
 
 // The assistant's server-side tool surface. Inputs use snake_case (LLM-friendly);
 // every tool defaults its `date` to today-in-app-tz. Write tools return a
@@ -261,7 +261,7 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
           return err(`${per.name} has no serving weight set — add its grams in Groceries first.`);
         }
         const grams = ozInput !== undefined ? toGrams(ozInput, "oz") : gramsInput!;
-        qty = grams / servingGrams;
+        qty = weightToServings(grams, servingGrams);
         weightLabel = ozInput !== undefined ? `${ozInput} oz` : `${gramsInput} g`;
       } else {
         qty = num(input.quantity) ?? 1;
