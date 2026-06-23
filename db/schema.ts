@@ -9,6 +9,7 @@ import {
   jsonb,
   uuid,
   unique,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 // Singleton (id = 1). Targets are stored explicitly, not derived at runtime.
@@ -29,8 +30,10 @@ export const profile = pgTable("profile", {
   targetFatG: integer("target_fat_g").notNull(),
 });
 
-// Self-maintained food library. Macros are per one `serving_desc` unit.
-// (is_estimated provenance flag is deferred to Phase 2.)
+// Self-maintained food library = the owner's "Groceries". Macros are per one
+// `serving_desc` unit; `serving_grams` gives that serving's weight so chat can
+// log by weight (oz/g). `is_estimated=false` means the numbers came off a real
+// label. purchase_weight (grams) + price are recorded attributes (no auto-decrement).
 export const foods = pgTable("foods", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -40,6 +43,13 @@ export const foods = pgTable("foods", {
   proteinG: numeric("protein_g", { precision: 6, scale: 2 }).notNull(),
   carbsG: numeric("carbs_g", { precision: 6, scale: 2 }).notNull(),
   fatG: numeric("fat_g", { precision: 6, scale: 2 }).notNull(),
+  store: text("store"),
+  link: text("link"),
+  category: text("category"),
+  servingGrams: numeric("serving_grams", { precision: 8, scale: 2 }),
+  isEstimated: boolean("is_estimated").notNull().default(false),
+  purchaseWeight: numeric("purchase_weight", { precision: 8, scale: 2 }),
+  price: numeric("price", { precision: 8, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
