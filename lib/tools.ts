@@ -6,6 +6,8 @@ import { foods, logEntries, meals, memoryFacts, weighIns } from "../db/schema";
 import { getDaySummary } from "./day-summary";
 import { setMealStatus, type MealStatusValue } from "./meal-status";
 import { todayInAppTz } from "./time";
+import { createGrocery } from "./groceries";
+import { toGrams } from "./units";
 
 // The assistant's server-side tool surface. Inputs use snake_case (LLM-friendly);
 // every tool defaults its `date` to today-in-app-tz. Write tools return a
@@ -37,13 +39,15 @@ export const TOOLS: Anthropic.Tool[] = [
   {
     name: "log_food",
     description:
-      "Log a food to the day's intake. Either pass food_id (an existing library food) with a quantity (multiple of its serving), OR pass name plus per-serving kcal/protein_g/carbs_g/fat_g to log (and add to the library) a new food. Optionally attach to a meal_id.",
+      "Log a food to the day's intake. Either pass food_id (an existing library food) with a quantity (multiple of its serving) OR with a weight (oz or grams — the food must have a serving weight set), OR pass name plus per-serving kcal/protein_g/carbs_g/fat_g to log (and add to the library) a new food. Prefer logging known groceries by weight. Optionally attach to a meal_id.",
     input_schema: {
       type: "object",
       properties: {
         food_id: { type: "integer", description: "Id of an existing library food." },
         name: { type: "string", description: "Name for a new free-form food (with macros below)." },
         quantity: { type: "number", description: "Servings eaten. Defaults to 1." },
+        oz: { type: "number", description: "Amount eaten in ounces (weight-based logging; needs an existing food_id with a serving weight)." },
+        grams: { type: "number", description: "Amount eaten in grams (weight-based logging; needs an existing food_id with a serving weight)." },
         meal_id: { type: "integer", description: "Optional meal to attach this entry to." },
         date: { type: "string", description: "YYYY-MM-DD. Defaults to today." },
         kcal: { type: "number", description: "Per-serving calories (new food only)." },
@@ -52,6 +56,29 @@ export const TOOLS: Anthropic.Tool[] = [
         fat_g: { type: "number", description: "Per-serving fat grams (new food only)." },
         serving_desc: { type: "string", description: "Serving description for a new food, e.g. '1 cup'." },
       },
+    },
+  },
+  {
+    name: "add_grocery",
+    description:
+      "Add a real grocery item to the owner's library (the source of truth) from its label. Use when the owner ate something not yet in the library: ask for the brand and the label's nutrition facts (serving size in grams + per-serving macros), then call this, then log_food by weight. Never invent macros.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Food name." },
+        brand: { type: "string", description: "Brand, if known." },
+        store: { type: "string", description: "Where it was bought, e.g. Walmart." },
+        link: { type: "string", description: "Optional product/label URL." },
+        category: { type: "string", description: "Optional tag: protein, oil, seasoning, supplement, etc." },
+        serving_grams: { type: "number", description: "Grams in one label serving." },
+        kcal: { type: "number", description: "Calories per serving." },
+        protein_g: { type: "number", description: "Protein grams per serving." },
+        carbs_g: { type: "number", description: "Carb grams per serving." },
+        fat_g: { type: "number", description: "Fat grams per serving." },
+        purchase_weight_g: { type: "number", description: "Optional total package weight in grams." },
+        price: { type: "number", description: "Optional price paid (USD)." },
+      },
+      required: ["name", "serving_grams", "kcal"],
     },
   },
   {
@@ -175,13 +202,13 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
     }
 
     case "log_food": {
-      const qty = num(input.quantity) ?? 1;
       const date = str(input.date) ?? today;
       const mealId = num(input.meal_id) ?? null;
       const writeBatchId = randomUUID();
 
       let foodId: number;
       let per: { name: string; kcal: number; proteinG: number; carbsG: number; fatG: number };
+      let servingGrams: number | null = null;
 
       const foodIdInput = num(input.food_id);
       if (foodIdInput !== undefined) {
@@ -195,6 +222,7 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
           fatG: Number(f.fatG),
         };
         foodId = f.id;
+        servingGrams = f.servingGrams === null ? null : Number(f.servingGrams);
       } else {
         const name2 = str(input.name);
         const kcal = num(input.kcal);
@@ -223,6 +251,22 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
         foodId = created.id;
       }
 
+      // Quantity: from weight (oz/grams) when given, else servings.
+      const ozInput = num(input.oz);
+      const gramsInput = num(input.grams);
+      let qty: number;
+      let weightLabel: string | null = null;
+      if (ozInput !== undefined || gramsInput !== undefined) {
+        if (servingGrams === null) {
+          return err(`${per.name} has no serving weight set — add its grams in Groceries first.`);
+        }
+        const grams = ozInput !== undefined ? toGrams(ozInput, "oz") : gramsInput!;
+        qty = grams / servingGrams;
+        weightLabel = ozInput !== undefined ? `${ozInput} oz` : `${gramsInput} g`;
+      } else {
+        qty = num(input.quantity) ?? 1;
+      }
+
       const entry = {
         date,
         mealId,
@@ -238,12 +282,12 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
       await db.insert(logEntries).values(entry);
       return ok(
         { logged: { name: per.name, quantity: qty, kcal: entry.kcal }, writeBatchId },
-        `Logged ${qty} × ${per.name} (${entry.kcal} kcal)`,
+        `Logged ${weightLabel ?? `${qty} ×`} ${per.name} (${entry.kcal} kcal)`,
         {
           writeBatchId,
           card: {
             label: "Food logged",
-            title: qty === 1 ? per.name : `${per.name} · ${qty}×`,
+            title: weightLabel ? `${per.name} · ${weightLabel}` : qty === 1 ? per.name : `${per.name} · ${qty}×`,
             detail: `${entry.kcal} kcal · ${entry.proteinG}P · ${entry.carbsG}C · ${entry.fatG}F`,
           },
         },
@@ -337,6 +381,36 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
       const [row] = await db.insert(memoryFacts).values({ content }).returning({ id: memoryFacts.id });
       return ok({ id: row.id, content }, `Remembered: "${content}"`, {
         card: { label: "Remembered", title: content, detail: "" },
+      });
+    }
+
+    case "add_grocery": {
+      const name = str(input.name);
+      const servingGrams = num(input.serving_grams);
+      const kcal = num(input.kcal);
+      if (!name || servingGrams === undefined || kcal === undefined) {
+        return err("name, serving_grams, and kcal are required.");
+      }
+      const g = await createGrocery({
+        name,
+        brand: str(input.brand) ?? null,
+        store: str(input.store) ?? null,
+        link: str(input.link) ?? null,
+        category: str(input.category) ?? null,
+        servingGrams,
+        kcal,
+        proteinG: num(input.protein_g) ?? 0,
+        carbsG: num(input.carbs_g) ?? 0,
+        fatG: num(input.fat_g) ?? 0,
+        purchaseWeightG: num(input.purchase_weight_g) ?? null,
+        price: num(input.price) ?? null,
+      });
+      return ok({ id: g.id, name: g.name }, `Added grocery ${g.name} (id ${g.id})`, {
+        card: {
+          label: "Grocery added",
+          title: g.name,
+          detail: `${g.kcal} kcal / ${servingGrams} g serving`,
+        },
       });
     }
 
