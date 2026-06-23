@@ -11,7 +11,7 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-06-22 · v1 shipped.*
+*Last updated: 2026-06-23 · v1 shipped; post-ship stale-Today fix landed.*
 
 **What's done:** Phases 1–5 all complete. v1 is **live and deployed**:
 **https://kal-delta.vercel.app** (Vercel project `kal`, team godfreyps-projects).
@@ -42,7 +42,12 @@ app, exercise routes with `curl` against `localhost:3100` (see phase sections fo
 a Promise; `RouteContext` only exists after typegen (use explicit `params: Promise<…>`);
 neon-http has no interactive txns & one HTTP round-trip per query (batch independent reads
 with `Promise.all`); Haiku rejects `thinking`/`effort` params; vitest files run in parallel
-so each integration test needs its OWN sentinel date.
+so each integration test needs its OWN sentinel date. **Any page that reads live DB or the
+current day MUST `export const dynamic = "force-dynamic"`** — Next 16 prerenders pages static
+by default (neon queries aren't detected as dynamic), so without it the page freezes at the
+build-time snapshot and `router.refresh()` just re-serves that frozen RSC (this is what made
+Today show the wrong day + 0 consumed after deploy; check the build route table — `/` must be
+`ƒ`, not `○`). This bug is invisible in `npm run dev` (dev never statically caches).
 
 **📋 Maintenance protocol (REQUIRED):** After each feature is built **and the owner confirms
 it's good**, update this file in the same change: bump the *Last updated* date, move the item
@@ -71,6 +76,27 @@ the feature. (This rule is also in `AGENTS.md` so it survives across sessions.)
 6. **Deferred to Phase 2:** `is_estimated` provenance flag on foods; grocery-logging section.
 
 ---
+
+## Post-ship fix (2026-06-23): stale Today screen
+
+Symptom: logging a meal on the deployed PWA showed a green check but the rings/macros/count
+never moved, and the screen could show yesterday's date. **Root cause: `/` was prerendered
+static** (build-time snapshot), so `router.refresh()` re-served a frozen RSC instead of
+reading the DB — writes landed correctly but the page never reflected them. Two-part fix:
+
+- **`app/page.tsx`** — `export const dynamic = "force-dynamic"` so Today reads live DB +
+  current day on every request (build route table now shows `ƒ /`, was `○ /`). This is the
+  real fix; see the gotcha above.
+- **`app/refresh-on-focus.tsx`** (new) — on `visibilitychange`→visible / bfcache `pageshow`,
+  calls `router.refresh()`. iOS standalone PWAs restore the previous session from memory on
+  reopen (no reload/navigation), so nothing otherwise re-fetches; this triggers the refetch
+  (and the day rollover). `key={date}` on `<MealList>` drops stale optimistic checks at the
+  boundary. Today-only by design (Chat is ephemeral, no stale-totals problem).
+
+NB during this debug: prod `APP_PASSWORD`/`SESSION_SECRET` are **Sensitive/encrypted** Vercel
+vars → `vercel env pull` writes them back as `""` (write-only). A prior pull blanked local
+`APP_PASSWORD` to `""`, so **local browser login is currently broken**; set a local-only value
+in `.env.local` if you need `localhost` login (prod is unaffected).
 
 ## Current status: Phase 5 COMPLETE ✅ (Auth + PWA + deployed) — v1 SHIPPED 🚀
 
@@ -255,6 +281,7 @@ app/api/auth/login|logout/route.ts
 app/login/page.tsx    password login screen
 app/sign-out.tsx      sign-out button (Today header)
 app/manifest.ts + public/icon.svg + app/apple-icon.tsx   PWA
+app/refresh-on-focus.tsx   re-fetch Today on PWA reopen (visibilitychange/pageshow)
 ```
 
 ---
