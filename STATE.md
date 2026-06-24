@@ -11,7 +11,7 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-06-23 · v1 shipped; post-ship stale-Today fix landed.*
+*Last updated: 2026-06-24 · v1 shipped; Groceries feature built (on branch, awaiting merge).*
 
 **What's done:** Phases 1–5 all complete. v1 is **live and deployed**:
 **https://kal-delta.vercel.app** (Vercel project `kal`, team godfreyps-projects).
@@ -19,6 +19,15 @@ Today screen (rings + macro bars + meal checklist + Sunday weigh-in), Chat (stre
 tool-loop, tool cards w/ Undo, model+cost tracker), password gate (iron-session),
 installable PWA. Stack & locked design decisions are below; per-phase detail is the
 archive further down.
+
+**⚠️ Uncommitted-to-main work — the Groceries feature lives on branch `groceries`**, NOT
+yet merged to `main`. Owner approved it (2026-06-24); merge/PR is the next action. Full
+spec/plan in `docs/superpowers/specs/2026-06-23-groceries-design.md` +
+`docs/superpowers/plans/2026-06-23-groceries.md`. See the **Groceries** section below.
+
+**Local login:** `.env.local` `APP_PASSWORD` is now `devpass` (set this session so localhost
+login works — the prod value is encrypted/write-only and a prior `vercel env pull` had blanked
+it). Prod unaffected. `PORT=3100 npm run dev` may still be running in the background.
 
 **How to run / verify (do this first):**
 ```bash
@@ -31,12 +40,15 @@ hot-reloads `.env.local` (no restart needed for env changes). To verify a change
 app, exercise routes with `curl` against `localhost:3100` (see phase sections for examples).
 
 **🟢 Upcoming / backlog (nothing in progress right now — confirm with owner before starting):**
-1. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
-2. **Plan screen** — REST CRUD for foods/profile/meals + the memory-facts editor.
-3. **Trends screen** — weight chart + weekly adherence (v1.5).
-4. **`is_estimated` provenance flag** on foods (carried on log_entries) + grocery-logging section.
-5. **Chat history summarization** — currently a hard 30-message cap; summarize-and-truncate later.
-6. **Optimistic remaining-update after chat Undo** — card greys to "Undone"; numbers refresh next ask.
+1. **Merge the `groceries` branch** to `main` (owner-approved 2026-06-24; not yet merged).
+2. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
+3. **Barcode / QR auto-fill** of the grocery form — owner's stated future want (scan the label panel → prefill macros). Deferred from the Groceries build.
+4. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it; add running-low/"how much left" later.
+5. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD now exists via `/groceries`).
+6. **Trends screen** — weight chart + weekly adherence (v1.5).
+7. **Chat history summarization** — currently a hard 30-message cap; summarize-and-truncate later.
+8. **Optimistic remaining-update after chat Undo** — card greys to "Undone"; numbers refresh next ask.
+9. **Surface `is_estimated` in the Groceries UI** — column + `add_grocery` set it, but `GroceryView`/screen don't show provenance yet.
 
 **⚠️ Gotchas that have bitten before:** Next 16 renamed `middleware`→`proxy` & made `params`
 a Promise; `RouteContext` only exists after typegen (use explicit `params: Promise<…>`);
@@ -76,6 +88,40 @@ the feature. (This rule is also in `AGENTS.md` so it survives across sessions.)
 6. **Deferred to Phase 2:** `is_estimated` provenance flag on foods; grocery-logging section.
 
 ---
+
+## Groceries feature (2026-06-24) — built on branch `groceries`, owner-approved, NOT yet merged
+
+A curated, weight-aware **Groceries** list = the `foods` library surfaced as a management screen
+and made the **source of truth** for macros. Owner logs by **weight** ("8 oz chicken"); Kal pulls
+macros only from the library and never invents them. Built via subagent-driven TDD; full suite 16/16,
+`tsc` clean, `npm run build` shows `ƒ /groceries`. Spec/plan in `docs/superpowers/{specs,plans}/`.
+
+- **Schema** (`db/schema.ts`, migration `0001_*.sql`) — `foods` gained `store`, `link`, `category`,
+  `serving_grams numeric(8,2)` (the weight basis), `is_estimated boolean NOT NULL default false`,
+  `purchase_weight numeric(8,2)` (grams, recorded only — NO auto-decrement), `price numeric(8,2)`.
+  Macros stay **per serving**; meal plan / Today / mark-eaten untouched. Seeded foods have
+  `serving_grams = null` (still log by serving; weight logging needs a gram basis).
+- **`lib/units.ts`** — `toGrams(v, "g"|"oz"|"lb")`, `weightToServings(grams, servingGrams)`;
+  `1 oz = 28.3495 g`, `1 lb = 453.592 g`. The ONE canonical conversion source (client imports it too).
+- **`lib/groceries.ts`** — `listGroceries / createGrocery / updateGrocery / deleteGrocery` + `GroceryView`
+  mapper (numeric→Number). `deleteGrocery` lets the FK-restrict error propagate.
+- **Chat tools** (`lib/tools.ts`) — new `add_grocery` (saves a label item, `is_estimated=false`);
+  `log_food` gained `oz`/`grams` → converts via the food's `serving_grams` (errors if null), snapshots
+  macros from the unrounded servings float, card shows the weight. `lib/system-prompt.ts` rules:
+  search→log by weight, never invent macros, off-list → ask brand+label facts → `add_grocery` → log.
+- **REST** — `GET/POST /api/groceries`, `PATCH/DELETE /api/groceries/[id]`. DELETE returns **409**
+  only for a Postgres FK violation (`err.cause.code === "23503"` — Drizzle wraps it on `.cause`);
+  other errors rethrow → 500 (don't mask). Client mutates only via these (swappable-brain rule).
+- **Screen** — `app/groceries/page.tsx` (server, **`force-dynamic`**) + `groceries-list.tsx` (client
+  add/edit/delete form: serving g/oz, package weight lb/oz/g → stored as grams; shows derived
+  ~$/serving; "no weight set" for seeded foods). "Groceries" link added to the Today header.
+- **Verified live (Neon + real model):** weight log 200 g of a 113.4 g/130 kcal serving → 229 kcal /
+  42.33 P exact; off-list food → model asked for the label, logged 0 invented macros; 409 in-use guard.
+- **Deferred (in backlog):** barcode/QR auto-fill, inventory decrement from `purchase_weight`,
+  surfacing `is_estimated` provenance in the UI.
+- **Process note:** unlike the Today/Chat screens, the Groceries screen did **not** get the
+  3-variant HTML design exploration first — owner flagged this as a miss; do the variant pass for
+  future net-new screens.
 
 ## Post-ship fix (2026-06-23): stale Today screen
 
@@ -282,6 +328,11 @@ app/login/page.tsx    password login screen
 app/sign-out.tsx      sign-out button (Today header)
 app/manifest.ts + public/icon.svg + app/apple-icon.tsx   PWA
 app/refresh-on-focus.tsx   re-fetch Today on PWA reopen (visibilitychange/pageshow)
+lib/units.ts (+test)       oz/lb/g → grams; grams → servings (Groceries)
+lib/groceries.ts (+test)   grocery CRUD over foods + GroceryView mapper
+app/groceries/page.tsx + groceries-list.tsx   Groceries screen (force-dynamic, add/edit/delete)
+app/api/groceries/route.ts + [id]/route.ts    Groceries REST (list/create, patch/delete + 409 guard)
+docs/superpowers/{specs,plans}/2026-06-23-groceries-*   Groceries spec + implementation plan
 ```
 
 ---
@@ -292,8 +343,11 @@ app/refresh-on-focus.tsx   re-fetch Today on PWA reopen (visibilitychange/pagesh
 - **Phase 3 — Chat route. DONE ✅** (see Current status above.)
 - **Phase 4 — Chat UI. DONE ✅** (see Current status above.)
 - **Phase 5 — Auth + PWA + deploy. DONE ✅ (v1 shipped).** Live at https://kal-delta.vercel.app.
-- **Phase 6 / v1.5+ — Phase 2 deferrals:** `is_estimated` flag, grocery-logging section, trends
-  screen, history summarization.
+- **Groceries — built 2026-06-24 (branch `groceries`, owner-approved, awaiting merge).** Weight-based
+  source-of-truth food library + screen + chat tools. (Delivered the Phase-2-deferred `is_estimated`
+  flag + grocery-logging section.)
+- **Phase 6 / v1.5+ — remaining deferrals:** prompt caching, barcode/QR auto-fill, inventory decrement,
+  trends/weight-chart screen, chat history summarization.
 
 ## Open notes
 
