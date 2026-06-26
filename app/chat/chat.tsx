@@ -136,7 +136,7 @@ export function Chat({ model }: { model: string }) {
         <Link href="/" className="home">‹ Today</Link>
         <div style={{ textAlign: "center" }}>
           <h1>Kal</h1>
-          <div className="sub">Ephemeral · not saved</div>
+          <div className="sub"><span>Ephemeral</span><span>not saved</span></div>
         </div>
         <button className="newbtn" onClick={newSession}>+ New</button>
       </header>
@@ -144,7 +144,8 @@ export function Chat({ model }: { model: string }) {
       <div className="chat-meta">
         <span className="cm-model">{model}</span>
         <span className="cm-cost">
-          {costKnown ? `$${costUsd.toFixed(4)}` : "cost n/a"} · {tokens.toLocaleString("en-US")} tok
+          <span>{costKnown ? `$${costUsd.toFixed(4)}` : "cost n/a"}</span>
+          <span>{tokens.toLocaleString("en-US")} tok</span>
         </span>
       </div>
 

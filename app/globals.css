@@ -151,6 +151,11 @@ body {
   color: var(--ink-soft);
   font-weight: 500;
 }
+.ring-foot .rf-pct {
+  margin-left: 10px;
+  font-family: var(--font-mono);
+  color: var(--faint);
+}
 
 /* segmented macro rows */
 .macros {
@@ -372,6 +377,8 @@ body {
   letter-spacing: -0.02em;
 }
 .chat-head .sub {
+  display: inline-flex;
+  gap: 7px;
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.08em;
@@ -406,7 +413,7 @@ body {
   letter-spacing: 0.04em;
 }
 .chat-meta .cm-model { color: var(--accent); }
-.chat-meta .cm-cost { color: var(--faint); }
+.chat-meta .cm-cost { display: inline-flex; gap: 8px; color: var(--faint); }
 
 .chat-thread {
   flex: 1;
@@ -716,7 +723,175 @@ body {
 }
 
 /* ---- Groceries screen ---- */
-.gr-add { margin: 4px 0 18px; }
+
+/* segmented toggle: by meal / by category */
+.gr-toggle {
+  display: flex;
+  gap: 3px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 3px;
+  margin: 0 0 12px;
+}
+.gr-toggle button {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 8px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.gr-toggle button.on {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* dashed add button */
+.gr-add {
+  width: 100%;
+  font-family: var(--font-sans-stack);
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px dashed #cdcbc4;
+  border-radius: 14px;
+  padding: 16px;
+  cursor: pointer;
+  margin: 0 0 22px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.gr-add:hover { border-color: var(--accent); color: var(--accent); }
+
+/* shelves */
+.gr-shelf { margin-bottom: 22px; }
+.gr-shelf-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+.gr-shelf-head .nm {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.gr-shelf-head .meta {
+  display: inline-flex;
+  gap: 9px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+.gr-shelf.cat .nm { display: inline-flex; align-items: center; gap: 8px; }
+.gr-shelf.cat .nm::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 9999px;
+  background: var(--dot, var(--muted));
+}
+.gr-shelf.cat.protein { --dot: #a8492f; }
+.gr-shelf.cat.carb    { --dot: #8a6a1f; }
+.gr-shelf.cat.fat     { --dot: #1f6c9f; }
+.gr-shelf.cat.dairy   { --dot: #2f7d77; }
+.gr-shelf.cat.fruit   { --dot: #8d4a78; }
+.gr-shelf.cat.veg     { --dot: #5a7d3c; }
+.gr-shelf.cat.other   { --dot: #9b9a96; }
+
+/* card list (one row per item: photo left, details right) */
+.gcard-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.gcard {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+}
+.gcard-photo {
+  width: 116px;
+  flex-shrink: 0;
+  padding: 8px;
+  background: #fff;
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 500;
+  color: rgba(31, 36, 33, 0.55);
+}
+/* full image, never cropped — product shots sit on white so contain is seamless */
+.gcard-photo img { width: 100%; height: 100%; object-fit: contain; }
+.gcat-protein { background: #f4e3dd; }
+.gcat-carb    { background: #f3ead4; }
+.gcat-fat     { background: #dfecf4; }
+.gcat-dairy   { background: #dfeeec; }
+.gcat-fruit   { background: #efe1ec; }
+.gcat-veg     { background: #e4eedd; }
+.gcat-other   { background: var(--surface-2); }
+
+.gcard-body { padding: 11px 12px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.gcard-nm { font-family: var(--font-serif); font-size: 15px; font-weight: 500; line-height: 1.15; color: var(--ink); }
+.gcard-src { display: flex; flex-wrap: wrap; gap: 2px 9px; font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); margin-top: -4px; }
+.gcard-kc { font-family: var(--font-mono); font-size: 24px; font-weight: 500; color: var(--ink); line-height: 1; letter-spacing: -0.01em; }
+.gcard-kc span { font-size: 10px; color: var(--faint); margin-left: 4px; }
+
+.gcard-bar { display: flex; gap: 4px; height: 8px; }
+.gcard-bar i { border-radius: 3px; min-width: 4px; }
+.gcard-bar .mp { background: var(--protein); }
+.gcard-bar .mc { background: var(--carbs); }
+.gcard-bar .mf { background: var(--fat); }
+.gcard-bar .empty { background: var(--seg-empty); }
+
+/* numbers sit under their segment: each flexes by grams (set inline), so the
+   value tracks the width of its own bar segment instead of a fixed position */
+.gcard-macnums { display: flex; gap: 4px; margin-top: 1px; font-family: var(--font-mono); font-size: 10px; }
+.gcard-macnums span { min-width: 2.4em; text-align: center; white-space: nowrap; }
+.gcard-macnums .mp { color: var(--protein); }
+.gcard-macnums .mc { color: var(--carbs); }
+.gcard-macnums .mf { color: var(--fat); }
+
+.gcard-foot {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+.gcard-cost { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 500; }
+.gcard-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.gcard-actions button {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.gcard-actions button:disabled { color: var(--faint); cursor: default; }
 .gr-error {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -752,26 +927,40 @@ body {
   border: none;
   cursor: pointer;
 }
-.gr-list { list-style: none; padding: 0; margin: 0; }
-.gr-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
+
+/* nutrition lookup (OpenFoodFacts) */
+.gr-lookup { display: flex; flex-direction: column; gap: 8px; padding: 10px; background: var(--surface-2); border-radius: 10px; margin-bottom: 4px; }
+.gr-lookup-row { display: flex; gap: 8px; }
+.gr-lookup-row input { flex: 1; }
+.gr-lookup-row .btn-dark { white-space: nowrap; padding: 9px 14px; }
+.gr-lookup-msg { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.gr-hits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 230px; overflow-y: auto; }
+.gr-hits button {
+  width: 100%; text-align: left; background: #fff; border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 3px;
 }
-.gr-main { display: flex; flex-direction: column; gap: 3px; }
-.gr-main b { font-family: var(--font-serif); font-size: 15px; color: var(--ink); }
-.gr-main small { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
-.gr-item-actions { display: flex; gap: 8px; flex-shrink: 0; }
-.gr-item-actions button {
+.gr-hits button:hover { border-color: var(--accent); }
+.gr-hits .hn { display: flex; align-items: center; gap: 6px; font-family: var(--font-serif); font-size: 13.5px; color: var(--ink); line-height: 1.2; }
+.gr-hits .hm { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+.src-tag { flex-shrink: 0; font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.05em; border-radius: 4px; padding: 1px 4px; }
+.src-tag.usda { background: var(--green-bg); color: var(--green-tx); }
+.src-tag.off { background: var(--surface-2); color: var(--muted); }
+
+.gr-photo-btn {
+  display: block;
+  text-align: center;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--muted);
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 4px 8px;
+  color: var(--ink-soft);
+  border: 1px dashed #cdcbc4;
+  border-radius: 8px;
+  padding: 9px;
   cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
 }
+.gr-photo-btn:hover { border-color: var(--accent); color: var(--accent); }
+.gr-photo-btn.small { padding: 8px; font-size: 11px; }
+
+.gr-photo-field { display: flex; gap: 10px; align-items: flex-start; }
+.gr-photo-preview { width: 56px; height: 56px; flex-shrink: 0; object-fit: contain; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
+.gr-photo-controls { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }

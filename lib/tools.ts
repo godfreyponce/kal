@@ -287,8 +287,8 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
           writeBatchId,
           card: {
             label: "Food logged",
-            title: weightLabel ? `${per.name} · ${weightLabel}` : qty === 1 ? per.name : `${per.name} · ${qty}×`,
-            detail: `${entry.kcal} kcal · ${entry.proteinG}P · ${entry.carbsG}C · ${entry.fatG}F`,
+            title: weightLabel ? `${per.name}, ${weightLabel}` : qty === 1 ? per.name : `${per.name}, ${qty}×`,
+            detail: `${entry.kcal} kcal, ${entry.proteinG}P ${entry.carbsG}C ${entry.fatG}F`,
           },
         },
       );
@@ -316,7 +316,7 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
         card = {
           label: "Meal eaten",
           title: mealName,
-          detail: `${result.loggedFoodIds.length} items · ${kcal} kcal`,
+          detail: `${result.loggedFoodIds.length} items, ${kcal} kcal`,
         };
       } else {
         card = { label: `Meal ${status}`, title: mealName, detail: "" };

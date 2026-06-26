@@ -20,11 +20,15 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "kcal must be a non-negative number" }, { status: 400 });
   }
 
+  // Photo is the pasted image address (reliable); the link is just a rebuy reference.
+  const imageUrl =
+    typeof body.imageUrl === "string" && body.imageUrl.trim() ? body.imageUrl.trim() : null;
   const input: GroceryInput = {
     name,
     brand: body.brand ?? null,
     store: body.store ?? null,
-    link: body.link ?? null,
+    link: body.link || null,
+    imageUrl,
     category: body.category ?? null,
     servingGrams,
     kcal,

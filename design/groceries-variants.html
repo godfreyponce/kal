@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kal · Groceries redesign — 3 variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+    --canvas: #f7f6f3;
+    --surface: #ffffff;
+    --surface-2: #f0efeb;
+    --ink: #1f2421;
+    --ink-soft: #2f3437;
+    --muted: #787774;
+    --faint: #9b9a96;
+    --border: #e6e4df;
+    --accent: #d97757; /* Claude terracotta */
+
+    /* category palette — muted but colorful, sits on the warm canvas */
+    --c-protein-bg: #f4e3dd; --c-protein-tx: #a8492f; --c-protein-dot: #c2603f;
+    --c-carb-bg:    #f3ead4; --c-carb-tx:    #8a6a1f; --c-carb-dot:    #b5852a;
+    --c-fat-bg:     #dfecf4; --c-fat-tx:     #1f6c9f; --c-fat-dot:     #3f7fb0;
+    --c-dairy-bg:   #dfeeec; --c-dairy-tx:   #2f7d77; --c-dairy-dot:   #3f9a92;
+    --c-fruit-bg:   #efe1ec; --c-fruit-tx:   #8d4a78; --c-fruit-dot:   #a4598c;
+    --c-veg-bg:     #e4eedd; --c-veg-tx:     #5a7d3c; --c-veg-dot:     #6f9a4a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #e9e8e3;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 20px 80px;
+  }
+
+  /* page scaffold */
+  .lede { max-width: 980px; margin: 0 auto 36px; }
+  .lede h1 { font-family: var(--font-serif); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lede p { color: var(--muted); font-size: 14.5px; margin: 0; max-width: 70ch; }
+  .lede code { font-family: var(--font-mono); font-size: 12.5px; background: #dedcd6; padding: 1px 6px; border-radius: 5px; }
+
+  .rail {
+    display: flex;
+    gap: 28px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  .col { width: 440px; max-width: 100%; }
+  .col-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .col-name { font-family: var(--font-serif); font-size: 21px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .col-desc { font-size: 13px; color: var(--muted); margin-bottom: 16px; min-height: 38px; }
+
+  /* phone frame */
+  .phone {
+    background: var(--canvas);
+    border-radius: 26px;
+    border: 1px solid #dad8d2;
+    box-shadow: 0 18px 50px -22px rgba(40,38,34,0.45);
+    overflow: hidden;
+  }
+  .scr { padding: 24px 20px 36px; }
+
+  /* shared header inside each phone */
+  .ghead { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+  .ghead .home {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted);
+    text-decoration: none;
+  }
+  .gtitle { font-family: var(--font-serif); font-weight: 500; font-size: 27px; letter-spacing: -0.02em; line-height: 1.05; }
+  .gsub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 4px; }
+  .kicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+  .rule { height: 1px; background: var(--border); margin: 18px 0; }
+
+  .add-btn {
+    width: 100%;
+    font-family: var(--font-sans); font-size: 13.5px; font-weight: 500;
+    background: var(--ink); color: #fff; border: none; border-radius: 10px;
+    padding: 12px; cursor: pointer; margin: 14px 0 20px;
+  }
+  .add-btn.ghost {
+    background: transparent; color: var(--ink-soft);
+    border: 1px dashed #cdcbc4;
+  }
+
+  .macros-mono { font-family: var(--font-mono); }
+  .est { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+
+  /* category pill (shared) */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase;
+    border-radius: 9999px; padding: 3px 8px; white-space: nowrap;
+  }
+  .pill .dot { width: 5px; height: 5px; border-radius: 9999px; background: currentColor; }
+  .cat-protein { background: var(--c-protein-bg); color: var(--c-protein-tx); }
+  .cat-carb    { background: var(--c-carb-bg);    color: var(--c-carb-tx); }
+  .cat-fat     { background: var(--c-fat-bg);     color: var(--c-fat-tx); }
+  .cat-dairy   { background: var(--c-dairy-bg);   color: var(--c-dairy-tx); }
+  .cat-fruit   { background: var(--c-fruit-bg);   color: var(--c-fruit-tx); }
+  .cat-veg     { background: var(--c-veg-bg);     color: var(--c-veg-tx); }
+
+  /* photo tile (shared base) — emoji stands in for a real product photo */
+  .photo { display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--surface-2); }
+  .ph-protein { background: var(--c-protein-bg); }
+  .ph-carb    { background: var(--c-carb-bg); }
+  .ph-fat     { background: var(--c-fat-bg); }
+  .ph-dairy   { background: var(--c-dairy-bg); }
+  .ph-fruit   { background: var(--c-fruit-bg); }
+  .ph-veg     { background: var(--c-veg-bg); }
+
+  /* =====================================================================
+     VARIANT A — "Pantry cards" : 2-up bento grid, photo-forward
+     ===================================================================== */
+  .A .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .A .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .A .card .photo { width: 100%; height: 96px; font-size: 40px; position: relative; }
+  .A .card .pill { position: absolute; top: 8px; left: 8px; }
+  .A .card .body { padding: 11px 12px 13px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+  .A .card .nm { font-family: var(--font-serif); font-size: 15.5px; font-weight: 500; line-height: 1.2; color: var(--ink); }
+  .A .card .meta { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .A .card .kc { font-family: var(--font-mono); font-size: 22px; font-weight: 500; color: var(--ink); line-height: 1; }
+  .A .card .kc span { font-size: 10px; color: var(--faint); margin-left: 3px; }
+  .A .macbar { display: flex; gap: 4px; margin-top: 2px; }
+  .A .macbar i { height: 6px; border-radius: 3px; }
+  .A .macbar .p { background: var(--c-protein-dot); }
+  .A .macbar .c { background: var(--c-carb-dot); }
+  .A .macbar .f { background: var(--c-fat-dot); }
+  .A .card .pcf { font-family: var(--font-mono); font-size: 9.5px; color: var(--faint); display: flex; justify-content: space-between; }
+  .A .card .foot {
+    margin-top: auto; padding-top: 9px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .A .card .cost { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); }
+  .A .card .cost b { color: var(--accent); font-weight: 500; }
+  .A .card .edit { font-family: var(--font-mono); font-size: 10px; color: var(--muted); background: none; border: none; cursor: pointer; }
+
+  /* =====================================================================
+     VARIANT B — "Photo rows" : dense list, square thumb, color tag
+     ===================================================================== */
+  .B .list { list-style: none; margin: 0; padding: 0; }
+  .B .row {
+    display: flex; gap: 13px; align-items: center;
+    padding: 11px; border: 1px solid var(--border); border-radius: 14px;
+    background: var(--surface); margin-bottom: 9px;
+  }
+  .B .row .photo { width: 56px; height: 56px; border-radius: 11px; font-size: 28px; }
+  .B .row .mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .B .row .top { display: flex; align-items: center; gap: 8px; }
+  .B .row .nm { font-family: var(--font-serif); font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+  .B .row .src { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); }
+  .B .row .mac { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); }
+  .B .row .mac .sep { color: var(--faint); margin: 0 2px; }
+  .B .row .mac .p { color: var(--c-protein-tx); }
+  .B .row .mac .c { color: var(--c-carb-tx); }
+  .B .row .mac .f { color: var(--c-fat-tx); }
+  .B .row .end { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .B .row .cost { font-family: var(--font-mono); font-size: 13px; color: var(--accent); font-weight: 500; }
+  .B .row .cost small { display: block; font-size: 8px; color: var(--faint); letter-spacing: 0.05em; text-transform: uppercase; font-weight: 400; }
+  .B .row .edit { font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 7px; cursor: pointer; }
+
+  /* =====================================================================
+     VARIANT C — "Aisles" : grouped by category, colored shelf headers
+     ===================================================================== */
+  .C .shelf { margin-bottom: 22px; }
+  .C .shelf-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 12px; border-radius: 9px; margin-bottom: 10px;
+  }
+  .C .shelf-head .nm { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; display: flex; align-items: center; gap: 7px; }
+  .C .shelf-head .nm .dot { width: 7px; height: 7px; border-radius: 9999px; background: currentColor; }
+  .C .shelf-head .ct { font-family: var(--font-mono); font-size: 10px; opacity: 0.7; }
+  .C .sh-protein { background: var(--c-protein-bg); color: var(--c-protein-tx); }
+  .C .sh-carb    { background: var(--c-carb-bg);    color: var(--c-carb-tx); }
+  .C .sh-fat     { background: var(--c-fat-bg);     color: var(--c-fat-tx); }
+  .C .sh-dairy   { background: var(--c-dairy-bg);   color: var(--c-dairy-tx); }
+  .C .sh-fruit   { background: var(--c-fruit-bg);   color: var(--c-fruit-tx); }
+  .C .item { display: flex; gap: 12px; align-items: center; padding: 9px 4px; border-bottom: 1px solid var(--border); }
+  .C .item:last-child { border-bottom: none; }
+  .C .item .photo { width: 46px; height: 46px; border-radius: 10px; font-size: 24px; }
+  .C .item .mid { flex: 1; min-width: 0; }
+  .C .item .nm { font-family: var(--font-serif); font-size: 15px; font-weight: 500; color: var(--ink); }
+  .C .item .meta { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .C .item .end { text-align: right; flex-shrink: 0; }
+  .C .item .kc { font-family: var(--font-mono); font-size: 14px; color: var(--ink); }
+  .C .item .kc span { font-size: 9px; color: var(--faint); }
+  .C .item .cost { font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+  <div class="lede">
+    <h1>Groceries — 3 redesign directions</h1>
+    <p>
+      All three add a <strong>category color system</strong> and a <strong>per-food photo slot</strong> (emoji here
+      stands in for a real product image). Same data as today — name, brand/store, serving weight,
+      <span class="macros-mono">kcal · P/C/F</span>, and derived <code>$/serving</code> — just arranged differently.
+      Tell me which direction (or which pieces of each) and I'll build it into <code>groceries-list.tsx</code>.
+    </p>
+  </div>
+
+  <div class="rail">
+
+    <!-- ============ VARIANT A ============ -->
+    <div class="col A">
+      <div class="col-tag">Variant A</div>
+      <div class="col-name">Pantry cards</div>
+      <div class="col-desc">Photo-forward 2-up bento grid. Big image, calorie number, and a tiny macro bar per card — most visual, most “app-y”.</div>
+      <div class="phone">
+        <div class="scr">
+          <div class="ghead">
+            <div>
+              <div class="gtitle">Groceries</div>
+              <div class="gsub">9 items · source of truth</div>
+            </div>
+            <a class="home" href="#">‹ Today</a>
+          </div>
+          <button class="add-btn">+ Add grocery</button>
+
+          <div class="grid">
+            <!-- card -->
+            <div class="card">
+              <div class="photo ph-protein">🍗<span class="pill cat-protein"><span class="dot"></span>protein</span></div>
+              <div class="body">
+                <div class="nm">Chicken Breast</div>
+                <div class="meta">Costco · 113g</div>
+                <div class="kc">130<span>kcal</span></div>
+                <div class="macbar"><i class="p" style="flex:27"></i><i class="c" style="flex:1"></i><i class="f" style="flex:3"></i></div>
+                <div class="pcf"><span>27P</span><span>0C</span><span>3F</span></div>
+                <div class="foot"><span class="cost"><b>$0.62</b>/srv</span><button class="edit">Edit</button></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="photo ph-fat">🫒<span class="pill cat-fat"><span class="dot"></span>oil</span></div>
+              <div class="body">
+                <div class="nm">EV Olive Oil</div>
+                <div class="meta">Whole Foods · 14g</div>
+                <div class="kc">120<span>kcal</span></div>
+                <div class="macbar"><i class="f" style="flex:14"></i></div>
+                <div class="pcf"><span>0P</span><span>0C</span><span>14F</span></div>
+                <div class="foot"><span class="cost"><b>$0.18</b>/srv</span><button class="edit">Edit</button></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="photo ph-dairy">🥛<span class="pill cat-dairy"><span class="dot"></span>dairy</span></div>
+              <div class="body">
+                <div class="nm">Greek Yogurt</div>
+                <div class="meta">Trader Joe's · 170g</div>
+                <div class="kc">100<span>kcal</span></div>
+                <div class="macbar"><i class="p" style="flex:17"></i><i class="c" style="flex:6"></i></div>
+                <div class="pcf"><span>17P</span><span>6C</span><span>0F</span></div>
+                <div class="foot"><span class="cost"><b>$0.71</b>/srv</span><button class="edit">Edit</button></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="photo ph-carb">🍚<span class="pill cat-carb"><span class="dot"></span>carb</span></div>
+              <div class="body">
+                <div class="nm">Jasmine Rice</div>
+                <div class="meta">Costco · 45g dry</div>
+                <div class="kc">160<span>kcal</span></div>
+                <div class="macbar"><i class="p" style="flex:3"></i><i class="c" style="flex:36"></i></div>
+                <div class="pcf"><span>3P</span><span>36C</span><span>0F</span></div>
+                <div class="foot"><span class="cost"><b>$0.09</b>/srv</span><button class="edit">Edit</button></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="photo ph-protein">🥚<span class="pill cat-protein"><span class="dot"></span>protein</span></div>
+              <div class="body">
+                <div class="nm">Large Eggs</div>
+                <div class="meta">Kroger · 50g</div>
+                <div class="kc">70<span>kcal</span></div>
+                <div class="macbar"><i class="p" style="flex:6"></i><i class="f" style="flex:5"></i></div>
+                <div class="pcf"><span>6P</span><span>0C</span><span>5F</span></div>
+                <div class="foot"><span class="cost"><b>$0.21</b>/srv</span><button class="edit">Edit</button></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="photo ph-fruit">🍌<span class="pill cat-fruit"><span class="dot"></span>fruit</span></div>
+              <div class="body">
+                <div class="nm">Banana</div>
+                <div class="meta">no weight set</div>
+                <div class="kc">105<span>kcal</span></div>
+                <div class="macbar"><i class="p" style="flex:1"></i><i class="c" style="flex:27"></i></div>
+                <div class="pcf"><span>1P</span><span>27C</span><span>0F</span></div>
+                <div class="foot"><span class="est">est</span><button class="edit">Edit</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ VARIANT B ============ -->
+    <div class="col B">
+      <div class="col-tag">Variant B</div>
+      <div class="col-name">Photo rows</div>
+      <div class="col-desc">Closest to today's list, upgraded: a square thumbnail, a color category tag, color-coded macros, and $/serving pulled to the right.</div>
+      <div class="phone">
+        <div class="scr">
+          <div class="ghead">
+            <div>
+              <div class="gtitle">Groceries</div>
+              <div class="gsub">9 items · source of truth</div>
+            </div>
+            <a class="home" href="#">‹ Today</a>
+          </div>
+          <button class="add-btn ghost">+ Add grocery</button>
+
+          <ul class="list">
+            <li class="row">
+              <div class="photo ph-protein" style="">🍗</div>
+              <div class="mid">
+                <div class="top"><span class="nm">Chicken Breast</span><span class="pill cat-protein"><span class="dot"></span>protein</span></div>
+                <div class="src">Costco · 113g serving</div>
+                <div class="mac">130 kcal <span class="sep">·</span> <span class="p">27P</span> <span class="c">0C</span> <span class="f">3F</span></div>
+              </div>
+              <div class="end"><div class="cost">$0.62<small>per srv</small></div><button class="edit">Edit</button></div>
+            </li>
+
+            <li class="row">
+              <div class="photo ph-fat">🫒</div>
+              <div class="mid">
+                <div class="top"><span class="nm">EV Olive Oil</span><span class="pill cat-fat"><span class="dot"></span>oil</span></div>
+                <div class="src">Whole Foods · 14g serving</div>
+                <div class="mac">120 kcal <span class="sep">·</span> <span class="p">0P</span> <span class="c">0C</span> <span class="f">14F</span></div>
+              </div>
+              <div class="end"><div class="cost">$0.18<small>per srv</small></div><button class="edit">Edit</button></div>
+            </li>
+
+            <li class="row">
+              <div class="photo ph-dairy">🥛</div>
+              <div class="mid">
+                <div class="top"><span class="nm">Greek Yogurt</span><span class="pill cat-dairy"><span class="dot"></span>dairy</span></div>
+                <div class="src">Trader Joe's · 170g serving</div>
+                <div class="mac">100 kcal <span class="sep">·</span> <span class="p">17P</span> <span class="c">6C</span> <span class="f">0F</span></div>
+              </div>
+              <div class="end"><div class="cost">$0.71<small>per srv</small></div><button class="edit">Edit</button></div>
+            </li>
+
+            <li class="row">
+              <div class="photo ph-carb">🍚</div>
+              <div class="mid">
+                <div class="top"><span class="nm">Jasmine Rice</span><span class="pill cat-carb"><span class="dot"></span>carb</span></div>
+                <div class="src">Costco · 45g serving</div>
+                <div class="mac">160 kcal <span class="sep">·</span> <span class="p">3P</span> <span class="c">36C</span> <span class="f">0F</span></div>
+              </div>
+              <div class="end"><div class="cost">$0.09<small>per srv</small></div><button class="edit">Edit</button></div>
+            </li>
+
+            <li class="row">
+              <div class="photo ph-protein">🐟</div>
+              <div class="mid">
+                <div class="top"><span class="nm">Atlantic Salmon</span><span class="pill cat-protein"><span class="dot"></span>protein</span></div>
+                <div class="src">Costco · 113g serving</div>
+                <div class="mac">208 kcal <span class="sep">·</span> <span class="p">22P</span> <span class="c">0C</span> <span class="f">13F</span></div>
+              </div>
+              <div class="end"><div class="cost">$1.84<small>per srv</small></div><button class="edit">Edit</button></div>
+            </li>
+
+            <li class="row">
+              <div class="photo ph-fruit">🍌</div>
+              <div class="mid">
+                <div class="top"><span class="nm">Banana</span><span class="pill cat-fruit"><span class="dot"></span>fruit</span></div>
+                <div class="src">no weight set <span class="est">· est</span></div>
+                <div class="mac">105 kcal <span class="sep">·</span> <span class="p">1P</span> <span class="c">27C</span> <span class="f">0F</span></div>
+              </div>
+              <div class="end"><button class="edit">Edit</button></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ VARIANT C ============ -->
+    <div class="col C">
+      <div class="col-tag">Variant C</div>
+      <div class="col-name">Aisles</div>
+      <div class="col-desc">Grouped into colored “shelves” by category — scannable like a real grocery run. Smaller thumbs, calorie + cost on the right.</div>
+      <div class="phone">
+        <div class="scr">
+          <div class="ghead">
+            <div>
+              <div class="gtitle">Groceries</div>
+              <div class="gsub">9 items · 5 categories</div>
+            </div>
+            <a class="home" href="#">‹ Today</a>
+          </div>
+          <button class="add-btn">+ Add grocery</button>
+
+          <!-- shelf: protein -->
+          <div class="shelf">
+            <div class="shelf-head sh-protein">
+              <span class="nm"><span class="dot"></span>Protein</span><span class="ct">3 items</span>
+            </div>
+            <div class="item">
+              <div class="photo ph-protein">🍗</div>
+              <div class="mid"><div class="nm">Chicken Breast</div><div class="meta">Costco · 113g · 27P</div></div>
+              <div class="end"><div class="kc">130<span> kcal</span></div><div class="cost">$0.62/srv</div></div>
+            </div>
+            <div class="item">
+              <div class="photo ph-protein">🐟</div>
+              <div class="mid"><div class="nm">Atlantic Salmon</div><div class="meta">Costco · 113g · 22P</div></div>
+              <div class="end"><div class="kc">208<span> kcal</span></div><div class="cost">$1.84/srv</div></div>
+            </div>
+            <div class="item">
+              <div class="photo ph-protein">🥚</div>
+              <div class="mid"><div class="nm">Large Eggs</div><div class="meta">Kroger · 50g · 6P</div></div>
+              <div class="end"><div class="kc">70<span> kcal</span></div><div class="cost">$0.21/srv</div></div>
+            </div>
+          </div>
+
+          <!-- shelf: carb -->
+          <div class="shelf">
+            <div class="shelf-head sh-carb">
+              <span class="nm"><span class="dot"></span>Carb</span><span class="ct">2 items</span>
+            </div>
+            <div class="item">
+              <div class="photo ph-carb">🍚</div>
+              <div class="mid"><div class="nm">Jasmine Rice</div><div class="meta">Costco · 45g · 36C</div></div>
+              <div class="end"><div class="kc">160<span> kcal</span></div><div class="cost">$0.09/srv</div></div>
+            </div>
+            <div class="item">
+              <div class="photo ph-carb">🥣</div>
+              <div class="mid"><div class="nm">Rolled Oats</div><div class="meta">Bob's Red Mill · 40g · 27C</div></div>
+              <div class="end"><div class="kc">150<span> kcal</span></div><div class="cost">$0.14/srv</div></div>
+            </div>
+          </div>
+
+          <!-- shelf: fat -->
+          <div class="shelf">
+            <div class="shelf-head sh-fat">
+              <span class="nm"><span class="dot"></span>Fat &amp; Oil</span><span class="ct">2 items</span>
+            </div>
+            <div class="item">
+              <div class="photo ph-fat">🫒</div>
+              <div class="mid"><div class="nm">EV Olive Oil</div><div class="meta">Whole Foods · 14g · 14F</div></div>
+              <div class="end"><div class="kc">120<span> kcal</span></div><div class="cost">$0.18/srv</div></div>
+            </div>
+            <div class="item">
+              <div class="photo ph-fat">🌰</div>
+              <div class="mid"><div class="nm">Raw Almonds</div><div class="meta">Costco · 28g · 14F</div></div>
+              <div class="end"><div class="kc">164<span> kcal</span></div><div class="cost">$0.33/srv</div></div>
+            </div>
+          </div>
+
+          <!-- shelf: dairy -->
+          <div class="shelf">
+            <div class="shelf-head sh-dairy">
+              <span class="nm"><span class="dot"></span>Dairy</span><span class="ct">1 item</span>
+            </div>
+            <div class="item">
+              <div class="photo ph-dairy">🥛</div>
+              <div class="mid"><div class="nm">Greek Yogurt</div><div class="meta">Trader Joe's · 170g · 17P</div></div>
+              <div class="end"><div class="kc">100<span> kcal</span></div><div class="cost">$0.71/srv</div></div>
+            </div>
+          </div>
+
+          <!-- shelf: fruit -->
+          <div class="shelf">
+            <div class="shelf-head sh-fruit">
+              <span class="nm"><span class="dot"></span>Fruit</span><span class="ct">1 item</span>
+            </div>
+            <div class="item">
+              <div class="photo ph-fruit">🍌</div>
+              <div class="mid"><div class="nm">Banana <span class="est">est</span></div><div class="meta">no weight set · 27C</div></div>
+              <div class="end"><div class="kc">105<span> kcal</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kal · Groceries — photo display options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --canvas: #f7f6f3; --surface: #fff; --surface-2: #f0efeb;
+    --ink: #1f2421; --ink-soft: #2f3437; --muted: #787774; --faint: #9b9a96; --border: #e6e4df;
+    --accent: #d97757; --protein: #9f2f2d; --carbs: #8a6a1f; --fat: #1f6c9f; --seg-empty: #e9e7e1;
+    --c-fat-bg: #dfecf4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e9e8e3; color: var(--ink); font-family: var(--font-sans); padding: 40px 20px 80px; -webkit-font-smoothing: antialiased; }
+  .lede { max-width: 900px; margin: 0 auto 30px; }
+  .lede h1 { font-family: var(--font-serif); font-weight: 500; font-size: 28px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lede p { color: var(--muted); font-size: 14px; margin: 0; }
+  .rail { display: flex; gap: 26px; justify-content: center; align-items: flex-start; flex-wrap: wrap; max-width: 1500px; margin: 0 auto; }
+  .col { width: 320px; max-width: 100%; }
+  .col-tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .col-name { font-family: var(--font-serif); font-size: 19px; font-weight: 500; margin-bottom: 4px; }
+  .col-desc { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; min-height: 52px; }
+  .pane { background: var(--canvas); border-radius: 22px; border: 1px solid #dad8d2; box-shadow: 0 16px 44px -24px rgba(40,38,34,0.45); padding: 18px; }
+
+  /* shared card bits */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .gcard { background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+  .photo { width: 100%; display: flex; align-items: center; justify-content: center; background: #fff; }
+  .photo img { width: 100%; height: 100%; }
+  .body { padding: 11px 12px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .nm { font-family: var(--font-serif); font-size: 15px; font-weight: 500; line-height: 1.15; }
+  .src { font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); margin-top: -4px; }
+  .kc { font-family: var(--font-mono); font-size: 22px; font-weight: 500; line-height: 1; }
+  .kc span { font-size: 10px; color: var(--faint); margin-left: 4px; }
+  .bar { display: flex; gap: 4px; height: 8px; }
+  .bar i { border-radius: 3px; min-width: 4px; }
+  .mp { background: var(--protein); } .mc { background: var(--carbs); } .mf { background: var(--fat); }
+  .pcf { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; }
+  .pcf .mp { color: var(--protein); background: none; } .pcf .mc { color: var(--carbs); background: none; } .pcf .mf { color: var(--fat); background: none; }
+  .foot { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .cost { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 500; }
+  .acts { font-family: var(--font-mono); font-size: 10px; color: var(--muted); display: flex; gap: 8px; }
+
+  /* per-option photo treatment */
+  .cover .photo { aspect-ratio: 16 / 7; }
+  .cover .photo img { object-fit: cover; }
+
+  .square .photo { aspect-ratio: 1 / 1; padding: 8px; }
+  .square .photo img { object-fit: contain; }
+
+  .four3 .photo { aspect-ratio: 4 / 3; padding: 8px; }
+  .four3 .photo img { object-fit: contain; }
+
+  /* horizontal card */
+  .hrow { display: flex; background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .hrow .photo { width: 116px; height: 116px; flex-shrink: 0; padding: 8px; border-right: 1px solid var(--border); }
+  .hrow .photo img { object-fit: contain; }
+  .hrow .body { gap: 6px; }
+  .hrow .bar { height: 7px; }
+</style>
+</head>
+<body>
+  <div class="lede">
+    <h1>Photo display — pick a fit</h1>
+    <p>Your real peanut image in each. The problem: <strong>“cover”</strong> crops a short strip out of the middle. <strong>“Contain”</strong> shows the whole label (product shots are on white, so the fit is seamless).</p>
+  </div>
+
+  <div class="rail">
+    <!-- reference: current -->
+    <div class="col">
+      <div class="col-tag">Now (the problem)</div>
+      <div class="col-name">Cover, 78px strip</div>
+      <div class="col-desc">Fills the box and crops top + bottom — you lose the lid and the bottom of the label.</div>
+      <div class="pane cover">
+        <div class="grid2">
+          <div class="gcard">
+            <div class="photo"><img src="https://i5.walmartimages.com/seo/Great-Value-Dry-Roasted-Seasoned-with-Sea-Salt-Peanuts-34-5-oz_e42987ab-7388-4329-8729-7ba95adcc3fb.9188ae73715a06a4da075ab223b61fb1.jpeg" alt=""></div>
+            <div class="body">
+              <div class="nm">Dry-roasted peanuts</div><div class="src">— · 60g</div>
+              <div class="kc">165<span>kcal</span></div>
+              <div class="bar"><i class="mp" style="flex:7"></i><i class="mc" style="flex:6"></i><i class="mf" style="flex:14"></i></div>
+              <div class="pcf"><span class="mp">7P</span><span class="mc">6C</span><span class="mf">14F</span></div>
+              <div class="foot"><span class="cost">$0.33/srv</span><span class="acts">Edit Delete</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option A: square contain -->
+    <div class="col">
+      <div class="col-tag">Option A</div>
+      <div class="col-name">Contain · square</div>
+      <div class="col-desc">Whole image on a 1:1 white tile. Most generous — the label reads clearly. Cards get a bit taller.</div>
+      <div class="pane square">
+        <div class="grid2">
+          <div class="gcard">
+            <div class="photo"><img src="https://i5.walmartimages.com/seo/Great-Value-Dry-Roasted-Seasoned-with-Sea-Salt-Peanuts-34-5-oz_e42987ab-7388-4329-8729-7ba95adcc3fb.9188ae73715a06a4da075ab223b61fb1.jpeg" alt=""></div>
+            <div class="body">
+              <div class="nm">Dry-roasted peanuts</div><div class="src">— · 60g</div>
+              <div class="kc">165<span>kcal</span></div>
+              <div class="bar"><i class="mp" style="flex:7"></i><i class="mc" style="flex:6"></i><i class="mf" style="flex:14"></i></div>
+              <div class="pcf"><span class="mp">7P</span><span class="mc">6C</span><span class="mf">14F</span></div>
+              <div class="foot"><span class="cost">$0.33/srv</span><span class="acts">Edit Delete</span></div>
+            </div>
+          </div>
+          <div class="gcard">
+            <div class="photo"><img src="https://i5.walmartimages.com/seo/Great-Value-Dry-Roasted-Seasoned-with-Sea-Salt-Peanuts-34-5-oz_e42987ab-7388-4329-8729-7ba95adcc3fb.9188ae73715a06a4da075ab223b61fb1.jpeg" alt=""></div>
+            <div class="body">
+              <div class="nm">Peanut butter</div><div class="src">— · 32g</div>
+              <div class="kc">190<span>kcal</span></div>
+              <div class="bar"><i class="mp" style="flex:7"></i><i class="mc" style="flex:8"></i><i class="mf" style="flex:16"></i></div>
+              <div class="pcf"><span class="mp">7P</span><span class="mc">8C</span><span class="mf">16F</span></div>
+              <div class="foot"><span class="cost">$0.18/srv</span><span class="acts">Edit Delete</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option B: 4:3 contain -->
+    <div class="col">
+      <div class="col-tag">Option B</div>
+      <div class="col-name">Contain · 4:3</div>
+      <div class="col-desc">Whole image, shorter tile. Keeps cards compact while showing everything — a middle ground.</div>
+      <div class="pane four3">
+        <div class="grid2">
+          <div class="gcard">
+            <div class="photo"><img src="https://i5.walmartimages.com/seo/Great-Value-Dry-Roasted-Seasoned-with-Sea-Salt-Peanuts-34-5-oz_e42987ab-7388-4329-8729-7ba95adcc3fb.9188ae73715a06a4da075ab223b61fb1.jpeg" alt=""></div>
+            <div class="body">
+              <div class="nm">Dry-roasted peanuts</div><div class="src">— · 60g</div>
+              <div class="kc">165<span>kcal</span></div>
+              <div class="bar"><i class="mp" style="flex:7"></i><i class="mc" style="flex:6"></i><i class="mf" style="flex:14"></i></div>
+              <div class="pcf"><span class="mp">7P</span><span class="mc">6C</span><span class="mf">14F</span></div>
+              <div class="foot"><span class="cost">$0.33/srv</span><span class="acts">Edit Delete</span></div>
+            </div>
+          </div>
+          <div class="gcard">
+            <div class="photo"><img src="https://i5.walmartimages.com/seo/Great-Value-Dry-Roasted-Seasoned-with-Sea-Salt-Peanuts-34-5-oz_e42987ab-7388-4329-8729-7ba95adcc3fb.9188ae73715a06a4da075ab223b61fb1.jpeg" alt=""></div>
+            <div class="body">
+              <div class="nm">Peanut butter</div><div class="src">— · 32g</div>
+              <div class="kc">190<span>kcal</span></div>
+              <div class="bar"><i class="mp" style="flex:7"></i><i class="mc" style="flex:8"></i><i class="mf" style="flex:16"></i></div>
+              <div class="pcf"><span class="mp">7P</span><span class="mc">8C</span><span class="mf">16F</span></div>
+              <div class="foot"><span class="cost">$0.18/srv</span><span class="acts">Edit Delete</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option C: horizontal -->
+    <div class="col">
+      <div class="col-tag">Option C</div>
+      <div class="col-name">Side photo · row</div>
+      <div class="col-desc">Square photo on the left, details on the right, one per row. Full image, roomy, fewer per screen.</div>
+      <div class="pane">
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <div class="hrow">
+            <div class="photo"><img src="https://i5.walmartimages.com/seo/Great-Value-Dry-Roasted-Seasoned-with-Sea-Salt-Peanuts-34-5-oz_e42987ab-7388-4329-8729-7ba95adcc3fb.9188ae73715a06a4da075ab223b61fb1.jpeg" alt=""></div>
+            <div class="body">
+              <div class="nm">Dry-roasted peanuts</div><div class="src">— · 60g</div>
+              <div class="kc">165<span>kcal</span></div>
+              <div class="bar"><i class="mp" style="flex:7"></i><i class="mc" style="flex:6"></i><i class="mf" style="flex:14"></i></div>
+              <div class="pcf"><span class="mp">7P</span><span class="mc">6C</span><span class="mf">14F</span></div>
+              <div class="foot"><span class="cost">$0.33/srv</span><span class="acts">Edit Delete</span></div>
+            </div>
+          </div>
+          <div class="hrow">
+            <div class="photo"><img src="https://i5.walmartimages.com/seo/Great-Value-Dry-Roasted-Seasoned-with-Sea-Salt-Peanuts-34-5-oz_e42987ab-7388-4329-8729-7ba95adcc3fb.9188ae73715a06a4da075ab223b61fb1.jpeg" alt=""></div>
+            <div class="body">
+              <div class="nm">Peanut butter</div><div class="src">— · 32g</div>
+              <div class="kc">190<span>kcal</span></div>
+              <div class="bar"><i class="mp" style="flex:7"></i><i class="mc" style="flex:8"></i><i class="mf" style="flex:16"></i></div>
+              <div class="pcf"><span class="mp">7P</span><span class="mc">8C</span><span class="mf">16F</span></div>
+              <div class="foot"><span class="cost">$0.18/srv</span><span class="acts">Edit Delete</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

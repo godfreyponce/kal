@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kal · macro bar options</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --font-serif:"Newsreader",Georgia,serif; --font-mono:"JetBrains Mono",monospace;
+    --canvas:#f7f6f3; --ink:#1f2421; --muted:#787774; --faint:#9b9a96; --border:#e6e4df;
+    --protein:#9f2f2d; --carbs:#8a6a1f; --fat:#1f6c9f; --seg-empty:#e9e7e1; --accent:#d97757;
+  }
+  *{box-sizing:border-box} body{margin:0;background:#e9e8e3;font-family:-apple-system,system-ui,sans-serif;padding:40px 20px 80px;color:var(--ink);-webkit-font-smoothing:antialiased}
+  .lede{max-width:900px;margin:0 auto 28px}
+  .lede h1{font-family:var(--font-serif);font-weight:500;font-size:28px;margin:0 0 6px;letter-spacing:-.02em}
+  .lede p{color:var(--muted);font-size:14px;margin:0}
+  .rail{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;max-width:1500px;margin:0 auto;align-items:flex-start}
+  .col{width:300px;max-width:100%}
+  .tag{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+  .nm{font-family:var(--font-serif);font-size:18px;font-weight:500;margin-bottom:4px}
+  .ds{font-size:12.5px;color:var(--muted);margin-bottom:14px;min-height:52px}
+  .pane{background:var(--canvas);border:1px solid #dad8d2;border-radius:20px;box-shadow:0 16px 44px -24px rgba(40,38,34,.45);padding:16px;display:flex;flex-direction:column;gap:12px}
+  .item{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+  .ih{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+  .ih b{font-family:var(--font-serif);font-size:15px;font-weight:500}
+  .ih .kc{font-family:var(--font-mono);font-size:13px;color:var(--muted)}
+
+  /* shared label row */
+  .pcf{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;margin-top:6px}
+  .pcf .p{color:var(--protein)} .pcf .c{color:var(--carbs)} .pcf .f{color:var(--fat)}
+
+  /* V1 current: gram-proportional single stacked bar */
+  .stack{display:flex;gap:4px;height:8px}
+  .stack i{border-radius:3px;min-width:4px}
+  .p{background:var(--protein)} .c{background:var(--carbs)} .f{background:var(--fat)}
+
+  /* V2 three labeled tracks (scaled to a fixed 45g max) */
+  .tracks{display:flex;flex-direction:column;gap:7px}
+  .trk{display:grid;grid-template-columns:14px 1fr 34px;align-items:center;gap:8px}
+  .trk .lab{font-family:var(--font-mono);font-size:10px}
+  .trk .rail2{height:7px;background:var(--seg-empty);border-radius:4px;overflow:hidden}
+  .trk .fill{height:100%;border-radius:4px}
+  .trk .val{font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:right}
+
+  /* V3 calorie-weighted stacked (segments = kcal share, P*4 C*4 F*9) */
+  .cal .pct{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:var(--faint);margin-top:5px;text-transform:uppercase;letter-spacing:.04em}
+
+  /* V4 chips, no bar */
+  .chips{display:flex;gap:7px}
+  .chip{font-family:var(--font-mono);font-size:11px;border-radius:8px;padding:5px 10px;flex:1;text-align:center}
+  .chip b{font-weight:500}
+  .chip.p{background:#f4e3dd;color:var(--protein)} .chip.c{background:#f3ead4;color:var(--carbs)} .chip.f{background:#dfecf4;color:var(--fat)}
+</style>
+</head>
+<body>
+  <div class="lede">
+    <h1>Macro bar — pick a representation</h1>
+    <p>Same three foods in each: <b>Peanuts</b> (7P 6C 14F), <b>White rice</b> (3P 36C 0.5F), <b>Chicken</b> (27P 0C 3F) — a fat-, carb-, and protein-dominant item so you can see how each style reads.</p>
+  </div>
+
+  <div class="rail">
+    <!-- V1 current -->
+    <div class="col">
+      <div class="tag">Now</div><div class="nm">Stacked · by grams</div>
+      <div class="ds">One bar, segments sized by gram count. Shows the dominant macro but fat looks “small” even when it’s most of the calories.</div>
+      <div class="pane">
+        <div class="item"><div class="ih"><b>Peanuts</b><span class="kc">165 kcal</span></div>
+          <div class="stack"><i class="p" style="flex:7"></i><i class="c" style="flex:6"></i><i class="f" style="flex:14"></i></div>
+          <div class="pcf"><span class="p">7P</span><span class="c">6C</span><span class="f">14F</span></div></div>
+        <div class="item"><div class="ih"><b>White rice</b><span class="kc">200 kcal</span></div>
+          <div class="stack"><i class="p" style="flex:3"></i><i class="c" style="flex:36"></i><i class="f" style="flex:0.5"></i></div>
+          <div class="pcf"><span class="p">3P</span><span class="c">36C</span><span class="f">0.5F</span></div></div>
+        <div class="item"><div class="ih"><b>Chicken</b><span class="kc">130 kcal</span></div>
+          <div class="stack"><i class="p" style="flex:27"></i><i class="c" style="flex:0.1"></i><i class="f" style="flex:3"></i></div>
+          <div class="pcf"><span class="p">27P</span><span class="c">0C</span><span class="f">3F</span></div></div>
+      </div>
+    </div>
+
+    <!-- V2 three tracks -->
+    <div class="col">
+      <div class="tag">Option A</div><div class="nm">Three tracks</div>
+      <div class="ds">A separate labeled bar per macro on a common scale (0–45g). Easiest to compare P vs C vs F at a glance and across foods.</div>
+      <div class="pane">
+        <div class="item"><div class="ih"><b>Peanuts</b><span class="kc">165 kcal</span></div>
+          <div class="tracks">
+            <div class="trk"><span class="lab p">P</span><span class="rail2"><span class="fill p" style="width:16%"></span></span><span class="val">7g</span></div>
+            <div class="trk"><span class="lab c">C</span><span class="rail2"><span class="fill c" style="width:13%"></span></span><span class="val">6g</span></div>
+            <div class="trk"><span class="lab f">F</span><span class="rail2"><span class="fill f" style="width:31%"></span></span><span class="val">14g</span></div>
+          </div></div>
+        <div class="item"><div class="ih"><b>White rice</b><span class="kc">200 kcal</span></div>
+          <div class="tracks">
+            <div class="trk"><span class="lab p">P</span><span class="rail2"><span class="fill p" style="width:7%"></span></span><span class="val">3g</span></div>
+            <div class="trk"><span class="lab c">C</span><span class="rail2"><span class="fill c" style="width:80%"></span></span><span class="val">36g</span></div>
+            <div class="trk"><span class="lab f">F</span><span class="rail2"><span class="fill f" style="width:1%"></span></span><span class="val">0.5g</span></div>
+          </div></div>
+        <div class="item"><div class="ih"><b>Chicken</b><span class="kc">130 kcal</span></div>
+          <div class="tracks">
+            <div class="trk"><span class="lab p">P</span><span class="rail2"><span class="fill p" style="width:60%"></span></span><span class="val">27g</span></div>
+            <div class="trk"><span class="lab c">C</span><span class="rail2"><span class="fill c" style="width:0%"></span></span><span class="val">0g</span></div>
+            <div class="trk"><span class="lab f">F</span><span class="rail2"><span class="fill f" style="width:7%"></span></span><span class="val">3g</span></div>
+          </div></div>
+      </div>
+    </div>
+
+    <!-- V3 calorie-weighted -->
+    <div class="col">
+      <div class="tag">Option B</div><div class="nm">Stacked · by calories</div>
+      <div class="ds">One bar, but segments sized by <i>calorie</i> share (P×4, C×4, F×9). Shows where the energy actually comes from — fat reads big for peanuts.</div>
+      <div class="pane cal">
+        <div class="item"><div class="ih"><b>Peanuts</b><span class="kc">165 kcal</span></div>
+          <div class="stack"><i class="p" style="flex:28"></i><i class="c" style="flex:24"></i><i class="f" style="flex:126"></i></div>
+          <div class="pct"><span>17% P</span><span>15% C</span><span>68% F</span></div></div>
+        <div class="item"><div class="ih"><b>White rice</b><span class="kc">200 kcal</span></div>
+          <div class="stack"><i class="p" style="flex:12"></i><i class="c" style="flex:144"></i><i class="f" style="flex:4.5"></i></div>
+          <div class="pct"><span>7% P</span><span>90% C</span><span>3% F</span></div></div>
+        <div class="item"><div class="ih"><b>Chicken</b><span class="kc">130 kcal</span></div>
+          <div class="stack"><i class="p" style="flex:108"></i><i class="c" style="flex:0.1"></i><i class="f" style="flex:27"></i></div>
+          <div class="pct"><span>80% P</span><span>0% C</span><span>20% F</span></div></div>
+      </div>
+    </div>
+
+    <!-- V4 chips -->
+    <div class="col">
+      <div class="tag">Option C</div><div class="nm">Chips · no bar</div>
+      <div class="ds">Drop the bar entirely — three colored value chips. Cleanest/most literal; loses the at-a-glance proportion.</div>
+      <div class="pane">
+        <div class="item"><div class="ih"><b>Peanuts</b><span class="kc">165 kcal</span></div>
+          <div class="chips"><span class="chip p"><b>7</b> P</span><span class="chip c"><b>6</b> C</span><span class="chip f"><b>14</b> F</span></div></div>
+        <div class="item"><div class="ih"><b>White rice</b><span class="kc">200 kcal</span></div>
+          <div class="chips"><span class="chip p"><b>3</b> P</span><span class="chip c"><b>36</b> C</span><span class="chip f"><b>0.5</b> F</span></div></div>
+        <div class="item"><div class="ih"><b>Chicken</b><span class="kc">130 kcal</span></div>
+          <div class="chips"><span class="chip p"><b>27</b> P</span><span class="chip c"><b>0</b> C</span><span class="chip f"><b>3</b> F</span></div></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -15,6 +15,13 @@
       "when": 1782248155965,
       "tag": "0001_fixed_inertia",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782323253992,
+      "tag": "0002_previous_iron_monger",
+      "breakpoints": true
     }
   ]
 }

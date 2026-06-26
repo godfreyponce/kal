@@ -14,7 +14,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   // name is required (non-null); the rest may be set to null to clear them.
   if (body.name !== undefined && body.name !== null) patch.name = body.name;
   for (const k of ["brand", "store", "link", "category"] as const) {
-    if (body[k] !== undefined) patch[k] = body[k];
+    if (body[k] !== undefined) patch[k] = body[k] || null;
+  }
+  // Photo is the pasted image address: "" clears it, a value sets it directly.
+  if (body.imageUrl !== undefined) {
+    patch.imageUrl = body.imageUrl ? String(body.imageUrl).trim() : null;
   }
   // Non-nullable numerics: skip null/undefined.
   for (const k of ["servingGrams", "kcal", "proteinG", "carbsG", "fatG"] as const) {

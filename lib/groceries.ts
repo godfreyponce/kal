@@ -1,12 +1,13 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from "../db";
-import { foods } from "../db/schema";
+import { foods, mealItems, meals } from "../db/schema";
 
 export type GroceryInput = {
   name: string;
   brand?: string | null;
   store?: string | null;
   link?: string | null;
+  imageUrl?: string | null;
   category?: string | null;
   servingGrams: number;
   kcal: number;
@@ -24,6 +25,7 @@ export type GroceryView = {
   brand: string | null;
   store: string | null;
   link: string | null;
+  imageUrl: string | null;
   category: string | null;
   servingGrams: number | null;
   kcal: number;
@@ -33,6 +35,11 @@ export type GroceryView = {
   purchaseWeightG: number | null;
   price: number | null;
 };
+
+/** A grocery plus the meals (by id) whose plan references it. [] = Pantry. */
+export type GroceryGroupItem = GroceryView & { mealIds: number[] };
+export type MealGroup = { id: number; name: string; plannedKcal: number };
+export type GroceryGroups = { groceries: GroceryGroupItem[]; meals: MealGroup[] };
 
 type Row = typeof foods.$inferSelect;
 const numOrNull = (v: string | null): number | null => (v === null ? null : Number(v));
@@ -46,6 +53,7 @@ function toView(r: Row): GroceryView {
     brand: r.brand,
     store: r.store,
     link: r.link,
+    imageUrl: r.imageUrl,
     category: r.category,
     servingGrams: numOrNull(r.servingGrams),
     kcal: r.kcal,
@@ -62,6 +70,47 @@ export async function listGroceries(): Promise<GroceryView[]> {
   return rows.map(toView);
 }
 
+/**
+ * Everything the Groceries screen needs to group by meal or by category in one
+ * read: every grocery tagged with the meals it belongs to (empty = Pantry), plus
+ * each meal's name and planned-kcal subtotal for the shelf headers.
+ */
+export async function getGroceryGroups(): Promise<GroceryGroups> {
+  const [rows, items, mealRows] = await Promise.all([
+    db.select().from(foods).orderBy(asc(foods.name)),
+    db
+      .select({
+        mealId: mealItems.mealId,
+        foodId: mealItems.foodId,
+        quantity: mealItems.quantity,
+        kcal: foods.kcal,
+      })
+      .from(mealItems)
+      .innerJoin(foods, eq(mealItems.foodId, foods.id)),
+    db
+      .select({ id: meals.id, name: meals.name })
+      .from(meals)
+      .orderBy(asc(meals.sortOrder)),
+  ]);
+
+  const mealIdsByFood = new Map<number, number[]>();
+  const plannedKcal = new Map<number, number>();
+  for (const it of items) {
+    const ids = mealIdsByFood.get(it.foodId) ?? [];
+    if (!ids.includes(it.mealId)) ids.push(it.mealId);
+    mealIdsByFood.set(it.foodId, ids);
+    plannedKcal.set(
+      it.mealId,
+      (plannedKcal.get(it.mealId) ?? 0) + Math.round(it.kcal * Number(it.quantity)),
+    );
+  }
+
+  return {
+    groceries: rows.map((r) => ({ ...toView(r), mealIds: mealIdsByFood.get(r.id) ?? [] })),
+    meals: mealRows.map((m) => ({ id: m.id, name: m.name, plannedKcal: plannedKcal.get(m.id) ?? 0 })),
+  };
+}
+
 export async function createGrocery(input: GroceryInput): Promise<GroceryView> {
   const [row] = await db
     .insert(foods)
@@ -70,6 +119,7 @@ export async function createGrocery(input: GroceryInput): Promise<GroceryView> {
       brand: input.brand ?? null,
       store: input.store ?? null,
       link: input.link ?? null,
+      imageUrl: input.imageUrl ?? null,
       category: input.category ?? null,
       servingDesc: `${input.servingGrams} g`,
       servingGrams: input.servingGrams.toFixed(2),
@@ -94,6 +144,7 @@ export async function updateGrocery(
   if (patch.brand !== undefined) set.brand = patch.brand;
   if (patch.store !== undefined) set.store = patch.store;
   if (patch.link !== undefined) set.link = patch.link;
+  if (patch.imageUrl !== undefined) set.imageUrl = patch.imageUrl;
   if (patch.category !== undefined) set.category = patch.category;
   if (patch.servingGrams !== undefined) {
     set.servingGrams = patch.servingGrams.toFixed(2);

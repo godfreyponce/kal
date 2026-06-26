@@ -45,6 +45,7 @@ export const foods = pgTable("foods", {
   fatG: numeric("fat_g", { precision: 6, scale: 2 }).notNull(),
   store: text("store"),
   link: text("link"),
+  imageUrl: text("image_url"),
   category: text("category"),
   servingGrams: numeric("serving_grams", { precision: 8, scale: 2 }),
   isEstimated: boolean("is_estimated").notNull().default(false),

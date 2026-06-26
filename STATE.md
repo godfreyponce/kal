@@ -11,7 +11,7 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-06-24 · v1 shipped; Groceries feature built (on branch, awaiting merge).*
+*Last updated: 2026-06-26 · v1 shipped; Groceries v2 (redesign + auto-fill + photos) built on branch, UNCOMMITTED, awaiting review+merge.*
 
 **What's done:** Phases 1–5 all complete. v1 is **live and deployed**:
 **https://kal-delta.vercel.app** (Vercel project `kal`, team godfreyps-projects).
@@ -20,35 +20,56 @@ tool-loop, tool cards w/ Undo, model+cost tracker), password gate (iron-session)
 installable PWA. Stack & locked design decisions are below; per-phase detail is the
 archive further down.
 
-**⚠️ Uncommitted-to-main work — the Groceries feature lives on branch `groceries`**, NOT
-yet merged to `main`. Owner approved it (2026-06-24); merge/PR is the next action. Full
-spec/plan in `docs/superpowers/specs/2026-06-23-groceries-design.md` +
-`docs/superpowers/plans/2026-06-23-groceries.md`. See the **Groceries** section below.
+**⚠️ Groceries lives on branch `groceries`, NOT merged to `main`. The original Groceries
+feature is COMMITTED (6 commits, up to `0ea09f1`). This session's big "Groceries v2" expansion
+(redesign + nutrition auto-fill + product photos) is ALL UNCOMMITTED in the working tree** —
+`git status` shows ~15 modified + new files (`app/api/nutrition/`, `app/api/upload/`,
+`lib/nutrition-lookup.*`, `lib/label-vision.*`, migration `0002_*`, etc). Next action: owner
+review → commit → merge. Full v2 detail in the **Groceries** section below; original
+spec/plan in `docs/superpowers/{specs,plans}/2026-06-23-groceries-*`.
 
-**Local login:** `.env.local` `APP_PASSWORD` is now `devpass` (set this session so localhost
-login works — the prod value is encrypted/write-only and a prior `vercel env pull` had blanked
-it). Prod unaffected. `PORT=3100 npm run dev` may still be running in the background.
+**⚠️ Demo data NOT reverted:** to test/demo v2 this session I edited live Neon data — assigned
+`category` to all 9 seeded foods (chicken→protein, canola/peanut butter→fat, rice/bread→carb,
+banana→fruit, mixed veg→veg) and set `Dry-roasted peanuts`' `image_url` to a Walmart photo.
+Owner hasn't decided keep-vs-revert. (The seed macros are still the original ESTIMATES, not
+real labels — see the data-provenance note in the Groceries section.)
+
+**Local env (`.env.local`, git-ignored):** `APP_PASSWORD=devpass` (prod value is encrypted/
+write-only; a `vercel env pull` blanks it — NEVER pull into `.env.local`, pull to a temp file
+and copy individual keys). Also set this session: `FDC_API_KEY` (real USDA key, owner-provided),
+`BLOB_READ_WRITE_TOKEN` (local-only — prod uploads use OIDC, see Groceries §photos).
 
 **How to run / verify (do this first):**
 ```bash
 PORT=3100 npm run dev    # :3000 is taken by another local project ("Glass"); use 3100
-npm test                 # vitest 8/8 (needs DATABASE_URL; hits live Neon w/ sentinel dates)
+npm test                 # vitest 27/27 across 8 files (needs DATABASE_URL; hits live Neon)
 npx tsc --noEmit         # must stay clean
 ```
-Run the dev server backgrounded and DON'T start a duplicate (EADDRINUSE on 3100). Next dev
-hot-reloads `.env.local` (no restart needed for env changes). To verify a change in the real
-app, exercise routes with `curl` against `localhost:3100` (see phase sections for examples).
+Run the dev server backgrounded and DON'T start a duplicate (EADDRINUSE on 3100). Integration
+tests hit live Neon and OCCASIONALLY FLAKE (transient) — re-run before trusting a red. To
+verify a change in the real app, exercise routes with `curl` against `localhost:3100`.
+**After editing `globals.css`, Turbopack dev serves STALE CSS** — `rm -rf .next` and restart,
+then hard-refresh the browser (the CSS chunk URL is unchanged so a soft refresh keeps the old
+file). This cost a lot of debugging this session; route/TSX edits hot-reload fine, only CSS is cached.
 
 **🟢 Upcoming / backlog (nothing in progress right now — confirm with owner before starting):**
-1. **Merge the `groceries` branch** to `main` (owner-approved 2026-06-24; not yet merged).
+1. **Commit + merge the `groceries` branch** to `main`. Working tree has uncommitted Groceries v2.
+   Merge checklist: add `FDC_API_KEY` to Vercel env (Prod) — without it USDA lookup silently no-ops;
+   confirm prod Blob upload works via OIDC (BLOB_STORE_ID + OIDC already on for Prod, no token needed);
+   `@vercel/blob` is a new dep; migration `0002` (image_url) is already applied to Neon.
 2. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
-3. **Barcode / QR auto-fill** of the grocery form — owner's stated future want (scan the label panel → prefill macros). Deferred from the Groceries build.
-4. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it; add running-low/"how much left" later.
-5. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD now exists via `/groceries`).
-6. **Trends screen** — weight chart + weekly adherence (v1.5).
-7. **Chat history summarization** — currently a hard 30-message cap; summarize-and-truncate later.
-8. **Optimistic remaining-update after chat Undo** — card greys to "Undone"; numbers refresh next ask.
-9. **Surface `is_estimated` in the Groceries UI** — column + `add_grocery` set it, but `GroceryView`/screen don't show provenance yet.
+3. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it.
+4. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD exists via `/groceries`).
+5. **Trends screen** — weight chart + weekly adherence (v1.5).
+6. **Chat history summarization** — currently a hard 30-message cap; summarize-and-truncate later.
+7. **Optimistic remaining-update after chat Undo** — card greys to "Undone"; numbers refresh next ask.
+8. **Surface `is_estimated` in the Groceries UI** — column + `add_grocery` set it, screen doesn't show provenance.
+9. **Fix seed macros** — the 9 seeded foods carry original ESTIMATES, not real labels; owner can correct
+   via the new lookup/vision auto-fill or by editing each. (Auto-fill from the product *link* is impossible —
+   Walmart/Amazon bot-wall server fetches; see Groceries §provenance.)
+
+*(Done this session, was backlog item "barcode/QR auto-fill": replaced by nutrition DB lookup (USDA+OFF)
++ label-photo vision + Vercel Blob product photos — all in Groceries v2 below.)*
 
 **⚠️ Gotchas that have bitten before:** Next 16 renamed `middleware`→`proxy` & made `params`
 a Promise; `RouteContext` only exists after typegen (use explicit `params: Promise<…>`);
@@ -89,7 +110,9 @@ the feature. (This rule is also in `AGENTS.md` so it survives across sessions.)
 
 ---
 
-## Groceries feature (2026-06-24) — built on branch `groceries`, owner-approved, NOT yet merged
+## Groceries v1 (2026-06-24, COMMITTED on branch) — the original feature
+
+*(Groceries v2 below — 2026-06-26, UNCOMMITTED — adds the redesign, auto-fill, and photos.)*
 
 A curated, weight-aware **Groceries** list = the `foods` library surfaced as a management screen
 and made the **source of truth** for macros. Owner logs by **weight** ("8 oz chicken"); Kal pulls
@@ -117,11 +140,51 @@ macros only from the library and never invents them. Built via subagent-driven T
   ~$/serving; "no weight set" for seeded foods). "Groceries" link added to the Today header.
 - **Verified live (Neon + real model):** weight log 200 g of a 113.4 g/130 kcal serving → 229 kcal /
   42.33 P exact; off-list food → model asked for the label, logged 0 invented macros; 409 in-use guard.
-- **Deferred (in backlog):** barcode/QR auto-fill, inventory decrement from `purchase_weight`,
-  surfacing `is_estimated` provenance in the UI.
-- **Process note:** unlike the Today/Chat screens, the Groceries screen did **not** get the
-  3-variant HTML design exploration first — owner flagged this as a miss; do the variant pass for
-  future net-new screens.
+- **Process note:** the v1 screen did **not** get the 3-variant HTML design exploration first —
+  owner flagged this as a miss. v2 (below) corrected this with design mockups in `design/`.
+
+## Groceries v2 (2026-06-26) — UNCOMMITTED working-tree changes on branch `groceries`
+
+Owner-driven redesign + nutrition auto-fill + product photos. **NOT committed** — `git status`
+lists all the files. All TDD. Suite **27/27** (8 files), `tsc` clean, `npm run build` shows
+`ƒ /groceries` + `ƒ /api/nutrition`, `ƒ /api/nutrition/vision`, `ƒ /api/upload`. Design mockups
+(open in browser): `design/groceries-{variants,combined,photo-options,bar-options}.html`.
+
+- **Schema** (migration `0002_previous_iron_monger.sql`, APPLIED to Neon) — `foods` gained
+  `image_url text`. New dep: **`@vercel/blob`**.
+- **Card redesign** (`app/groceries/groceries-list.tsx` + `.gr-*`/`.gcard-*` in `globals.css`):
+  - Default groups by **today's meals** (Breakfast/Lunch/… shelves via `getGroceryGroups`, which
+    joins `meal_items`); a toggle flips to **by-category** shelves; foods in no meal → **Pantry**.
+  - **Horizontal cards**: square photo left (full image, `object-fit:contain` on white — products
+    shoot on white so contain is seamless), details right, one per row.
+  - **Macro bar** is a single stacked bar sized by **grams**; the P/C/F numbers sit BELOW each
+    segment, each flexed by the same gram value so the number tracks its segment (0-gram macros omitted).
+  - **Categories** are a FIXED dropdown (protein/carb/fat/dairy/fruit/veg/other), colored; `normCat()`
+    maps free-text/chat values (e.g. "oil"→fat) to a bucket.
+- **No middots:** every `·` separator removed app-wide (Today/Chat/Groceries/`lib/tools.ts` tool cards),
+  replaced by flex-gap spans or spaces/commas. Owner called the `·` a "midpoint."
+- **Nutrition auto-fill** — the form has a lookup box + a label-photo button:
+  - **`lib/nutrition-lookup.ts`** (+tests): `searchNutrition(q)` queries **USDA FoodData Central**
+    (needs `FDC_API_KEY`; strong on US store brands) AND **OpenFoodFacts** (no key) in parallel,
+    merges (USDA first), dedupes, caps 8. Both store per-100g; we **scale to the label serving** when
+    its gram weight is known (so a card reads `180 kcal / 28 g`). `GET /api/nutrition?q=`.
+    Hits carry a `source` tag shown in the UI.
+  - **`lib/label-vision.ts`** (+tests) + **`POST /api/nutrition/vision`**: Claude (CHAT_MODEL, Haiku)
+    reads a Nutrition Facts photo → one serving's macros. `parseLabelNutrition()` is pure/tested;
+    client downscales the image ≤1024px before sending. Verified: real label photo → 180/28g exact.
+- **Product photos** — **`POST /api/upload`** stores a downscaled front-of-package photo to **Vercel
+  Blob** (`@vercel/blob` `put`, `access:"public"`, store `kal-photos` / `store_I1fImjhmMybeesam`),
+  returns the public URL saved as `image_url`. Form has "📷 Add product photo" (preview) + paste-URL.
+  - **AUTH:** prod uploads use **OIDC automatically** (OIDC on for Prod, `BLOB_STORE_ID` in Prod env —
+    no token needed). LOCAL dev needs `BLOB_READ_WRITE_TOKEN` in `.env.local` (OIDC is OFF for the
+    `development` env; the token is from the store's dashboard quickstart, NOT in `vercel env`).
+- **Provenance / why no link-scraping:** auto-filling macros OR photos from the product *link* is
+  impossible — Walmart/Amazon/Target bot-wall server-side fetches (proven: our server gets a captcha
+  page; a render-proxy got the page but not the macros). The seeded foods' macros are original
+  ESTIMATES, not labels — correct them via lookup/vision. DB coverage is patchy (OFF lacked the GV
+  peanuts; USDA had them exact) — vision is the universal fallback.
+- **Verified live:** USDA+OFF lookup returns the exact GV peanuts (180/28g); vision read the real
+  label → 180/28g/8P/4C/15F; Blob upload → public URL fetches 200 image/jpeg.
 
 ## Post-ship fix (2026-06-23): stale Today screen
 
@@ -293,8 +356,11 @@ npm run db:migrate   # apply migrations to Neon (uses DATABASE_URL_UNPOOLED)
 npm run db:seed      # reseed (wipes + reinserts Kal's own tables only)
 ```
 
-Env lives in `.env.local` (git-ignored, pulled from Vercel). Standalone scripts load it via
-`db/env.ts`. To re-pull: `vercel env pull .env.local --yes`.
+Env lives in `.env.local` (git-ignored). Standalone scripts load it via `db/env.ts`.
+⚠️ Do NOT `vercel env pull .env.local` — it writes encrypted/sensitive vars (`APP_PASSWORD`,
+`SESSION_SECRET`) back as `""` and breaks local login. To grab one key, pull to a TEMP file
+(`vercel env pull /tmp/x.env`) and copy just the line you need. Local-only keys not in Vercel:
+`APP_PASSWORD=devpass`, `BLOB_READ_WRITE_TOKEN` (from the Blob store dashboard, not env).
 
 ## File map
 
@@ -329,10 +395,17 @@ app/sign-out.tsx      sign-out button (Today header)
 app/manifest.ts + public/icon.svg + app/apple-icon.tsx   PWA
 app/refresh-on-focus.tsx   re-fetch Today on PWA reopen (visibilitychange/pageshow)
 lib/units.ts (+test)       oz/lb/g → grams; grams → servings (Groceries)
-lib/groceries.ts (+test)   grocery CRUD over foods + GroceryView mapper
-app/groceries/page.tsx + groceries-list.tsx   Groceries screen (force-dynamic, add/edit/delete)
+lib/groceries.ts (+test)   grocery CRUD + GroceryView mapper + getGroceryGroups() (meal/category grouping)
+app/groceries/page.tsx + groceries-list.tsx   Groceries screen (force-dynamic; v2 redesign, lookup, vision, photo upload)
 app/api/groceries/route.ts + [id]/route.ts    Groceries REST (list/create, patch/delete + 409 guard)
-docs/superpowers/{specs,plans}/2026-06-23-groceries-*   Groceries spec + implementation plan
+docs/superpowers/{specs,plans}/2026-06-23-groceries-*   Groceries v1 spec + implementation plan
+— Groceries v2 (2026-06-26, uncommitted) —
+lib/nutrition-lookup.ts (+test)   USDA FDC + OpenFoodFacts search, merged, scaled to label serving
+lib/label-vision.ts (+test)       Claude reads a Nutrition Facts photo → macros (parseLabelNutrition pure)
+app/api/nutrition/route.ts        GET ?q= → merged nutrition hits
+app/api/nutrition/vision/route.ts POST {imageBase64,mediaType} → label macros
+app/api/upload/route.ts           POST → Vercel Blob product photo → public URL (image_url)
+design/groceries-{variants,combined,photo-options,bar-options}.html   v2 design mockups
 ```
 
 ---
@@ -343,10 +416,11 @@ docs/superpowers/{specs,plans}/2026-06-23-groceries-*   Groceries spec + impleme
 - **Phase 3 — Chat route. DONE ✅** (see Current status above.)
 - **Phase 4 — Chat UI. DONE ✅** (see Current status above.)
 - **Phase 5 — Auth + PWA + deploy. DONE ✅ (v1 shipped).** Live at https://kal-delta.vercel.app.
-- **Groceries — built 2026-06-24 (branch `groceries`, owner-approved, awaiting merge).** Weight-based
-  source-of-truth food library + screen + chat tools. (Delivered the Phase-2-deferred `is_estimated`
-  flag + grocery-logging section.)
-- **Phase 6 / v1.5+ — remaining deferrals:** prompt caching, barcode/QR auto-fill, inventory decrement,
+- **Groceries v1 — built 2026-06-24 (branch `groceries`, COMMITTED).** Weight-based source-of-truth
+  food library + screen + chat tools.
+- **Groceries v2 — built 2026-06-26 (branch `groceries`, UNCOMMITTED).** Card redesign, USDA+OFF
+  nutrition auto-fill, label-photo vision, Vercel Blob product photos, middots removed. ← review + commit + merge next.
+- **Phase 6 / v1.5+ — remaining deferrals:** prompt caching, inventory decrement,
   trends/weight-chart screen, chat history summarization.
 
 ## Open notes

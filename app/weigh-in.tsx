@@ -42,7 +42,7 @@ export function WeighIn({
         <b>
           {latestWeighIn ? (
             <>
-              Last {latestWeighIn.weightLb.toFixed(1)} <span>lb · {latestWeighIn.date}</span>
+              Last {latestWeighIn.weightLb.toFixed(1)} <span>lb&nbsp;&nbsp;{latestWeighIn.date}</span>
             </>
           ) : (
             <span>No weigh-ins yet</span>

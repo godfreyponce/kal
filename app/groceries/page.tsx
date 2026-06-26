@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { listGroceries } from "@/lib/groceries";
+import { getGroceryGroups } from "@/lib/groceries";
 import { GroceriesList } from "./groceries-list";
 
 // Reads live DB — must render per request (see the force-dynamic gotcha).
 export const dynamic = "force-dynamic";
 
 export default async function GroceriesPage() {
-  const groceries = await listGroceries();
+  const groups = await getGroceryGroups();
   return (
     <main className="app groceries">
       <div className="head-row">
@@ -17,7 +17,7 @@ export default async function GroceriesPage() {
         <Link href="/" className="chat-link">‹ Today</Link>
       </div>
       <div className="rule" />
-      <GroceriesList initial={groceries} />
+      <GroceriesList groups={groups} />
     </main>
   );
 }

@@ -26,7 +26,7 @@ function headerDate(date: string): string {
   })
     .format(new Date(`${date}T12:00:00Z`))
     .toUpperCase()
-    .replace(",", " ·");
+    .replace(",", "");
 }
 
 function MacroRow({
@@ -112,7 +112,7 @@ export default async function TodayPage() {
           </div>
         </div>
         <div className="ring-foot">
-          <b>{n(consumed.kcal)}</b> of {n(targets.kcal)} eaten · {Math.round(kcalPct * 100)}%
+          <b>{n(consumed.kcal)}</b> of {n(targets.kcal)} eaten <span className="rf-pct">{Math.round(kcalPct * 100)}%</span>
         </div>
       </div>
 
