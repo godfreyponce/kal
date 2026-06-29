@@ -11,7 +11,7 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-06-26 · v1 shipped; Groceries v2 (redesign + auto-fill + photos) built on branch, UNCOMMITTED, awaiting review+merge.*
+*Last updated: 2026-06-29 · v1 shipped; Groceries v2 (redesign + auto-fill + photos) MERGED to `main` + DEPLOYED to prod for owner trial — design NOT yet owner-approved (owner dislikes it but wanted it live to test the photo→label flow).*
 
 **What's done:** Phases 1–5 all complete. v1 is **live and deployed**:
 **https://kal-delta.vercel.app** (Vercel project `kal`, team godfreyps-projects).
@@ -20,13 +20,21 @@ tool-loop, tool cards w/ Undo, model+cost tracker), password gate (iron-session)
 installable PWA. Stack & locked design decisions are below; per-phase detail is the
 archive further down.
 
-**⚠️ Groceries lives on branch `groceries`, NOT merged to `main`. The original Groceries
-feature is COMMITTED (6 commits, up to `0ea09f1`). This session's big "Groceries v2" expansion
-(redesign + nutrition auto-fill + product photos) is ALL UNCOMMITTED in the working tree** —
-`git status` shows ~15 modified + new files (`app/api/nutrition/`, `app/api/upload/`,
-`lib/nutrition-lookup.*`, `lib/label-vision.*`, migration `0002_*`, etc). Next action: owner
-review → commit → merge. Full v2 detail in the **Groceries** section below; original
-spec/plan in `docs/superpowers/{specs,plans}/2026-06-23-groceries-*`.
+**✅ Groceries v2 is now COMMITTED (`346f203`), MERGED to `main` (fast-forward), and DEPLOYED
+to prod (https://kal-delta.vercel.app, aliased 2026-06-29).** `groceries` branch == `main`.
+The owner does NOT like the v2 design yet — it was shipped to let them try the
+**snap-the-Nutrition-Facts-label → auto-fill macros** flow on their phone. Design rework is a
+later pass (owner: get the whole thing working first). Full v2 detail in the **Groceries**
+section below; original spec/plan in `docs/superpowers/{specs,plans}/2026-06-23-groceries-*`.
+
+**Prod env status for v2 (verified 2026-06-29 via `vercel env ls production`):**
+- `ANTHROPIC_API_KEY` present → **label-photo vision works in prod** (`/api/nutrition/vision`
+  returns 401 unauth = route live + gated; in-app call carries the session cookie).
+- `BLOB_STORE_ID` present (Prod+Preview) → product-photo upload should work via OIDC (not yet
+  exercised live in prod).
+- **`FDC_API_KEY` is MISSING from prod** → typing a food *name* to search nutrition DB returns
+  only OpenFoodFacts (USDA half silently no-ops). Add it to Prod env to enable USDA name-search.
+  Does NOT affect the label-photo flow.
 
 **⚠️ Demo data NOT reverted:** to test/demo v2 this session I edited live Neon data — assigned
 `category` to all 9 seeded foods (chicken→protein, canola/peanut butter→fat, rice/bread→carb,
@@ -53,10 +61,11 @@ then hard-refresh the browser (the CSS chunk URL is unchanged so a soft refresh 
 file). This cost a lot of debugging this session; route/TSX edits hot-reload fine, only CSS is cached.
 
 **🟢 Upcoming / backlog (nothing in progress right now — confirm with owner before starting):**
-1. **Commit + merge the `groceries` branch** to `main`. Working tree has uncommitted Groceries v2.
-   Merge checklist: add `FDC_API_KEY` to Vercel env (Prod) — without it USDA lookup silently no-ops;
-   confirm prod Blob upload works via OIDC (BLOB_STORE_ID + OIDC already on for Prod, no token needed);
-   `@vercel/blob` is a new dep; migration `0002` (image_url) is already applied to Neon.
+1. **Groceries v2 design rework** — owner dislikes the current v2 design (shipped to prod for the
+   photo→label trial, not because the look is approved). Redo it WITH the 3-variant HTML mockup
+   step first (see [[design-variants-for-new-screens]]). Leftover prod-env todos: add `FDC_API_KEY`
+   to Vercel Prod (USDA name-search no-ops without it — label-photo flow unaffected); exercise the
+   product-photo Blob upload live in prod to confirm OIDC. (Commit/merge/deploy: DONE 2026-06-29.)
 2. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
 3. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it.
 4. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD exists via `/groceries`).
@@ -418,8 +427,9 @@ design/groceries-{variants,combined,photo-options,bar-options}.html   v2 design 
 - **Phase 5 — Auth + PWA + deploy. DONE ✅ (v1 shipped).** Live at https://kal-delta.vercel.app.
 - **Groceries v1 — built 2026-06-24 (branch `groceries`, COMMITTED).** Weight-based source-of-truth
   food library + screen + chat tools.
-- **Groceries v2 — built 2026-06-26 (branch `groceries`, UNCOMMITTED).** Card redesign, USDA+OFF
-  nutrition auto-fill, label-photo vision, Vercel Blob product photos, middots removed. ← review + commit + merge next.
+- **Groceries v2 — built 2026-06-26, MERGED + DEPLOYED 2026-06-29.** Card redesign, USDA+OFF
+  nutrition auto-fill, label-photo vision, Vercel Blob product photos, middots removed. Live in
+  prod for trial; **design not owner-approved** → rework is backlog item #1.
 - **Phase 6 / v1.5+ — remaining deferrals:** prompt caching, inventory decrement,
   trends/weight-chart screen, chat history summarization.
 
