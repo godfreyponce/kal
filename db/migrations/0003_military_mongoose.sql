@@ -1,0 +1,1 @@
+ALTER TABLE "foods" ADD COLUMN "raw_to_cooked_yield" numeric(5, 2);

@@ -1,6 +1,6 @@
 import "../db/env";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { eq, like } from "drizzle-orm";
+import { eq, inArray, like } from "drizzle-orm";
 import { db } from "../db";
 import { foods, logEntries } from "../db/schema";
 import { createGrocery } from "./groceries";
@@ -9,6 +9,13 @@ import { runTool } from "./tools";
 const TEST_DATE = "2099-03-03";
 
 async function clear() {
+  // Delete log entries by the test foods' ids (not just by date) — any entry
+  // referencing a ZZTOOL_ food is debris, and a leftover on another date would
+  // FK-block the food delete forever.
+  const testFoods = await db.select({ id: foods.id }).from(foods).where(like(foods.name, "ZZTOOL_%"));
+  if (testFoods.length) {
+    await db.delete(logEntries).where(inArray(logEntries.foodId, testFoods.map((f) => f.id)));
+  }
   await db.delete(logEntries).where(eq(logEntries.date, TEST_DATE));
   await db.delete(foods).where(like(foods.name, "ZZTOOL_%"));
 }
@@ -57,6 +64,26 @@ describe("log_food by weight", () => {
     expect(entry.proteinG).toBe("60.00");
     expect(entry.carbsG).toBe("20.00");
     expect(entry.fatG).toBe("10.00");
+  });
+
+  it("renders serving-based logs as absolute amounts, never a multiplier", async () => {
+    const [pb] = await db
+      .insert(foods)
+      .values({
+        name: "ZZTOOL_PB",
+        servingDesc: "1 tbsp",
+        kcal: 95,
+        proteinG: "3.50",
+        carbsG: "3.50",
+        fatG: "8.00",
+      })
+      .returning({ id: foods.id });
+
+    const run = await runTool("log_food", { food_id: pb.id, quantity: 2, date: TEST_DATE });
+    expect(run.summary).toContain("2 tbsp");
+    expect(run.summary).not.toContain("×");
+    expect(run.card?.title).toBe("ZZTOOL_PB, 2 tbsp");
+    expect(run.card?.title).not.toContain("×");
   });
 
   it("errors if the food has no serving weight set", async () => {

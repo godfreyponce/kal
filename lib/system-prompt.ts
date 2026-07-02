@@ -2,6 +2,7 @@ import { asc, desc, eq, gte } from "drizzle-orm";
 import { db } from "../db";
 import { foods, mealItems, meals, mealStatus, memoryFacts, profile, weighIns } from "../db/schema";
 import { getDaySummary } from "./day-summary";
+import { buildPlanBlock, type PlanMeal } from "./resolve-item";
 
 const m = (x: number) => Math.round(x);
 
@@ -27,7 +28,17 @@ export async function assembleSystemPrompt(date: string): Promise<string> {
     getDaySummary(date),
     db.select().from(meals).orderBy(asc(meals.sortOrder)),
     db
-      .select({ mealId: mealItems.mealId, quantity: mealItems.quantity, foodName: foods.name })
+      .select({
+        mealId: mealItems.mealId,
+        quantity: mealItems.quantity,
+        foodName: foods.name,
+        servingDesc: foods.servingDesc,
+        kcal: foods.kcal,
+        proteinG: foods.proteinG,
+        carbsG: foods.carbsG,
+        fatG: foods.fatG,
+        rawToCookedYield: foods.rawToCookedYield,
+      })
       .from(mealItems)
       .innerJoin(foods, eq(mealItems.foodId, foods.id)),
     db
@@ -42,19 +53,33 @@ export async function assembleSystemPrompt(date: string): Promise<string> {
       .limit(10),
     db.select({ content: memoryFacts.content }).from(memoryFacts).orderBy(asc(memoryFacts.createdAt)),
   ]);
-  const itemsByMeal = new Map<number, string[]>();
+  const itemsByMeal = new Map<number, PlanMeal["items"]>();
   for (const it of items) {
     const list = itemsByMeal.get(it.mealId) ?? [];
-    list.push(`${Number(it.quantity)}× ${it.foodName}`);
+    list.push({
+      quantity: Number(it.quantity),
+      food: {
+        name: it.foodName,
+        servingDesc: it.servingDesc,
+        kcal: it.kcal,
+        proteinG: Number(it.proteinG),
+        carbsG: Number(it.carbsG),
+        fatG: Number(it.fatG),
+        rawToCookedYield: it.rawToCookedYield === null ? null : Number(it.rawToCookedYield),
+      },
+    });
     itemsByMeal.set(it.mealId, list);
   }
   const statusByMeal = new Map(statusRows.map((s) => [s.mealId, s.status]));
 
-  const planLines = mealRows.map((meal) => {
-    const status = statusByMeal.get(meal.id) ?? "pending";
-    const itemList = itemsByMeal.get(meal.id)?.join(", ") ?? "(no items)";
-    return `  - [id ${meal.id}] ${meal.name} [${status}]: ${itemList}`;
-  });
+  const planBlock = buildPlanBlock(
+    mealRows.map((meal) => ({
+      id: meal.id,
+      name: meal.name,
+      status: statusByMeal.get(meal.id) ?? "pending",
+      items: itemsByMeal.get(meal.id) ?? [],
+    })),
+  );
 
   let weightLine = "No weigh-ins on record.";
   if (weights.length > 0) {
@@ -84,13 +109,15 @@ TODAY (${date}): consumed ${m(consumed.kcal)} kcal / ${m(consumed.proteinG)}P / 
   )}F; remaining ${m(remaining.kcal)} kcal / ${m(remaining.proteinG)}P / ${m(remaining.carbsG)}C / ${m(
     remaining.fatG,
   )}F.
-MEAL PLAN + STATUS TODAY:
-${planLines.join("\n")}
+MEAL PLAN + STATUS TODAY (amounts are absolute; macros are pre-computed per line and per meal):
+${planBlock}
 WEIGHT: ${weightLine}
 MEMORY:
 ${memoryBlock}
 
 Rules:
+- All food amounts are provided to you fully resolved, with explicit weights/units and pre-computed macros. Do not assume, infer, or invent a serving size under any circumstances. Never multiply a bare quantity by a guessed per-serving size. If any amount, unit, or macro is missing from the context you were given, say so and ask the user — do not estimate to fill the gap.
+- All plan amounts and macros are COOKED (as-eaten) weights; weight logging is by cooked weight too. Raw equivalents are given per line where known ("raw ≈"). When the owner asks how much of a meat (chicken, beef, pork, …) to eat, prep, or weigh, give BOTH cooked and raw weights. To convert raw↔cooked yourself, use the food's raw_to_cooked_yield from search_foods (cooked = raw × yield); if the yield is missing, say so and ask — never guess a cooking-loss percentage.
 - Ground every recommendation in the remaining macros above. Use tools to read/write data; never invent numbers.
 - To record eating, prefer set_meal_status('eaten') for a planned meal (it fills the gaps without double-counting).
 - Log groceries by weight: use search_foods to find the item, then log_food with its food_id and the weight the owner gives (oz or grams). The grocery library is the source of truth — never invent macros.

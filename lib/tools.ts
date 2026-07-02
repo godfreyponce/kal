@@ -8,6 +8,7 @@ import { setMealStatus, type MealStatusValue } from "./meal-status";
 import { todayInAppTz } from "./time";
 import { createGrocery } from "./groceries";
 import { toGrams, weightToServings } from "./units";
+import { resolveItem } from "./resolve-item";
 
 // The assistant's server-side tool surface. Inputs use snake_case (LLM-friendly);
 // every tool defaults its `date` to today-in-app-tz. Write tools return a
@@ -39,7 +40,7 @@ export const TOOLS: Anthropic.Tool[] = [
   {
     name: "log_food",
     description:
-      "Log a food to the day's intake. Either pass food_id (an existing library food) with a quantity (multiple of its serving) OR with a weight (oz or grams — the food must have a serving weight set), OR pass name plus per-serving kcal/protein_g/carbs_g/fat_g to log (and add to the library) a new food. Prefer logging known groceries by weight. Optionally attach to a meal_id.",
+      "Log a food to the day's intake. Prefer absolute amounts: pass food_id with grams or oz for weighed foods (the food must have a serving weight set), or quantity for counted/volume foods (eggs, slices, tbsp — quantity means how many of the food's serving unit, e.g. 2 slices). Never guess a serving size: the amount must come from the user or the plan context. Alternatively pass name plus per-serving kcal/protein_g/carbs_g/fat_g to log (and add to the library) a new food. Optionally attach to a meal_id.",
     input_schema: {
       type: "object",
       properties: {
@@ -207,7 +208,14 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
       const writeBatchId = randomUUID();
 
       let foodId: number;
-      let per: { name: string; kcal: number; proteinG: number; carbsG: number; fatG: number };
+      let per: {
+        name: string;
+        servingDesc: string;
+        kcal: number;
+        proteinG: number;
+        carbsG: number;
+        fatG: number;
+      };
       let servingGrams: number | null = null;
 
       const foodIdInput = num(input.food_id);
@@ -216,6 +224,7 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
         if (!f) return err(`No food with id ${foodIdInput}`);
         per = {
           name: f.name,
+          servingDesc: f.servingDesc,
           kcal: f.kcal,
           proteinG: Number(f.proteinG),
           carbsG: Number(f.carbsG),
@@ -231,6 +240,7 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
         }
         per = {
           name: name2,
+          servingDesc: str(input.serving_desc) ?? "1 serving",
           kcal,
           proteinG: num(input.protein_g) ?? 0,
           carbsG: num(input.carbs_g) ?? 0,
@@ -241,7 +251,7 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
           .values({
             name: name2,
             brand: null,
-            servingDesc: str(input.serving_desc) ?? "1 serving",
+            servingDesc: per.servingDesc,
             kcal: Math.round(kcal),
             proteinG: per.proteinG.toFixed(2),
             carbsG: per.carbsG.toFixed(2),
@@ -280,14 +290,16 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
         writeBatchId,
       };
       await db.insert(logEntries).values(entry);
+      // Never surface the servings multiplier — always an absolute amount.
+      const amountLabel = weightLabel ?? resolveItem(qty, per).amountLabel;
       return ok(
-        { logged: { name: per.name, quantity: qty, kcal: entry.kcal }, writeBatchId },
-        `Logged ${weightLabel ?? `${qty} ×`} ${per.name} (${entry.kcal} kcal)`,
+        { logged: { name: per.name, amount: amountLabel, kcal: entry.kcal }, writeBatchId },
+        `Logged ${per.name}, ${amountLabel} (${entry.kcal} kcal)`,
         {
           writeBatchId,
           card: {
             label: "Food logged",
-            title: weightLabel ? `${per.name}, ${weightLabel}` : qty === 1 ? per.name : `${per.name}, ${qty}×`,
+            title: `${per.name}, ${amountLabel}`,
             detail: `${entry.kcal} kcal, ${entry.proteinG}P ${entry.carbsG}C ${entry.fatG}F`,
           },
         },
