@@ -11,7 +11,30 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-06-29 · v1 shipped; Groceries v2 (redesign + auto-fill + photos) MERGED to `main` + DEPLOYED to prod for owner trial — design NOT yet owner-approved (owner dislikes it but wanted it live to test the photo→label flow).*
+*Last updated: 2026-07-02 · Unit-resolution bug FIXED, COMMITTED to `main` (53b2271 + c717b04),
+Seed v2 applied to live Neon. NOT yet deployed to prod. NEXT UP: Today meal-detail popup —
+3-variant mockup is built and awaiting the owner's pick.*
+
+**🚧 DEPLOY PENDING (2026-07-02) — read before doing anything:**
+- The **unit-resolution fix + Seed v2** (full section below) is committed on `main` and validated;
+  **live Neon already has the v2 data** (surgical apply) and migration 0003 is applied. But
+  **prod (kal-delta.vercel.app) still runs the PRE-FIX code against the new data** — works, but its
+  chat prompt still renders bare multipliers. `vercel --prod` when the owner says go.
+- ⚠️ `npm run db:seed` is a FULL WIPE (logs, statuses, ALL foods incl. owner-added + photos). To
+  update live data in place use `npx tsx db/apply-seed-v2.ts` (idempotent, preserves everything).
+- `db/seed.ts`'s PROFILE block was hand-edited by the owner (175 cm / 170 lb / 30yo / goal 160 by
+  2027-01-01) — that's the reset-path profile only; the **live profile row was NOT changed** (still
+  the old body stats; only targets were updated). Reconcile with the owner before touching it.
+
+**🎨 NEXT TASK — Today meal-detail popup (owner-requested 2026-07-02):** tap a meal row on the
+Today screen → popup showing what that meal IS (items w/ absolute amounts + kcal, raw ≈ hints for
+meats, macro totals, Mark-eaten button). 3-variant interactive mockup is DONE:
+`design/today-meal-popup-variants.html` (A bottom sheet / B centered card / C inline expand) —
+owner is reviewing; **build whichever they pick**. Implementation notes: `getTodayView()`
+(`lib/today.ts`) currently returns only per-meal planned kcal — it'll need per-meal item lists;
+resolve amounts with `lib/resolve-item.ts` (`resolveItem`/`formatMacros` — never render a bare
+multiplier); meal-row UI lives in `app/meal-list.tsx`. Owner's standing note: don't compromise
+simplicity for structure/maintainability.
 
 **What's done:** Phases 1–5 all complete. v1 is **live and deployed**:
 **https://kal-delta.vercel.app** (Vercel project `kal`, team godfreyps-projects).
@@ -50,35 +73,41 @@ and copy individual keys). Also set this session: `FDC_API_KEY` (real USDA key, 
 **How to run / verify (do this first):**
 ```bash
 PORT=3100 npm run dev    # :3000 is taken by another local project ("Glass"); use 3100
-npm test                 # vitest 27/27 across 8 files (needs DATABASE_URL; hits live Neon)
+npm test                 # vitest 45/45 across 10 files (needs DATABASE_URL; hits live Neon)
 npx tsc --noEmit         # must stay clean
 ```
 Run the dev server backgrounded and DON'T start a duplicate (EADDRINUSE on 3100). Integration
-tests hit live Neon and OCCASIONALLY FLAKE (transient) — re-run before trusting a red. To
+tests hit live Neon — a transient network red can still happen (re-run before trusting it), but
+the RECURRING "flake" was a real cleanup bug, fixed 2026-07-02 (see the unit-fix section). To
 verify a change in the real app, exercise routes with `curl` against `localhost:3100`.
 **After editing `globals.css`, Turbopack dev serves STALE CSS** — `rm -rf .next` and restart,
 then hard-refresh the browser (the CSS chunk URL is unchanged so a soft refresh keeps the old
 file). This cost a lot of debugging this session; route/TSX edits hot-reload fine, only CSS is cached.
 
-**🟢 Upcoming / backlog (nothing in progress right now — confirm with owner before starting):**
-1. **Groceries v2 design rework** — owner dislikes the current v2 design (shipped to prod for the
+**🟢 Upcoming / backlog (meal popup above is #0 — confirm with owner before starting anything else):**
+1. **Commit + deploy the unit-resolution fix** — once the owner confirms (they reviewed + liked the
+   raw/cooked behavior; popup mockups were the next ask). Commit the dirty tree, update this file's
+   🚧 block, `vercel --prod`.
+2. **Groceries v2 design rework** — owner dislikes the current v2 design (shipped to prod for the
    photo→label trial, not because the look is approved). Redo it WITH the 3-variant HTML mockup
    step first (see [[design-variants-for-new-screens]]). Leftover prod-env todos: add `FDC_API_KEY`
    to Vercel Prod (USDA name-search no-ops without it — label-photo flow unaffected); exercise the
    product-photo Blob upload live in prod to confirm OIDC. (Commit/merge/deploy: DONE 2026-06-29.)
-2. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
-3. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it.
-4. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD exists via `/groceries`).
-5. **Trends screen** — weight chart + weekly adherence (v1.5).
-6. **Chat history summarization** — currently a hard 30-message cap; summarize-and-truncate later.
-7. **Optimistic remaining-update after chat Undo** — card greys to "Undone"; numbers refresh next ask.
-8. **Surface `is_estimated` in the Groceries UI** — column + `add_grocery` set it, screen doesn't show provenance.
-9. **Fix seed macros** — the 9 seeded foods carry original ESTIMATES, not real labels; owner can correct
-   via the new lookup/vision auto-fill or by editing each. (Auto-fill from the product *link* is impossible —
-   Walmart/Amazon bot-wall server fetches; see Groceries §provenance.)
+3. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
+4. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it.
+5. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD exists via `/groceries`).
+6. **Trends screen** — weight chart + weekly adherence (v1.5).
+7. **Chat history summarization** — currently a hard 30-message cap; summarize-and-truncate later.
+8. **Optimistic remaining-update after chat Undo** — card greys to "Undone"; numbers refresh next ask.
+9. **Surface `is_estimated` in the Groceries UI** — column + `add_grocery` set it, screen doesn't show provenance.
+10. **Correct remaining [est] food macros from real labels** — Seed v2 set honest `is_estimated`
+    flags and fixed peanuts from its real label; eggs/banana/chicken/beef/rice/oil/veg are still
+    estimates. Owner corrects via lookup/vision as labels come in; **re-derive profile targets after**
+    (`computeTargets()` in `db/seed-data.ts` — owner rule: targets come from the food data, never
+    hand-picked). (Link-scraping is impossible — bot-walls; see Groceries §provenance.)
 
-*(Done this session, was backlog item "barcode/QR auto-fill": replaced by nutrition DB lookup (USDA+OFF)
-+ label-photo vision + Vercel Blob product photos — all in Groceries v2 below.)*
+*(Done 2026-07-02: the unit-resolution fix + Seed v2 — see section below. Done 2026-06-26:
+barcode/QR auto-fill replaced by nutrition lookup + label vision + product photos — Groceries v2.)*
 
 **⚠️ Gotchas that have bitten before:** Next 16 renamed `middleware`→`proxy` & made `params`
 a Promise; `RouteContext` only exists after typegen (use explicit `params: Promise<…>`);
@@ -118,6 +147,46 @@ the feature. (This rule is also in `AGENTS.md` so it survives across sessions.)
 6. **Deferred to Phase 2:** `is_estimated` provenance flag on foods; grocery-logging section.
 
 ---
+
+## Unit-resolution fix + Seed v2 (2026-07-02) — UNCOMMITTED, live-data APPLIED
+
+The assistant had miscalculated macros 3× from one root cause: `meal_items.quantity` reached the
+model as a bare multiplier (`6× Chicken breast`) with no unit/macros, so it guessed serving sizes
+(21 oz chicken dinners, 372 g protein days). Owner's brief fixed cause + data. All TDD; suite
+**45/45** (10 files), `tsc` clean; all 3 of the brief's validation questions verified against the
+live model (dinner chicken → 170 g exact; full-day protein → 215 g; beef swap → ~204 g cooked).
+
+- **Fix 1 — resolve before inject** (the real fix): **`lib/resolve-item.ts`** (+12 tests) —
+  `parseServing("100 g")`, `resolveItem(qty, food)` → `{amountLabel, rawLabel, kcal, P/C/F}`,
+  `formatPlanLine`, `sumResolved` (totals sum line-rounded values so lines+totals agree),
+  `buildPlanBlock`. The system prompt now renders every meal as resolved lines:
+  `- Chicken breast, cooked: 170 g (6 oz) -> 281 kcal, 53g P, 0g C, 6g F [raw ≈ 227 g (8 oz)]`
+  + per-meal TOTAL. **The model never sees a multiplier**; chat tool cards too (`lib/tools.ts`
+  log_food card/summary now "name, 2 tbsp" not "2 ×"; tool description prefers absolute amounts).
+- **Fix 2 — data**: weighed foods re-based to **per-100 g** (`serving_desc="100 g"`,
+  `serving_grams=100`); count foods keep natural units (egg/slice/tbsp/banana). `meal_items.quantity`
+  stays a serving multiplier in the DB but now encodes absolute grams (1.7 = 170 g) — owner-approved
+  (Option A, no migration churn); the invariant is *no multiplier ever rendered*. New col
+  **`foods.raw_to_cooked_yield`** (migration `0003`, APPLIED): cooked/raw for meats (chicken 0.75,
+  beef 0.72), dry→cooked for rice (3.0) — injected as the `raw ≈` hint + used by chat for raw↔cooked.
+- **Fix 3 — guardrails**: verbatim never-invent-a-serving-size rule + cooked-weight-is-canonical
+  rule (meats: always give BOTH cooked and raw; use stored yield, never a guessed % — owner hit
+  Haiku guessing "25% cooking loss" and demanded this).
+- **Seed v2**: data in **`db/seed-data.ts`** (+5 tests), shared by `db/seed.ts` (FULL-WIPE reset)
+  and **`db/apply-seed-v2.ts`** (surgical in-place apply — what was RUN against live Neon: 9 foods
+  updated by name, ground beef inserted, 16 meal_items replaced, targets updated; logs/weigh-ins/
+  photos/brands untouched). Targets are **COMPUTED from the plan data** via `computeTargets()`
+  (owner rule): now **3603 kcal / 216P / 421C / 125F**. Honest `is_estimated` flags. **Peanuts
+  deviation from the brief**: live row had the real GV label (180 kcal per 28 g) mis-stored against
+  100 g — seeded as the label scaled to 100 g (643 kcal / 28.6P / 14.3C / 53.6F, est=false), not
+  the brief's 590 estimate. NB the brief's own "~370C/~100F" day totals never added up (~421C/~123F
+  from its own food data); computed targets win.
+- **Historical note**: pre-fix `log_entries` keep correct snapshotted macros, but their `quantity`
+  was a multiplier of the OLD basis (chicken "6" = 6×1oz) — display-only concern, nothing rereads it.
+- **Test-suite fix**: the "occasional Neon flake" in `tools-groceries.test.ts` was actually a
+  cleanup ordering bug (log entries deleted by date, foods by name → FK-blocked forever once any
+  ZZTOOL_ log landed off-date). Cleanup now deletes by the test foods' ids first. 4 consecutive
+  full runs green.
 
 ## Groceries v1 (2026-06-24, COMMITTED on branch) — the original feature
 
@@ -409,6 +478,12 @@ app/groceries/page.tsx + groceries-list.tsx   Groceries screen (force-dynamic; v
 app/api/groceries/route.ts + [id]/route.ts    Groceries REST (list/create, patch/delete + 409 guard)
 docs/superpowers/{specs,plans}/2026-06-23-groceries-*   Groceries v1 spec + implementation plan
 — Groceries v2 (2026-06-26, uncommitted) —
+— Unit-resolution fix + Seed v2 (2026-07-02, uncommitted) —
+lib/resolve-item.ts (+test)       parseServing/resolveItem/formatPlanLine/buildPlanBlock — model/UI never see a multiplier
+db/seed-data.ts (+test)           Seed v2 foods/meals/items + computeTargets() (targets derive from food data)
+db/apply-seed-v2.ts               surgical in-place apply to live DB (preserves logs/photos; idempotent)
+db/migrations/0003_*.sql          foods.raw_to_cooked_yield (APPLIED to Neon)
+design/today-meal-popup-variants.html   NEXT TASK mockups: meal-tap popup, 3 variants (awaiting owner pick)
 lib/nutrition-lookup.ts (+test)   USDA FDC + OpenFoodFacts search, merged, scaled to label serving
 lib/label-vision.ts (+test)       Claude reads a Nutrition Facts photo → macros (parseLabelNutrition pure)
 app/api/nutrition/route.ts        GET ?q= → merged nutrition hits
@@ -430,6 +505,10 @@ design/groceries-{variants,combined,photo-options,bar-options}.html   v2 design 
 - **Groceries v2 — built 2026-06-26, MERGED + DEPLOYED 2026-06-29.** Card redesign, USDA+OFF
   nutrition auto-fill, label-photo vision, Vercel Blob product photos, middots removed. Live in
   prod for trial; **design not owner-approved** → rework is backlog item #1.
+- **Unit-resolution fix + Seed v2 — built + live-data-applied 2026-07-02, UNCOMMITTED.** Resolver
+  lib, per-100g basis, raw/cooked yields, computed targets. Commit + deploy pending owner go-ahead.
+- **Today meal-detail popup — NEXT.** Mockups done (`design/today-meal-popup-variants.html`);
+  implement the owner's picked variant.
 - **Phase 6 / v1.5+ — remaining deferrals:** prompt caching, inventory decrement,
   trends/weight-chart screen, chat history summarization.
 

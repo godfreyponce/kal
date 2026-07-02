@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kal — Meal detail popup · 3 design variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --canvas: #F7F6F3;
+    --surface: #FFFFFF;
+    --surface-2: #F0EFEB;
+    --ink: #1F2421;
+    --muted: #787774;
+    --faint: #9B9A96;
+    --border: #E6E4DF;
+    --green-bg: #E6EFE5;  --green-tx: #346538;
+    --protein: #9F2F2D;  --carbs: #8A6A1F;  --fat: #1F6C9F;
+    --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+    --serif: 'Newsreader', Georgia, serif;
+    --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans); background: var(--canvas); color: var(--ink);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; padding: 64px 24px 96px;
+  }
+
+  /* ---- Gallery scaffolding ---- */
+  .page-head { max-width: 900px; margin: 0 auto 56px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 14px; }
+  .page-head h1 { font-family: var(--serif); font-weight: 500; font-size: 44px; line-height: 1.08; letter-spacing: -0.03em; margin-bottom: 18px; }
+  .page-head p { color: var(--muted); max-width: 62ch; font-size: 15.5px; }
+  .variants { max-width: 1360px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 48px; justify-content: center; }
+  .variant { width: 400px; }
+  .v-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+  .v-name { font-family: var(--serif); font-size: 24px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .v-desc { color: var(--muted); font-size: 13.5px; margin-bottom: 20px; min-height: 66px; }
+
+  /* ---- Phone frame ---- */
+  .phone {
+    position: relative; width: 400px; height: 660px; overflow: hidden;
+    background: var(--canvas); border: 1px solid var(--border); border-radius: 28px;
+    box-shadow: 0 24px 60px rgba(31,36,33,0.10);
+  }
+  .screen { padding: 26px 22px; height: 100%; overflow-y: auto; }
+  .kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+  .meals-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 6px; }
+
+  /* meal rows (mirrors the live Today screen) */
+  .meal-row {
+    display: flex; align-items: center; gap: 14px; padding: 16px 2px;
+    border-bottom: 1px solid var(--border); cursor: pointer; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .meal-row:active { background: var(--surface-2); }
+  .check {
+    width: 30px; height: 30px; border-radius: 9px; flex: none;
+    border: 1px solid var(--border); background: var(--surface);
+    display: grid; place-items: center; font-size: 15px;
+  }
+  .eaten .check { background: var(--green-bg); border-color: transparent; color: var(--green-tx); }
+  .meal-main { flex: 1; min-width: 0; }
+  .meal-name { font-size: 17.5px; letter-spacing: -0.01em; }
+  .eaten .meal-name { color: var(--faint); }
+  .meal-hint { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .meal-kcal { font-family: var(--mono); font-size: 13px; color: var(--faint); }
+  .chev { color: var(--faint); font-size: 13px; margin-left: 2px; }
+
+  /* ---- shared popup content ---- */
+  .pop-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+  .pop-title { font-family: var(--serif); font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
+  .pop-kcal { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .pop-hint { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-bottom: 14px; }
+  .item { display: flex; align-items: baseline; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .item:last-of-type { border-bottom: 0; }
+  .item-name { flex: 1; font-size: 14.5px; }
+  .item-raw { display: block; font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
+  .item-amt { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .item-kcal { font-family: var(--mono); font-size: 12px; color: var(--faint); width: 42px; text-align: right; }
+  .pop-totals { display: flex; gap: 18px; padding: 13px 0 0; margin-top: 4px; border-top: 1px solid var(--ink); }
+  .tot { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .tot b { color: var(--ink); font-weight: 500; }
+  .tot.p b { color: var(--protein); } .tot.c b { color: var(--carbs); } .tot.f b { color: var(--fat); }
+  .pop-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .btn {
+    flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--surface); font-family: var(--sans); font-size: 14.5px; cursor: pointer;
+  }
+  .btn.primary { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+  .btn.undo { background: var(--green-bg); color: var(--green-tx); border-color: transparent; }
+
+  /* ---- Variant A: bottom sheet ---- */
+  .scrim {
+    position: absolute; inset: 0; background: rgba(31,36,33,0.32);
+    opacity: 0; pointer-events: none; transition: opacity 0.22s;
+  }
+  .phone.open .scrim { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--canvas); border-radius: 22px 22px 0 0;
+    padding: 10px 22px 26px; transform: translateY(102%); transition: transform 0.28s cubic-bezier(.32,.72,.33,1);
+    box-shadow: 0 -12px 40px rgba(31,36,33,0.14);
+  }
+  .phone.open .sheet { transform: translateY(0); }
+  .grabber { width: 38px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+
+  /* ---- Variant B: centered card ---- */
+  .modal {
+    position: absolute; left: 20px; right: 20px; top: 50%;
+    transform: translateY(-46%) scale(0.96); opacity: 0; pointer-events: none;
+    background: var(--canvas); border-radius: 18px; padding: 22px;
+    box-shadow: 0 20px 60px rgba(31,36,33,0.22); border: 1px solid var(--border);
+    transition: opacity 0.18s, transform 0.18s;
+  }
+  .phone.open .modal { opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
+  .modal .x {
+    position: absolute; top: 14px; right: 14px; width: 28px; height: 28px;
+    border-radius: 50%; border: 0; background: var(--surface-2); color: var(--muted);
+    font-size: 13px; cursor: pointer; line-height: 1;
+  }
+
+  /* ---- Variant C: inline expand ---- */
+  .detail { overflow: hidden; max-height: 0; transition: max-height 0.26s ease; border-bottom: 0 solid var(--border); }
+  .detail.open { border-bottom: 1px solid var(--border); }
+  .detail-inner { padding: 4px 2px 18px 46px; }
+  .detail .item { padding: 7px 0; }
+  .detail .pop-totals { border-top-color: var(--border); }
+  .meal-row .chev { transition: transform 0.2s; }
+  .meal-row.expanded .chev { transform: rotate(90deg); }
+  .meal-row.expanded { border-bottom-color: transparent; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="eyebrow">Kal — design exploration</div>
+  <h1>Meal detail popup, three ways</h1>
+  <p>Tap any meal on the Today screen to see what it actually is — every item with its
+     absolute amount (cooked + raw where relevant), pre-computed kcal, and the meal's macro
+     totals. The checkbox still marks eaten with one tap; the popup is for <em>reading</em> the
+     plan, and carries its own Mark-eaten button so nothing gets slower. All three variants
+     use today's real plan data.</p>
+</div>
+
+<div class="variants">
+
+  <!-- ============ VARIANT A ============ -->
+  <section class="variant">
+    <div class="v-label">Variant A</div>
+    <div class="v-name">Bottom sheet</div>
+    <div class="v-desc">iOS-native slide-up sheet with a grabber. Feels like a PWA should on a
+      phone; thumb-reachable actions; dismiss by tapping the scrim. The list stays visible
+      behind it, dimmed.</div>
+    <div class="phone" id="phoneA">
+      <div class="screen">
+        <div class="meals-head"><span class="kicker">Meals</span><span class="kicker">Tap for details</span></div>
+        <div id="listA"></div>
+      </div>
+      <div class="scrim" onclick="closeV('A')"></div>
+      <div class="sheet"><div class="grabber"></div><div id="popA"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ VARIANT B ============ -->
+  <section class="variant">
+    <div class="v-label">Variant B</div>
+    <div class="v-name">Centered card</div>
+    <div class="v-desc">A dialog card floating over the dimmed list — the most “popup” of the
+      three. Reads like an index card for the meal; close via ✕ or scrim. Slightly more formal,
+      maximum focus on one meal.</div>
+    <div class="phone" id="phoneB">
+      <div class="screen">
+        <div class="meals-head"><span class="kicker">Meals</span><span class="kicker">Tap for details</span></div>
+        <div id="listB"></div>
+      </div>
+      <div class="scrim" onclick="closeV('B')"></div>
+      <div class="modal"><button class="x" onclick="closeV('B')">✕</button><div id="popB"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ VARIANT C ============ -->
+  <section class="variant">
+    <div class="v-label">Variant C</div>
+    <div class="v-name">Inline expand</div>
+    <div class="v-desc">No overlay at all — the row unfolds in place, accordion-style, and the
+      chevron rotates. Lightest touch: nothing covers the screen, several meals can be open at
+      once, zero context switch.</div>
+    <div class="phone" id="phoneC">
+      <div class="screen">
+        <div class="meals-head"><span class="kicker">Meals</span><span class="kicker">Tap for details</span></div>
+        <div id="listC"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// Today's real plan (Seed v2, resolved amounts — never a multiplier).
+const MEALS = [
+  { name: "Breakfast", hint: "morning", kcal: 815, eaten: true,
+    p: 48, c: 80, f: 40,
+    items: [
+      { n: "Egg, large", amt: "4 eggs", kcal: 280 },
+      { n: "Whole wheat bread", amt: "4 slices", kcal: 240 },
+      { n: "Peanut butter", amt: "2 tbsp", kcal: 190 },
+      { n: "Banana, medium", amt: "1 banana", kcal: 105 },
+    ] },
+  { name: "Lunch", hint: "midday", kcal: 1059, eaten: false,
+    p: 70, c: 140, f: 22,
+    items: [
+      { n: "Chicken breast, cooked", amt: "170 g (6 oz)", raw: "raw ≈ 227 g (8 oz)", kcal: 281 },
+      { n: "White rice, cooked", amt: "400 g", kcal: 520 },
+      { n: "Canola oil", amt: "1 tbsp", kcal: 120 },
+      { n: "Frozen mixed vegetables", amt: "250 g", kcal: 138 },
+    ] },
+  { name: "Snack", hint: "afternoon", kcal: 415, eaten: false,
+    p: 16, c: 56, f: 18,
+    items: [
+      { n: "Whole wheat bread", amt: "2 slices", kcal: 120 },
+      { n: "Peanut butter", amt: "2 tbsp", kcal: 190 },
+      { n: "Banana, medium", amt: "1 banana", kcal: 105 },
+    ] },
+  { name: "Dinner", hint: "post-soccer ~11pm", kcal: 1059, eaten: false,
+    p: 70, c: 140, f: 22,
+    items: [
+      { n: "Chicken breast, cooked", amt: "170 g (6 oz)", raw: "raw ≈ 227 g (8 oz)", kcal: 281 },
+      { n: "White rice, cooked", amt: "400 g", kcal: 520 },
+      { n: "Canola oil", amt: "1 tbsp", kcal: 120 },
+      { n: "Frozen mixed vegetables", amt: "250 g", kcal: 138 },
+    ] },
+  { name: "Peanuts (graze)", hint: "throughout day", kcal: 257, eaten: false,
+    p: 11, c: 6, f: 21,
+    items: [
+      { n: "Dry-roasted peanuts, salted", amt: "40 g (1.5 oz)", kcal: 257 },
+    ] },
+];
+
+const fmt = (n) => n.toLocaleString("en-US");
+
+function rowHTML(m, i, variant) {
+  return `
+    <div class="meal-row ${m.eaten ? "eaten" : ""}" id="row${variant}${i}" onclick="tap('${variant}', ${i})">
+      <span class="check">${m.eaten ? "✓" : ""}</span>
+      <span class="meal-main">
+        <div class="meal-name">${m.name}</div>
+        <div class="meal-hint">${m.hint}</div>
+      </span>
+      <span class="meal-kcal">${fmt(m.kcal)}</span>
+      <span class="chev">›</span>
+    </div>
+    ${variant === "C" ? `<div class="detail" id="detailC${i}"><div class="detail-inner">${popHTML(m, true)}</div></div>` : ""}`;
+}
+
+function popHTML(m, inline = false) {
+  const items = m.items.map((it) => `
+    <div class="item">
+      <span class="item-name">${it.n}${it.raw ? `<span class="item-raw">${it.raw}</span>` : ""}</span>
+      <span class="item-amt">${it.amt}</span>
+      <span class="item-kcal">${it.kcal}</span>
+    </div>`).join("");
+  return `
+    ${inline ? "" : `<div class="pop-head"><span class="pop-title">${m.name}</span><span class="pop-kcal">${fmt(m.kcal)} kcal</span></div>
+    <div class="pop-hint">${m.hint}</div>`}
+    ${items}
+    <div class="pop-totals">
+      <span class="tot"><b>${fmt(m.kcal)}</b> kcal</span>
+      <span class="tot p"><b>${m.p}g</b> P</span>
+      <span class="tot c"><b>${m.c}g</b> C</span>
+      <span class="tot f"><b>${m.f}g</b> F</span>
+    </div>
+    <div class="pop-actions">
+      ${m.eaten
+        ? `<button class="btn undo">Eaten ✓ — tap to undo</button>`
+        : `<button class="btn primary">Mark eaten</button>`}
+      ${inline ? "" : `<button class="btn" onclick="closeAll()">Close</button>`}
+    </div>`;
+}
+
+// Render lists
+for (const v of ["A", "B", "C"]) {
+  document.getElementById("list" + v).innerHTML = MEALS.map((m, i) => rowHTML(m, i, v)).join("");
+}
+
+function tap(variant, i) {
+  const m = MEALS[i];
+  if (variant === "C") {
+    const d = document.getElementById("detailC" + i);
+    const row = document.getElementById("rowC" + i);
+    const open = d.classList.toggle("open");
+    row.classList.toggle("expanded", open);
+    d.style.maxHeight = open ? d.scrollHeight + "px" : "0";
+    return;
+  }
+  document.getElementById("pop" + variant).innerHTML = popHTML(m);
+  document.getElementById("phone" + variant).classList.add("open");
+}
+function closeV(variant) { document.getElementById("phone" + variant).classList.remove("open"); }
+function closeAll() { closeV("A"); closeV("B"); }
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll(); });
+</script>
+</body>
+</html>
