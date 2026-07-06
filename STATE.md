@@ -12,8 +12,9 @@ this file is the quick-resume summary).
 ## ⏩ NEW AGENT — START HERE
 
 *Last updated: 2026-07-06 (later session) · Popup per-food stats RESTYLED to the E3 open-column
-strip, owner-accepted + committed. Everything earlier (popup, unit fix, Seed v2) was deployed to
-prod 2026-07-06, but **this stats restyle is NOT deployed yet** — next `vercel --prod` picks it up.*
+strip + popup polish (hint/", cooked"), owner-accepted, committed (56548ae + 74f9665), and
+**DEPLOYED to prod** (`kal-l4skkkg43` READY, aliased to kal-delta.vercel.app; unauth 307→login,
+no runtime errors). Prod, `main`, and live Neon are all in sync. No deploy pending.*
 
 **✅ Prod is current (verified 2026-07-06):** deployment `kal-4aabw2v1t` READY, aliased to
 kal-delta.vercel.app; unauth `/` → 307 /login, login 200; no runtime errors in fresh logs.
@@ -543,8 +544,8 @@ design/groceries-{variants,combined,photo-options,bar-options}.html   v2 design 
 - **Unit-resolution fix + Seed v2 — built + live-data-applied 2026-07-02, COMMITTED.** Resolver
   lib, per-100g basis, raw/cooked yields, computed targets. Deploy pending owner go-ahead.
 - **Today meal-detail popup — DONE 2026-07-06, owner-accepted.** Variant B card + B3 per-serving
-  expand + Rise & sink animation. Deployed 2026-07-06. Per-food stats restyled to the **E3
-  open-column strip** later that day (owner-accepted, committed, NOT yet deployed).
+  expand + Rise & sink animation. Per-food stats restyled to the **E3 open-column strip** + polish
+  later that day (owner-accepted). All deployed to prod 2026-07-06.
 - **Phase 6 / v1.5+ — remaining deferrals:** prompt caching, inventory decrement,
   trends/weight-chart screen, chat history summarization.
 
