@@ -443,43 +443,50 @@ body {
   transform: rotate(90deg);
 }
 .mpop-serv {
-  padding: 2px 0 11px;
+  padding: 5px 0 12px;
   border-bottom: 1px solid var(--border);
 }
-.mpop-mini {
-  width: 100%;
-  border-collapse: collapse;
+/* E3 stat strip: four open columns — tiny kicker label, your value (colored),
+   1-serving basis underneath. No box; hairline dividers between columns. */
+.mpop-stats {
+  display: flex;
+  padding: 2px 0 1px;
+}
+.mpop-stats .ms {
+  flex: 1;
+  min-width: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  text-align: center;
 }
-.mpop-mini th,
-.mpop-mini td {
-  padding: 3.5px 0;
-  text-align: right;
-  font-weight: 400;
+.mpop-stats .ms + .ms {
+  border-left: 1px solid var(--border);
 }
-.mpop-mini th {
-  color: var(--faint);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+.ms-lab {
+  display: block;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-}
-.mpop-mini th:first-child,
-.mpop-mini td:first-child {
-  text-align: left;
-}
-.mpop-mini td:first-child {
   color: var(--faint);
+  line-height: 1.5;
 }
-.mpop-mini td {
-  color: var(--muted);
-}
-.mpop-mini tr.serv td {
+.ms-v {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.3;
+  white-space: nowrap;
+  font-weight: 500;
   color: var(--ink);
 }
-.mpop-mini tr.serv td.p { color: var(--protein); }
-.mpop-mini tr.serv td.c { color: var(--carbs); }
-.mpop-mini tr.serv td.f { color: var(--fat); }
+.mpop-stats .ms.p .ms-v { color: var(--protein); }
+.mpop-stats .ms.c .ms-v { color: var(--carbs); }
+.mpop-stats .ms.f .ms-v { color: var(--fat); }
+.ms-s {
+  display: block;
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--faint);
+  white-space: nowrap;
+}
 .mpop-totals {
   display: flex;
   gap: 18px;

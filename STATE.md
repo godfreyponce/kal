@@ -11,9 +11,9 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-07-06 · Today meal-detail popup BUILT + owner-accepted + committed (44980d1),
-and **DEPLOYED to prod** together with the unit-resolution fix + Seed v2 (53b2271 + c717b04) via
-`vercel --prod` 2026-07-06. Prod, `main`, and live Neon are all in sync. No deploy pending.*
+*Last updated: 2026-07-06 (later session) · Popup per-food stats RESTYLED to the E3 open-column
+strip, owner-accepted + committed. Everything earlier (popup, unit fix, Seed v2) was deployed to
+prod 2026-07-06, but **this stats restyle is NOT deployed yet** — next `vercel --prod` picks it up.*
 
 **✅ Prod is current (verified 2026-07-06):** deployment `kal-4aabw2v1t` READY, aliased to
 kal-delta.vercel.app; unauth `/` → 307 /login, login 200; no runtime errors in fresh logs.
@@ -166,6 +166,14 @@ bare multiplier. TDD on the data layer; suite 48/48 (11 files), `tsc` clean.
 - **⚠️ Name-collision lesson**: first cut named the row button `.mrow`, which CLOBBERED the
   Today macro-bars' existing `.mrow` (page.tsx) and broke that section — renamed to `.rowbtn`.
   Before adding a class to `globals.css`, grep it first.
+- **Stats restyle (2026-07-06 later session, owner-accepted):** owner found the B3 mini-table's
+  numbers hard to read. 4 mockup rounds (`design/today-meal-popup-stats-{variants,chips,oneline,
+  strip}.html`: chips → stacked chips → one-line strips → strip riffs) → owner picked **E3 "no
+  box"**: four open columns, tiny uppercase kicker label on top, your colored value, 1-serving
+  basis beneath (`70 / egg`), hairline dividers, no background. `StatStrip` replaced
+  `ServingTable` in `app/meal-popup.tsx`; `.mpop-mini` CSS swapped for `.mpop-stats`/`.ms-*`.
+  Weighed foods shorten the basis unit for the quarter-width column (`100 g (3.5 oz)` → `100 g`).
+  Data layer untouched; `tsc` clean, 48/48.
 
 ## Unit-resolution fix + Seed v2 (2026-07-02) — COMMITTED (53b2271), live-data APPLIED
 
@@ -504,10 +512,11 @@ db/apply-seed-v2.ts               surgical in-place apply to live DB (preserves 
 db/migrations/0003_*.sql          foods.raw_to_cooked_yield (APPLIED to Neon)
 — Today meal-detail popup (2026-07-06) —
 lib/today.test.ts                 getTodayView items: resolved amounts + 1-serving basis (sentinel 2099-04-04)
-app/meal-popup.tsx                the popup card (B + B3 expand + Rise & sink open/close)
+app/meal-popup.tsx                the popup card (B + E3 stat strip + Rise & sink open/close)
 design/today-meal-popup-variants.html                 round 1: popup style, 3 variants (owner picked B)
 design/today-meal-popup-b-item-expand.html            round 2: per-serving expand, 3 variants (owner picked B3)
 design/today-meal-popup-open-close-animations.html    round 3: open/close motion, 3 variants (owner picked Rise & sink)
+design/today-meal-popup-stats-{variants,chips,oneline,strip}.html   per-food stats restyle rounds 1-4 (owner picked E3 strip)
 lib/nutrition-lookup.ts (+test)   USDA FDC + OpenFoodFacts search, merged, scaled to label serving
 lib/label-vision.ts (+test)       Claude reads a Nutrition Facts photo → macros (parseLabelNutrition pure)
 app/api/nutrition/route.ts        GET ?q= → merged nutrition hits
@@ -532,7 +541,8 @@ design/groceries-{variants,combined,photo-options,bar-options}.html   v2 design 
 - **Unit-resolution fix + Seed v2 — built + live-data-applied 2026-07-02, COMMITTED.** Resolver
   lib, per-100g basis, raw/cooked yields, computed targets. Deploy pending owner go-ahead.
 - **Today meal-detail popup — DONE 2026-07-06, owner-accepted.** Variant B card + B3 per-serving
-  expand + Rise & sink animation. Deploy pending (same `vercel --prod` as the unit fix).
+  expand + Rise & sink animation. Deployed 2026-07-06. Per-food stats restyled to the **E3
+  open-column strip** later that day (owner-accepted, committed, NOT yet deployed).
 - **Phase 6 / v1.5+ — remaining deferrals:** prompt caching, inventory decrement,
   trends/weight-chart screen, chat history summarization.
 

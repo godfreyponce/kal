@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meal popup — per-food stats, 3 variants</title>
+<style>
+  :root {
+    --canvas: #f7f6f3;
+    --surface-2: #f0efeb;
+    --ink: #1f2421;
+    --ink-soft: #2f3437;
+    --muted: #787774;
+    --faint: #9b9a96;
+    --border: #e6e4df;
+    --protein: #9f2f2d;
+    --carbs: #8a6a1f;
+    --fat: #1f6c9f;
+    --green-bg: #e6efe5;
+    --green-tx: #346538;
+    --font-sans-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #b9b7b2; /* scrim-ish grey so the cards read like the real overlay */
+    color: var(--ink);
+    font-family: var(--font-sans-stack);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 20px 64px;
+  }
+  .page-head {
+    max-width: 1320px;
+    margin: 0 auto 28px;
+    color: #f4f3f0;
+  }
+  .page-head h1 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+  }
+  .page-head p {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 36px;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .variant { width: 396px; max-width: 100%; }
+  .vlabel {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f4f3f0;
+    margin-bottom: 4px;
+  }
+  .vdesc {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #eceae6;
+    opacity: 0.85;
+    margin-bottom: 12px;
+    min-height: 3.2em;
+  }
+
+  /* ---- the popup card, verbatim from globals.css ---- */
+  .mpop-card {
+    position: relative;
+    width: 100%;
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px 22px 22px;
+    box-shadow: 0 20px 60px rgba(31, 36, 33, 0.22);
+  }
+  .mpop-head { display: flex; align-items: center; gap: 12px; margin-bottom: 2px; }
+  .mpop-title {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    flex: 1; min-width: 0; line-height: 1.2;
+  }
+  .mpop-kcal { font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .mpop-x {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 9999px;
+    border: 0; background: var(--surface-2); color: var(--muted);
+    font-size: 13px; line-height: 1; cursor: pointer;
+  }
+  .mpop-hint { font-family: var(--font-mono); font-size: 11px; color: var(--faint); margin-bottom: 12px; }
+  .mpop-item {
+    width: 100%; display: flex; align-items: baseline; gap: 10px;
+    padding: 9px 0; border: 0; border-bottom: 1px solid var(--border);
+    background: none; font: inherit; text-align: left; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mpop-item.open, .mpop-item.last, .mpop-serv.last { border-bottom-color: transparent; }
+  .mi-name { flex: 1; min-width: 0; font-size: 14.5px; color: var(--ink-soft); }
+  .mi-amt { font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .mi-kcal { font-family: var(--font-mono); font-size: 12px; color: var(--faint); width: 42px; text-align: right; }
+  .mi-caret { color: var(--faint); font-size: 11px; align-self: center; transition: transform 0.18s; display: inline-block; }
+  .mpop-item.open .mi-caret { transform: rotate(90deg); }
+  .mpop-serv { padding: 2px 0 11px; border-bottom: 1px solid var(--border); }
+  .mpop-serv.hidden { display: none; }
+  .mpop-totals {
+    display: flex; gap: 18px; padding-top: 13px; margin-top: 4px;
+    border-top: 1px solid var(--ink);
+    font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+  }
+  .mpop-totals b { color: var(--ink); font-weight: 500; }
+  .mpop-totals .p b { color: var(--protein); }
+  .mpop-totals .c b { color: var(--carbs); }
+  .mpop-totals .f b { color: var(--fat); }
+  .mpop-btn {
+    width: 100%; margin-top: 18px; padding: 12px; border-radius: 12px;
+    border: 1px solid var(--green-bg); background: var(--green-bg); color: var(--green-tx);
+    font-family: var(--font-sans-stack); font-size: 14.5px; cursor: pointer;
+  }
+
+  /* =====================================================================
+     VARIANT A — same table, bigger & breathier
+     Numbers up from 11px to 13px, real row spacing, and the expansion sits
+     on its own soft panel so it separates from the list instead of blending
+     into it. "Your" row darkened from muted to near-ink.
+     ===================================================================== */
+  .va .mpop-serv { padding: 4px 0 12px; }
+  .va .panel {
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 10px 12px 11px;
+  }
+  .va table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 13px; }
+  .va th, .va td { padding: 5px 0; text-align: right; font-weight: 400; }
+  .va th { color: var(--faint); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 0; }
+  .va th:first-child, .va td:first-child { text-align: left; }
+  .va td:first-child { color: var(--faint); font-size: 11px; }
+  .va tr.serv td { color: var(--ink); border-bottom: 1px solid var(--border); }
+  .va tr.serv td:first-child { color: var(--muted); }
+  .va tr.serv td.p { color: var(--protein); }
+  .va tr.serv td.c { color: var(--carbs); }
+  .va tr.serv td.f { color: var(--fat); }
+  .va tr.yours td { color: var(--ink-soft); padding-bottom: 0; }
+
+  /* =====================================================================
+     VARIANT B — yours first, serving as a footnote
+     No grid, no header row to cross-reference. Your amount reads exactly
+     like the totals row you already scan (bold colored numbers, unit
+     labels attached). The 1-serving basis drops to one faint caption line.
+     ===================================================================== */
+  .vb .mpop-serv { padding: 3px 0 12px; }
+  .vb .yours {
+    display: flex; gap: 18px;
+    font-family: var(--font-mono); font-size: 12.5px; color: var(--muted);
+    padding: 3px 0 7px;
+  }
+  .vb .yours b { color: var(--ink); font-weight: 500; }
+  .vb .yours .p b { color: var(--protein); }
+  .vb .yours .c b { color: var(--carbs); }
+  .vb .yours .f b { color: var(--fat); }
+  .vb .basis {
+    font-family: var(--font-mono); font-size: 10.5px; color: var(--faint);
+  }
+
+  /* =====================================================================
+     VARIANT C — labeled chips
+     Your amount as tinted pills, each carrying its own label — nothing to
+     line up or cross-reference, color + shape do the work. Serving basis
+     is the same faint caption line as B.
+     ===================================================================== */
+  .vc .mpop-serv { padding: 5px 0 12px; }
+  .vc .chips { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 8px; }
+  .vc .chip {
+    font-family: var(--font-mono); font-size: 11.5px;
+    padding: 3px 9px; border-radius: 9999px;
+    background: var(--surface-2); color: var(--ink);
+  }
+  .vc .chip b { font-weight: 500; }
+  .vc .chip.p { background: rgba(159, 47, 45, 0.09); color: var(--protein); }
+  .vc .chip.c { background: rgba(138, 106, 31, 0.10); color: var(--carbs); }
+  .vc .chip.f { background: rgba(31, 108, 159, 0.09); color: var(--fat); }
+  .vc .basis { font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Per-food stats — 3 treatments</h1>
+  <p>only the expanded stats block changes; tap the food rows — egg &amp; peanut butter start open</p>
+</div>
+
+<div class="row" id="row"></div>
+
+<script>
+// Breakfast data (real plan numbers)
+const FOODS = [
+  { name: "Egg, large",        amt: "4 egg",    kcal: 280, serv: "1 egg",    s: [70, "6g", "0.5g", "5g"],  y: [280, "24g", "2g", "20g"], open: true  },
+  { name: "Whole wheat bread", amt: "4 slice",  kcal: 240, serv: "1 slice",  s: [60, "3g", "11g", "1g"],   y: [240, "12g", "44g", "4g"], open: false },
+  { name: "Peanut butter",     amt: "2 tbsp",   kcal: 190, serv: "1 tbsp",   s: [95, "4g", "3.5g", "8g"],  y: [190, "8g", "7g", "16g"],  open: true  },
+  { name: "Banana, medium",    amt: "1 banana", kcal: 105, serv: "1 banana", s: [105, "1.3g", "27g", "0.4g"], y: [105, "1.3g", "27g", "0.4g"], open: false },
+];
+
+// per-variant renderers for the expanded stats block
+const EXPANSIONS = {
+  va: (f) => `
+    <div class="panel">
+      <table>
+        <thead><tr><th></th><th>kcal</th><th>P</th><th>C</th><th>F</th></tr></thead>
+        <tbody>
+          <tr class="serv"><td>1 serving (${f.serv})</td><td>${f.s[0]}</td><td class="p">${f.s[1]}</td><td class="c">${f.s[2]}</td><td class="f">${f.s[3]}</td></tr>
+          <tr class="yours"><td>your ${f.amt}</td><td>${f.y[0]}</td><td>${f.y[1]}</td><td>${f.y[2]}</td><td>${f.y[3]}</td></tr>
+        </tbody>
+      </table>
+    </div>`,
+  vb: (f) => `
+    <div class="yours">
+      <span><b>${f.y[0]}</b> kcal</span>
+      <span class="p"><b>${f.y[1]}</b> P</span>
+      <span class="c"><b>${f.y[2]}</b> C</span>
+      <span class="f"><b>${f.y[3]}</b> F</span>
+    </div>
+    <div class="basis">1 serving (${f.serv}) = ${f.s[0]} kcal, ${f.s[1]} P, ${f.s[2]} C, ${f.s[3]} F</div>`,
+  vc: (f) => `
+    <div class="chips">
+      <span class="chip"><b>${f.y[0]}</b> kcal</span>
+      <span class="chip p"><b>${f.y[1]}</b> protein</span>
+      <span class="chip c"><b>${f.y[2]}</b> carbs</span>
+      <span class="chip f"><b>${f.y[3]}</b> fat</span>
+    </div>
+    <div class="basis">1 serving (${f.serv}) = ${f.s[0]} kcal, ${f.s[1]} P, ${f.s[2]} C, ${f.s[3]} F</div>`,
+};
+
+const VARIANTS = [
+  { key: "va", label: "A — bigger &amp; breathier", desc: "same two-row table, 13px numbers, on its own soft panel so it separates from the list" },
+  { key: "vb", label: "B — yours first", desc: "your amount styled like the totals row you already read; 1-serving demoted to a faint footnote" },
+  { key: "vc", label: "C — labeled chips", desc: "tinted pills with labels attached — no columns, no header row to cross-reference" },
+];
+
+function card(v) {
+  const items = FOODS.map((f, i) => {
+    const last = i === FOODS.length - 1 ? " last" : "";
+    return `
+      <button type="button" class="mpop-item${f.open ? " open" : ""}${last}" onclick="toggle(this)">
+        <span class="mi-name">${f.name}</span>
+        <span class="mi-amt">${f.amt}</span>
+        <span class="mi-kcal">${f.kcal}</span>
+        <span class="mi-caret">›</span>
+      </button>
+      <div class="mpop-serv${last}${f.open ? "" : " hidden"}">${EXPANSIONS[v.key](f)}</div>`;
+  }).join("");
+  return `
+    <div class="variant ${v.key}">
+      <div class="vlabel">${v.label}</div>
+      <div class="vdesc">${v.desc}</div>
+      <div class="mpop-card">
+        <div class="mpop-head">
+          <span class="mpop-title">Breakfast</span>
+          <span class="mpop-kcal">815 kcal</span>
+          <button type="button" class="mpop-x">✕</button>
+        </div>
+        <div class="mpop-hint">morning — tap a food for one serving</div>
+        ${items}
+        <div class="mpop-totals">
+          <span><b>815</b> kcal</span>
+          <span class="p"><b>48g</b> P</span>
+          <span class="c"><b>80g</b> C</span>
+          <span class="f"><b>40g</b> F</span>
+        </div>
+        <button type="button" class="mpop-btn">Eaten ✓ — tap to undo</button>
+      </div>
+    </div>`;
+}
+
+document.getElementById("row").innerHTML = VARIANTS.map(card).join("");
+
+function toggle(btn) {
+  const serv = btn.nextElementSibling;
+  const open = serv.classList.toggle("hidden");
+  btn.classList.toggle("open", !open);
+}
+</script>
+
+</body>
+</html>

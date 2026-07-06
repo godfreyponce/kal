@@ -12,35 +12,30 @@ const g = (x: number) => (x < 10 && x % 1 !== 0 ? x.toFixed(1) : String(Math.rou
 // amount, since the macros are computed from the cooked weight.
 const amt = (it: TodayMealItem) => (it.rawLabel ? `${it.amountLabel} cooked` : it.amountLabel);
 
-function ServingTable({ it }: { it: TodayMealItem }) {
+// Short per-serving unit for the strip's sub-lines: "100 g (3.5 oz)" → "100 g",
+// "1 egg" → "egg" — the full servingLabel doesn't fit a quarter-width column.
+const per = (s: string) => s.replace(/\s*\(.*\)$/, "").replace(/^1 /, "");
+
+function StatStrip({ it }: { it: TodayMealItem }) {
+  const unit = per(it.servingLabel);
+  const cols = [
+    { cls: "", lab: "kcal", v: n(it.kcal), s: n(it.serving.kcal) },
+    { cls: " p", lab: "protein", v: `${g(it.proteinG)}g`, s: `${g(it.serving.proteinG)}g` },
+    { cls: " c", lab: "carbs", v: `${g(it.carbsG)}g`, s: `${g(it.serving.carbsG)}g` },
+    { cls: " f", lab: "fat", v: `${g(it.fatG)}g`, s: `${g(it.serving.fatG)}g` },
+  ];
   return (
-    <table className="mpop-mini">
-      <thead>
-        <tr>
-          <th />
-          <th>kcal</th>
-          <th>P</th>
-          <th>C</th>
-          <th>F</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr className="serv">
-          <td>1 serving ({it.servingLabel})</td>
-          <td>{n(it.serving.kcal)}</td>
-          <td className="p">{g(it.serving.proteinG)}g</td>
-          <td className="c">{g(it.serving.carbsG)}g</td>
-          <td className="f">{g(it.serving.fatG)}g</td>
-        </tr>
-        <tr>
-          <td>your {amt(it)}</td>
-          <td>{n(it.kcal)}</td>
-          <td>{g(it.proteinG)}g</td>
-          <td>{g(it.carbsG)}g</td>
-          <td>{g(it.fatG)}g</td>
-        </tr>
-      </tbody>
-    </table>
+    <div className="mpop-stats">
+      {cols.map((c) => (
+        <span key={c.lab} className={`ms${c.cls}`}>
+          <span className="ms-lab">{c.lab}</span>
+          <span className="ms-v">{c.v}</span>
+          <span className="ms-s">
+            {c.s} / {unit}
+          </span>
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -132,7 +127,7 @@ export function MealPopup({
               </button>
               {open && (
                 <div className={`mpop-serv${last}`}>
-                  <ServingTable it={it} />
+                  <StatStrip it={it} />
                 </div>
               )}
             </div>
