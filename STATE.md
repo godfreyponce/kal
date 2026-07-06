@@ -173,7 +173,9 @@ bare multiplier. TDD on the data layer; suite 48/48 (11 files), `tsc` clean.
   basis beneath (`70 / egg`), hairline dividers, no background. `StatStrip` replaced
   `ServingTable` in `app/meal-popup.tsx`; `.mpop-mini` CSS swapped for `.mpop-stats`/`.ms-*`.
   Weighed foods shorten the basis unit for the quarter-width column (`100 g (3.5 oz)` → `100 g`).
-  Data layer untouched; `tsc` clean, 48/48.
+  Data layer untouched; `tsc` clean, 48/48. Same-day polish (owner-accepted): hint line now shows
+  only the timeHint (the "tap a food for one serving" text is gone), and a trailing ", cooked" is
+  stripped from popup food names (display-only — the amount already says cooked; DB/chat unchanged).
 
 ## Unit-resolution fix + Seed v2 (2026-07-02) — COMMITTED (53b2271), live-data APPLIED
 

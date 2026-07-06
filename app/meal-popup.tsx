@@ -11,6 +11,9 @@ const g = (x: number) => (x < 10 && x % 1 !== 0 ? x.toFixed(1) : String(Math.rou
 // A raw hint means the food is cooked-basis (meats, rice) — say so on the
 // amount, since the macros are computed from the cooked weight.
 const amt = (it: TodayMealItem) => (it.rawLabel ? `${it.amountLabel} cooked` : it.amountLabel);
+// The amount already says "cooked" for those foods — drop the redundant
+// ", cooked" from the display name ("Chicken breast, cooked" → "Chicken breast").
+const displayName = (s: string) => s.replace(/,\s*cooked$/i, "");
 
 // Short per-serving unit for the strip's sub-lines: "100 g (3.5 oz)" → "100 g",
 // "1 egg" → "egg" — the full servingLabel doesn't fit a quarter-width column.
@@ -102,9 +105,7 @@ export function MealPopup({
             ✕
           </button>
         </div>
-        <div className="mpop-hint">
-          {meal.timeHint ? `${meal.timeHint} — ` : ""}tap a food for one serving
-        </div>
+        {meal.timeHint && <div className="mpop-hint">{meal.timeHint}</div>}
         {meal.items.map((it, j) => {
           const open = expanded.has(j);
           // The last line before the totals' dark rule carries no grey border.
@@ -118,7 +119,7 @@ export function MealPopup({
                 onClick={() => toggleItem(j)}
               >
                 <span className="mi-name">
-                  {it.foodName}
+                  {displayName(it.foodName)}
                   {it.rawLabel && <span className="mi-raw">{it.rawLabel}</span>}
                 </span>
                 <span className="mi-amt">{amt(it)}</span>
