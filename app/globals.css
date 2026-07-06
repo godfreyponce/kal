@@ -283,6 +283,241 @@ body {
   font-size: 11px;
   color: var(--faint);
 }
+.rowbtn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.mchev {
+  color: var(--faint);
+  font-size: 13px;
+}
+
+/* meal-detail popup (variant B card, B3 per-serving expand) */
+.mpop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+/* Rise & sink: the card drifts up into place on open and sinks away on close.
+   Both directions are transitions driven by the .open class on .mpop; the
+   component unmounts 180ms after dropping it (just past the 0.17s exit). */
+.mpop-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(31, 36, 33, 0.32);
+  opacity: 0;
+  transition: opacity 0.16s ease-in;
+}
+.mpop.open .mpop-scrim {
+  opacity: 1;
+  transition: opacity 0.22s ease-out;
+}
+.mpop-card {
+  position: relative;
+  width: 100%;
+  max-width: 396px;
+  max-height: 84vh;
+  overflow-y: auto;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px 22px 22px;
+  box-shadow: 0 20px 60px rgba(31, 36, 33, 0.22);
+  opacity: 0;
+  transform: translateY(26px) scale(0.98);
+  transition: opacity 0.17s ease-in, transform 0.17s cubic-bezier(0.4, 0, 1, 1);
+}
+.mpop.open .mpop-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.24s ease-out, transform 0.26s cubic-bezier(0.32, 0.72, 0.33, 1);
+}
+/* the ✕ lives IN the header row so it never covers the kcal */
+.mpop-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+.mpop-title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.2;
+}
+.mpop-kcal {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.mpop-x {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  border: 0;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.mpop-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--faint);
+  margin-bottom: 12px;
+}
+.mpop-item {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.mpop-item.open,
+.mpop-item.last,
+.mpop-serv.last {
+  border-bottom-color: transparent;
+}
+.mi-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14.5px;
+  color: var(--ink-soft);
+}
+.mi-raw {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--faint);
+}
+.mi-amt {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.mi-kcal {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--faint);
+  width: 42px;
+  text-align: right;
+}
+.mi-caret {
+  color: var(--faint);
+  font-size: 11px;
+  align-self: center;
+  transition: transform 0.18s;
+}
+.mpop-item.open .mi-caret {
+  transform: rotate(90deg);
+}
+.mpop-serv {
+  padding: 2px 0 11px;
+  border-bottom: 1px solid var(--border);
+}
+.mpop-mini {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.mpop-mini th,
+.mpop-mini td {
+  padding: 3.5px 0;
+  text-align: right;
+  font-weight: 400;
+}
+.mpop-mini th {
+  color: var(--faint);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mpop-mini th:first-child,
+.mpop-mini td:first-child {
+  text-align: left;
+}
+.mpop-mini td:first-child {
+  color: var(--faint);
+}
+.mpop-mini td {
+  color: var(--muted);
+}
+.mpop-mini tr.serv td {
+  color: var(--ink);
+}
+.mpop-mini tr.serv td.p { color: var(--protein); }
+.mpop-mini tr.serv td.c { color: var(--carbs); }
+.mpop-mini tr.serv td.f { color: var(--fat); }
+.mpop-totals {
+  display: flex;
+  gap: 18px;
+  padding-top: 13px;
+  margin-top: 4px;
+  border-top: 1px solid var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+.mpop-totals b {
+  color: var(--ink);
+  font-weight: 500;
+}
+.mpop-totals .p b { color: var(--protein); }
+.mpop-totals .c b { color: var(--carbs); }
+.mpop-totals .f b { color: var(--fat); }
+.mpop-btn {
+  width: 100%;
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--canvas);
+  font-family: var(--font-sans-stack);
+  font-size: 14.5px;
+  cursor: pointer;
+}
+.mpop-btn.undo {
+  background: var(--green-bg);
+  color: var(--green-tx);
+  border-color: var(--green-bg);
+}
+.mpop-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
 
 /* weigh-in (Sunday) */
 .weigh {

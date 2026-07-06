@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kal — Meal popup · open/close animations, 3 variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --canvas: #F7F6F3;
+    --surface-2: #F0EFEB;
+    --ink: #1F2421;
+    --ink-soft: #2F3437;
+    --muted: #787774;
+    --faint: #9B9A96;
+    --border: #E6E4DF;
+    --green-bg: #E6EFE5;  --green-tx: #346538;
+    --protein: #9F2F2D;  --carbs: #8A6A1F;  --fat: #1F6C9F;
+    --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+    --serif: 'Newsreader', Georgia, serif;
+    --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans); background: var(--canvas); color: var(--ink);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; padding: 64px 24px 96px;
+  }
+
+  /* ---- Gallery scaffolding ---- */
+  .page-head { max-width: 900px; margin: 0 auto 56px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 14px; }
+  .page-head h1 { font-family: var(--serif); font-weight: 500; font-size: 44px; line-height: 1.08; letter-spacing: -0.03em; margin-bottom: 18px; }
+  .page-head p { color: var(--muted); max-width: 62ch; font-size: 15.5px; }
+  .variants { max-width: 1360px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 48px; justify-content: center; }
+  .variant { width: 400px; }
+  .v-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+  .v-name { font-family: var(--serif); font-size: 24px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .v-desc { color: var(--muted); font-size: 13.5px; margin-bottom: 20px; min-height: 88px; }
+
+  /* ---- Phone frame ---- */
+  .phone {
+    position: relative; width: 400px; height: 660px; overflow: hidden;
+    background: var(--canvas); border: 1px solid var(--border); border-radius: 28px;
+    box-shadow: 0 24px 60px rgba(31,36,33,0.10);
+  }
+  .screen { padding: 26px 22px; height: 100%; overflow-y: auto; }
+  .kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+  .meals-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 6px; }
+  .meal-row {
+    display: flex; align-items: center; gap: 14px; padding: 16px 2px;
+    border-bottom: 1px solid var(--border); cursor: pointer; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .meal-row:active { background: var(--surface-2); }
+  .check {
+    width: 30px; height: 30px; border-radius: 9px; flex: none;
+    border: 1px solid var(--border); background: #fff;
+    display: grid; place-items: center; font-size: 15px;
+  }
+  .eaten .check { background: var(--green-bg); border-color: transparent; color: var(--green-tx); }
+  .meal-main { flex: 1; min-width: 0; }
+  .meal-name { font-size: 17.5px; letter-spacing: -0.01em; }
+  .eaten .meal-name { color: var(--faint); }
+  .meal-hint { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .meal-kcal { font-family: var(--mono); font-size: 13px; color: var(--faint); }
+  .chev { color: var(--faint); font-size: 13px; margin-left: 2px; }
+
+  /* ---- The shipped card (variant B + B3), animation-neutral base ---- */
+  .scrim {
+    position: absolute; inset: 0; background: rgba(31,36,33,0.32);
+    opacity: 0; pointer-events: none;
+  }
+  .phone.open .scrim { opacity: 1; pointer-events: auto; }
+  .modal {
+    position: absolute; left: 20px; right: 20px; top: 50%;
+    opacity: 0; pointer-events: none;
+    background: var(--canvas); border-radius: 18px; padding: 20px 22px 22px;
+    box-shadow: 0 20px 60px rgba(31,36,33,0.22); border: 1px solid var(--border);
+    max-height: 84%; overflow-y: auto;
+  }
+  .phone.open .modal { opacity: 1; pointer-events: auto; }
+
+  .pop-head { display: flex; align-items: center; gap: 12px; margin-bottom: 2px; }
+  .pop-title { font-family: var(--serif); font-size: 24px; font-weight: 500; letter-spacing: -0.02em; flex: 1; min-width: 0; line-height: 1.2; }
+  .pop-kcal { font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .x {
+    flex: none; width: 28px; height: 28px; border-radius: 50%; border: 0;
+    background: var(--surface-2); color: var(--muted); font-size: 13px;
+    cursor: pointer; line-height: 1;
+  }
+  .pop-hint { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-bottom: 12px; }
+  .item {
+    display: flex; align-items: baseline; gap: 10px; padding: 9px 0;
+    border-bottom: 1px solid var(--border); cursor: pointer; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .item.open, .item.last, .serv.last { border-bottom-color: transparent; }
+  .item-name { flex: 1; font-size: 14.5px; color: var(--ink-soft); min-width: 0; }
+  .item-raw { display: block; font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
+  .item-amt { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .item-kcal { font-family: var(--mono); font-size: 12px; color: var(--faint); width: 42px; text-align: right; }
+  .item-caret { color: var(--faint); font-size: 11px; align-self: center; transition: transform 0.18s; }
+  .item.open .item-caret { transform: rotate(90deg); }
+  .serv { padding: 2px 0 11px; border-bottom: 1px solid var(--border); display: none; }
+  .serv.open { display: block; }
+  .mini { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+  .mini th, .mini td { padding: 3.5px 0; text-align: right; font-weight: 400; }
+  .mini th { color: var(--faint); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .mini th:first-child, .mini td:first-child { text-align: left; }
+  .mini td:first-child { color: var(--faint); }
+  .mini td { color: var(--muted); }
+  .mini tr.servrow td { color: var(--ink); }
+  .mini tr.servrow td.p { color: var(--protein); }
+  .mini tr.servrow td.c { color: var(--carbs); }
+  .mini tr.servrow td.f { color: var(--fat); }
+  .pop-totals {
+    display: flex; gap: 18px; padding-top: 13px; margin-top: 4px;
+    border-top: 1px solid var(--ink); font-family: var(--mono); font-size: 12px; color: var(--muted);
+  }
+  .pop-totals b { color: var(--ink); font-weight: 500; }
+  .pop-totals .p b { color: var(--protein); }
+  .pop-totals .c b { color: var(--carbs); }
+  .pop-totals .f b { color: var(--fat); }
+  .btn {
+    width: 100%; margin-top: 18px; padding: 12px; border-radius: 12px;
+    border: 1px solid var(--ink); background: var(--ink); color: var(--canvas);
+    font-family: var(--sans); font-size: 14.5px; cursor: pointer;
+  }
+  .btn.undo { background: var(--green-bg); color: var(--green-tx); border-color: var(--green-bg); }
+
+  /* =========================================================
+     ANIMATION VARIANTS — the only thing that differs below.
+     Open = .phone gets .open; close = it's removed. Both
+     directions are pure transitions so close mirrors open.
+     ========================================================= */
+
+  /* ---- ANIM 1 · Soft fade — what's built now, plus a true exit ---- */
+  #phoneN1 .scrim { transition: opacity 0.15s ease-in; }
+  #phoneN1.open .scrim { transition: opacity 0.18s ease-out; }
+  #phoneN1 .modal {
+    transform: translateY(-50%) scale(0.96);
+    transition: opacity 0.15s ease-in, transform 0.15s ease-in;
+  }
+  #phoneN1.open .modal {
+    transform: translateY(-50%) scale(1);
+    transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+  }
+
+  /* ---- ANIM 2 · Spring pop — overshoot in, quick shrink out ---- */
+  #phoneN2 .scrim { transition: opacity 0.14s ease-in; }
+  #phoneN2.open .scrim { transition: opacity 0.2s ease-out; }
+  #phoneN2 .modal {
+    transform: translateY(-50%) scale(0.9);
+    transition: opacity 0.13s ease-in, transform 0.13s ease-in;
+  }
+  #phoneN2.open .modal {
+    transform: translateY(-50%) scale(1);
+    /* springy overshoot: scale passes 1 then settles */
+    transition: opacity 0.16s ease-out, transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* ---- ANIM 3 · Rise & sink — card floats up in, sinks away out ---- */
+  #phoneN3 .scrim { transition: opacity 0.16s ease-in; }
+  #phoneN3.open .scrim { transition: opacity 0.22s ease-out; }
+  #phoneN3 .modal {
+    transform: translateY(calc(-50% + 26px)) scale(0.98);
+    transition: opacity 0.17s ease-in, transform 0.17s cubic-bezier(0.4, 0, 1, 1);
+  }
+  #phoneN3.open .modal {
+    transform: translateY(-50%) scale(1);
+    transition: opacity 0.24s ease-out, transform 0.26s cubic-bezier(0.32, 0.72, 0.33, 1);
+  }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="eyebrow">Kal — design exploration, round 3</div>
+  <h1>Opening &amp; closing the meal card</h1>
+  <p>Same card everywhere (your picked B + B3, last grey line removed) — only the open/close
+     motion differs. Every variant now has a real <em>exit</em> animation, not just an entrance.
+     Tap a meal to open; close with ✕, the scrim, or Esc. Open and close a few times in each
+     phone — the feel is the whole decision. Timings are in the CSS, one block per variant,
+     easy to tweak.</p>
+</div>
+
+<div class="variants">
+
+  <!-- ============ ANIM 1 ============ -->
+  <section class="variant">
+    <div class="v-label">Animation 1</div>
+    <div class="v-name">Soft fade</div>
+    <div class="v-desc">What's built today, completed with a mirrored exit: fade + gentle scale
+      from 96%, and on close it recedes the same way, slightly faster (0.18s in, 0.15s out).
+      Calm and invisible — motion you feel but never notice.</div>
+    <div class="phone" id="phoneN1">
+      <div class="screen">
+        <div class="meals-head"><span class="kicker">Meals</span><span class="kicker">Tap for details</span></div>
+        <div id="listN1"></div>
+      </div>
+      <div class="scrim" onclick="closeV('N1')"></div>
+      <div class="modal" id="modalN1"></div>
+    </div>
+  </section>
+
+  <!-- ============ ANIM 2 ============ -->
+  <section class="variant">
+    <div class="v-label">Animation 2</div>
+    <div class="v-name">Spring pop</div>
+    <div class="v-desc">Playful: the card pops in from 90% with a small overshoot past full size
+      before settling (0.34s spring), and shrinks away quickly on close (0.13s). The most
+      "alive" of the three — motion you do notice, in a good way.</div>
+    <div class="phone" id="phoneN2">
+      <div class="screen">
+        <div class="meals-head"><span class="kicker">Meals</span><span class="kicker">Tap for details</span></div>
+        <div id="listN2"></div>
+      </div>
+      <div class="scrim" onclick="closeV('N2')"></div>
+      <div class="modal" id="modalN2"></div>
+    </div>
+  </section>
+
+  <!-- ============ ANIM 3 ============ -->
+  <section class="variant">
+    <div class="v-label">Animation 3</div>
+    <div class="v-name">Rise &amp; sink</div>
+    <div class="v-desc">iOS-sheet energy without the sheet: the card drifts up ~26px into place
+      on open, and sinks back down as it fades on close. Directional motion — feels like the
+      card came from the meal list and returns to it.</div>
+    <div class="phone" id="phoneN3">
+      <div class="screen">
+        <div class="meals-head"><span class="kicker">Meals</span><span class="kicker">Tap for details</span></div>
+        <div id="listN3"></div>
+      </div>
+      <div class="scrim" onclick="closeV('N3')"></div>
+      <div class="modal" id="modalN3"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// Today's real plan (Seed v2) with per-serving basis — same data as the app.
+const MEALS = [
+  { name: "Breakfast", hint: "morning", eaten: true,
+    items: [
+      { n: "Egg, large",        amt: "4 egg",   qty: 4, serv: { desc: "1 egg",           kcal: 70,  p: 6,   c: 0.5, f: 5 } },
+      { n: "Whole wheat bread", amt: "4 slice", qty: 4, serv: { desc: "1 slice",         kcal: 60,  p: 4,   c: 11,  f: 1 } },
+      { n: "Peanut butter",     amt: "2 tbsp",  qty: 2, serv: { desc: "1 tbsp",          kcal: 95,  p: 3.5, c: 3.5, f: 8 } },
+      { n: "Banana, medium",    amt: "1 banana", qty: 1, serv: { desc: "1 banana",       kcal: 105, p: 1.3, c: 27,  f: 0.4 } },
+    ] },
+  { name: "Lunch", hint: "midday", eaten: false,
+    items: [
+      { n: "Chicken breast, cooked", amt: "170 g (6 oz) cooked", raw: "raw ≈ 227 g (8 oz)", qty: 1.7, serv: { desc: "100 g (3.5 oz)", kcal: 165, p: 31,  c: 0,  f: 3.6 } },
+      { n: "White rice, cooked",     amt: "400 g (14 oz) cooked", raw: "raw ≈ 133 g (4.5 oz)", qty: 4,   serv: { desc: "100 g (3.5 oz)", kcal: 130, p: 2.7, c: 28, f: 0.3 } },
+      { n: "Canola oil",             amt: "1 tbsp",                                  qty: 1,   serv: { desc: "1 tbsp",         kcal: 120, p: 0,   c: 0,  f: 14 } },
+      { n: "Frozen mixed vegetables, cooked", amt: "250 g (9 oz)",                   qty: 2.5, serv: { desc: "100 g (3.5 oz)", kcal: 55,  p: 2.5, c: 11, f: 0.4 } },
+    ] },
+  { name: "Snack", hint: "afternoon", eaten: false,
+    items: [
+      { n: "Whole wheat bread", amt: "2 slice",  qty: 2, serv: { desc: "1 slice",  kcal: 60,  p: 4,   c: 11,  f: 1 } },
+      { n: "Peanut butter",     amt: "2 tbsp",   qty: 2, serv: { desc: "1 tbsp",   kcal: 95,  p: 3.5, c: 3.5, f: 8 } },
+      { n: "Banana, medium",    amt: "1 banana", qty: 1, serv: { desc: "1 banana", kcal: 105, p: 1.3, c: 27,  f: 0.4 } },
+    ] },
+  { name: "Dinner", hint: "post-soccer ~11pm", eaten: false,
+    items: [
+      { n: "Chicken breast, cooked", amt: "170 g (6 oz) cooked", raw: "raw ≈ 227 g (8 oz)", qty: 1.7, serv: { desc: "100 g (3.5 oz)", kcal: 165, p: 31,  c: 0,  f: 3.6 } },
+      { n: "White rice, cooked",     amt: "400 g (14 oz) cooked", raw: "raw ≈ 133 g (4.5 oz)", qty: 4,   serv: { desc: "100 g (3.5 oz)", kcal: 130, p: 2.7, c: 28, f: 0.3 } },
+      { n: "Canola oil",             amt: "1 tbsp",                                  qty: 1,   serv: { desc: "1 tbsp",         kcal: 120, p: 0,   c: 0,  f: 14 } },
+      { n: "Frozen mixed vegetables, cooked", amt: "250 g (9 oz)",                   qty: 2.5, serv: { desc: "100 g (3.5 oz)", kcal: 55,  p: 2.5, c: 11, f: 0.4 } },
+    ] },
+  { name: "Peanuts (graze)", hint: "throughout day", eaten: false,
+    items: [
+      { n: "Dry-roasted peanuts, salted", amt: "40 g (1.5 oz)", qty: 0.4, serv: { desc: "100 g (3.5 oz)", kcal: 643, p: 28.6, c: 14.3, f: 53.6 } },
+    ] },
+];
+
+const g = (x) => (x < 10 && x % 1 !== 0 ? Math.round(x * 10) / 10 : Math.round(x));
+const fmt = (n) => n.toLocaleString("en-US");
+for (const m of MEALS) {
+  m.kcal = 0; m.p = 0; m.c = 0; m.f = 0;
+  for (const it of m.items) {
+    it.mealKcal = Math.round(it.serv.kcal * it.qty);
+    it.mealP = g(it.serv.p * it.qty); it.mealC = g(it.serv.c * it.qty); it.mealF = g(it.serv.f * it.qty);
+    m.kcal += it.mealKcal; m.p += it.mealP; m.c += it.mealC; m.f += it.mealF;
+  }
+  m.p = g(m.p); m.c = g(m.c); m.f = g(m.f);
+}
+
+function rowHTML(m, i, v) {
+  return `
+    <div class="meal-row ${m.eaten ? "eaten" : ""}" onclick="openMeal('${v}', ${i})">
+      <span class="check">${m.eaten ? "✓" : ""}</span>
+      <span class="meal-main">
+        <div class="meal-name">${m.name}</div>
+        <div class="meal-hint">${m.hint}</div>
+      </span>
+      <span class="meal-kcal">${fmt(m.kcal)}</span>
+      <span class="chev">›</span>
+    </div>`;
+}
+
+function servHTML(it) {
+  const s = it.serv;
+  return `<table class="mini">
+    <tr><th></th><th>kcal</th><th>P</th><th>C</th><th>F</th></tr>
+    <tr class="servrow">
+      <td>1 serving (${s.desc})</td>
+      <td>${s.kcal}</td><td class="p">${g(s.p)}g</td><td class="c">${g(s.c)}g</td><td class="f">${g(s.f)}g</td>
+    </tr>
+    <tr>
+      <td>your ${it.amt}</td>
+      <td>${it.mealKcal}</td><td>${it.mealP}g</td><td>${it.mealC}g</td><td>${it.mealF}g</td>
+    </tr>
+  </table>`;
+}
+
+function popHTML(m, v, mi) {
+  const items = m.items.map((it, j) => {
+    const last = j === m.items.length - 1 ? " last" : "";
+    return `
+    <div class="item${last}" id="item${v}-${mi}-${j}" onclick="toggleServ('${v}', ${mi}, ${j})">
+      <span class="item-name">${it.n}${it.raw ? `<span class="item-raw">${it.raw}</span>` : ""}</span>
+      <span class="item-amt">${it.amt}</span>
+      <span class="item-kcal">${it.mealKcal}</span>
+      <span class="item-caret">›</span>
+    </div>
+    <div class="serv${last}" id="serv${v}-${mi}-${j}">${servHTML(it)}</div>`;
+  }).join("");
+  return `
+    <div class="pop-head">
+      <span class="pop-title">${m.name}</span>
+      <span class="pop-kcal">${fmt(m.kcal)} kcal</span>
+      <button class="x" onclick="closeV('${v}')">✕</button>
+    </div>
+    <div class="pop-hint">${m.hint} — tap a food for one serving</div>
+    ${items}
+    <div class="pop-totals">
+      <span><b>${fmt(m.kcal)}</b> kcal</span>
+      <span class="p"><b>${m.p}g</b> P</span>
+      <span class="c"><b>${m.c}g</b> C</span>
+      <span class="f"><b>${m.f}g</b> F</span>
+    </div>
+    <button class="btn${m.eaten ? " undo" : ""}">${m.eaten ? "Eaten ✓ — tap to undo" : "Mark eaten"}</button>`;
+}
+
+const VS = ["N1", "N2", "N3"];
+for (const v of VS) {
+  document.getElementById("list" + v).innerHTML = MEALS.map((m, i) => rowHTML(m, i, v)).join("");
+}
+
+function openMeal(v, i) {
+  document.getElementById("modal" + v).innerHTML = popHTML(MEALS[i], v, i);
+  // let the closed styles paint once so the open transition runs
+  requestAnimationFrame(() => document.getElementById("phone" + v).classList.add("open"));
+}
+function closeV(v) { document.getElementById("phone" + v).classList.remove("open"); }
+function toggleServ(v, mi, j) {
+  document.getElementById(`serv${v}-${mi}-${j}`).classList.toggle("open");
+  document.getElementById(`item${v}-${mi}-${j}`).classList.toggle("open");
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") VS.forEach(closeV); });
+</script>
+</body>
+</html>

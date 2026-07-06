@@ -3,6 +3,22 @@ import { db } from "../db";
 import { foods, mealItems, meals, mealStatus, weighIns } from "../db/schema";
 import { getDaySummary, type DaySummary } from "./day-summary";
 import type { MealStatusValue } from "./meal-status";
+import { resolveItem } from "./resolve-item";
+
+/** One plan item, resolved for display — never a bare multiplier. */
+export type TodayMealItem = {
+  foodName: string;
+  /** The planned amount on the plate: "170 g (6 oz)", "4 egg". */
+  amountLabel: string;
+  rawLabel: string | null;
+  kcal: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  /** The food's 1-serving basis: "100 g (3.5 oz)", "1 egg". */
+  servingLabel: string;
+  serving: { kcal: number; proteinG: number; carbsG: number; fatG: number };
+};
 
 export type TodayMeal = {
   id: number;
@@ -12,6 +28,7 @@ export type TodayMeal = {
   status: MealStatusValue;
   /** The next meal still to eat — highlighted as "now" in the UI. */
   isNow: boolean;
+  items: TodayMealItem[];
 };
 
 export type WeighIn = { date: string; weightLb: number };
@@ -33,9 +50,20 @@ export async function getTodayView(date: string): Promise<TodayView> {
   const [summary, items, mealRows, statusRows, latestRows] = await Promise.all([
     getDaySummary(date),
     db
-      .select({ mealId: mealItems.mealId, kcal: foods.kcal, quantity: mealItems.quantity })
+      .select({
+        mealId: mealItems.mealId,
+        quantity: mealItems.quantity,
+        name: foods.name,
+        servingDesc: foods.servingDesc,
+        kcal: foods.kcal,
+        proteinG: foods.proteinG,
+        carbsG: foods.carbsG,
+        fatG: foods.fatG,
+        rawToCookedYield: foods.rawToCookedYield,
+      })
       .from(mealItems)
-      .innerJoin(foods, eq(mealItems.foodId, foods.id)),
+      .innerJoin(foods, eq(mealItems.foodId, foods.id))
+      .orderBy(asc(mealItems.id)),
     db
       .select({ id: meals.id, name: meals.name, timeHint: meals.timeHint })
       .from(meals)
@@ -51,11 +79,37 @@ export async function getTodayView(date: string): Promise<TodayView> {
       .limit(1),
   ]);
 
-  // Planned kcal per meal = sum(food.kcal * quantity) over its items.
+  // Resolve every plan item once (absolute amount + macros + 1-serving basis);
+  // plannedKcal per meal = sum of the line-rounded item kcal, so rows and
+  // popup lines always agree.
+  const itemsByMeal = new Map<number, TodayMealItem[]>();
   const plannedKcal = new Map<number, number>();
   for (const it of items) {
-    const add = Math.round(it.kcal * Number(it.quantity));
-    plannedKcal.set(it.mealId, (plannedKcal.get(it.mealId) ?? 0) + add);
+    const food = {
+      name: it.name,
+      servingDesc: it.servingDesc,
+      kcal: it.kcal,
+      proteinG: Number(it.proteinG),
+      carbsG: Number(it.carbsG),
+      fatG: Number(it.fatG),
+      rawToCookedYield: it.rawToCookedYield === null ? null : Number(it.rawToCookedYield),
+    };
+    const plate = resolveItem(Number(it.quantity), food);
+    const one = resolveItem(1, food);
+    const list = itemsByMeal.get(it.mealId) ?? [];
+    list.push({
+      foodName: it.name,
+      amountLabel: plate.amountLabel,
+      rawLabel: plate.rawLabel,
+      kcal: plate.kcal,
+      proteinG: plate.proteinG,
+      carbsG: plate.carbsG,
+      fatG: plate.fatG,
+      servingLabel: one.amountLabel,
+      serving: { kcal: one.kcal, proteinG: one.proteinG, carbsG: one.carbsG, fatG: one.fatG },
+    });
+    itemsByMeal.set(it.mealId, list);
+    plannedKcal.set(it.mealId, (plannedKcal.get(it.mealId) ?? 0) + plate.kcal);
   }
 
   const statusByMeal = new Map(statusRows.map((s) => [s.mealId, s.status as MealStatusValue]));
@@ -72,6 +126,7 @@ export async function getTodayView(date: string): Promise<TodayView> {
       plannedKcal: plannedKcal.get(m.id) ?? 0,
       status,
       isNow,
+      items: itemsByMeal.get(m.id) ?? [],
     };
   });
 

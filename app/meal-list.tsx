@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { TodayMeal } from "@/lib/today";
 import type { MealStatusValue } from "@/lib/meal-status";
+import { MealPopup } from "./meal-popup";
 
 const n = (x: number) => Math.round(x).toLocaleString("en-US");
 
@@ -21,6 +22,7 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
   // Optimistic overrides applied on top of server-provided status, keyed by meal id.
   const [optimistic, setOptimistic] = useState<Record<number, MealStatusValue>>({});
   const [busy, setBusy] = useState<number | null>(null);
+  const [openId, setOpenId] = useState<number | null>(null);
 
   const statusOf = (m: TodayMeal): MealStatusValue => optimistic[m.id] ?? m.status;
 
@@ -50,11 +52,13 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
     }
   }
 
+  const openMeal = openId === null ? null : (meals.find((m) => m.id === openId) ?? null);
+
   return (
     <>
       <div className="meals-head">
         <div className="kicker">Meals</div>
-        <div className="hint">tap to mark eaten</div>
+        <div className="hint">tap meal for details</div>
       </div>
       <ul className="checklist">
         {meals.map((m) => {
@@ -73,15 +77,34 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
               >
                 {eaten && <Check />}
               </button>
-              <div className="ct">
-                <span className={`n${eaten ? " done" : ""}`}>{m.name}</span>
-                {!eaten && m.timeHint && <small>{m.timeHint}</small>}
-              </div>
-              <span className="ck">{n(m.plannedKcal)}</span>
+              <button
+                type="button"
+                className="rowbtn"
+                aria-haspopup="dialog"
+                aria-label={`${m.name} details`}
+                onClick={() => setOpenId(m.id)}
+              >
+                <span className="ct">
+                  <span className={`n${eaten ? " done" : ""}`}>{m.name}</span>
+                  {!eaten && m.timeHint && <small>{m.timeHint}</small>}
+                </span>
+                <span className="ck">{n(m.plannedKcal)}</span>
+                <span className="mchev">›</span>
+              </button>
             </li>
           );
         })}
       </ul>
+      {openMeal && (
+        <MealPopup
+          key={openMeal.id}
+          meal={openMeal}
+          status={statusOf(openMeal)}
+          busy={busy !== null || isPending}
+          onToggle={() => toggle(openMeal)}
+          onClose={() => setOpenId(null)}
+        />
+      )}
     </>
   );
 }

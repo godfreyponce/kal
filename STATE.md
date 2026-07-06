@@ -11,30 +11,25 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-07-02 · Unit-resolution bug FIXED, COMMITTED to `main` (53b2271 + c717b04),
-Seed v2 applied to live Neon. NOT yet deployed to prod. NEXT UP: Today meal-detail popup —
-3-variant mockup is built and awaiting the owner's pick.*
+*Last updated: 2026-07-06 · Today meal-detail popup BUILT + owner-accepted, committed to `main`.
+Unit-resolution fix + Seed v2 also committed (53b2271 + c717b04), Seed v2 applied to live Neon.
+NEITHER is deployed to prod yet — `vercel --prod` when the owner says go.*
 
-**🚧 DEPLOY PENDING (2026-07-02) — read before doing anything:**
-- The **unit-resolution fix + Seed v2** (full section below) is committed on `main` and validated;
-  **live Neon already has the v2 data** (surgical apply) and migration 0003 is applied. But
-  **prod (kal-delta.vercel.app) still runs the PRE-FIX code against the new data** — works, but its
-  chat prompt still renders bare multipliers. `vercel --prod` when the owner says go.
+**🚧 DEPLOY PENDING — read before doing anything:**
+- **Two accepted features are on `main` but NOT in prod**: the **unit-resolution fix + Seed v2**
+  (2026-07-02, section below; live Neon already has the v2 data + migration 0003) and the
+  **Today meal-detail popup** (2026-07-06, section below). Prod (kal-delta.vercel.app) still runs
+  pre-fix code — works, but its chat prompt renders bare multipliers and Today has no popup.
+  `vercel --prod` when the owner says go.
 - ⚠️ `npm run db:seed` is a FULL WIPE (logs, statuses, ALL foods incl. owner-added + photos). To
   update live data in place use `npx tsx db/apply-seed-v2.ts` (idempotent, preserves everything).
 - `db/seed.ts`'s PROFILE block was hand-edited by the owner (175 cm / 170 lb / 30yo / goal 160 by
   2027-01-01) — that's the reset-path profile only; the **live profile row was NOT changed** (still
   the old body stats; only targets were updated). Reconcile with the owner before touching it.
 
-**🎨 NEXT TASK — Today meal-detail popup (owner-requested 2026-07-02):** tap a meal row on the
-Today screen → popup showing what that meal IS (items w/ absolute amounts + kcal, raw ≈ hints for
-meats, macro totals, Mark-eaten button). 3-variant interactive mockup is DONE:
-`design/today-meal-popup-variants.html` (A bottom sheet / B centered card / C inline expand) —
-owner is reviewing; **build whichever they pick**. Implementation notes: `getTodayView()`
-(`lib/today.ts`) currently returns only per-meal planned kcal — it'll need per-meal item lists;
-resolve amounts with `lib/resolve-item.ts` (`resolveItem`/`formatMacros` — never render a bare
-multiplier); meal-row UI lives in `app/meal-list.tsx`. Owner's standing note: don't compromise
-simplicity for structure/maintainability.
+**✅ Today meal-detail popup — DONE 2026-07-06, owner-accepted** (was the 2026-07-02 next task).
+Full section below. Owner's standing note stands for future work: don't compromise simplicity
+for structure/maintainability.
 
 **What's done:** Phases 1–5 all complete. v1 is **live and deployed**:
 **https://kal-delta.vercel.app** (Vercel project `kal`, team godfreyps-projects).
@@ -84,10 +79,9 @@ verify a change in the real app, exercise routes with `curl` against `localhost:
 then hard-refresh the browser (the CSS chunk URL is unchanged so a soft refresh keeps the old
 file). This cost a lot of debugging this session; route/TSX edits hot-reload fine, only CSS is cached.
 
-**🟢 Upcoming / backlog (meal popup above is #0 — confirm with owner before starting anything else):**
-1. **Commit + deploy the unit-resolution fix** — once the owner confirms (they reviewed + liked the
-   raw/cooked behavior; popup mockups were the next ask). Commit the dirty tree, update this file's
-   🚧 block, `vercel --prod`.
+**🟢 Upcoming / backlog (confirm with owner before starting anything):**
+1. **Deploy to prod** — unit-resolution fix + meal popup are both committed + accepted;
+   `vercel --prod` when the owner says go, then update this file's 🚧 block.
 2. **Groceries v2 design rework** — owner dislikes the current v2 design (shipped to prod for the
    photo→label trial, not because the look is approved). Redo it WITH the 3-variant HTML mockup
    step first (see [[design-variants-for-new-screens]]). Leftover prod-env todos: add `FDC_API_KEY`
@@ -148,7 +142,36 @@ the feature. (This rule is also in `AGENTS.md` so it survives across sessions.)
 
 ---
 
-## Unit-resolution fix + Seed v2 (2026-07-02) — UNCOMMITTED, live-data APPLIED
+## Today meal-detail popup (2026-07-06) — COMMITTED, owner-accepted
+
+Tap a meal row on Today → centered card (owner picked variant B) showing what the meal IS;
+tap any food line inside it → a two-row per-serving table (owner picked expansion B3 from
+`design/today-meal-popup-b-item-expand.html`). All amounts come from `resolveItem` — never a
+bare multiplier. TDD on the data layer; suite 48/48 (11 files), `tsc` clean.
+
+- **Data** (`lib/today.ts` +3 tests in `lib/today.test.ts`, sentinel date 2099-04-04):
+  `TodayMeal` gained `items: TodayMealItem[]` — each plan item resolved (`amountLabel`,
+  `rawLabel`, line-rounded kcal/P/C/F) plus a 1-serving basis (`servingLabel` + `serving`
+  macros from `resolveItem(1, food)`). `plannedKcal` now sums the same line-rounded kcal, so
+  meal rows and popup lines always agree.
+- **UI** (`app/meal-popup.tsx` new; `app/meal-list.tsx`; `.rowbtn`/`.mpop-*` in `globals.css`):
+  meal row body (name/kcal/› chevron) opens the popup; the checkbox still one-tap toggles eaten.
+  Card: header row = serif title + kcal + ✕ (in-flex, can't overlap), no bottom Close (✕/scrim/
+  Esc), full-width Mark-eaten/undo button sharing MealList's optimistic toggle. Item tap →
+  mini-table "1 serving (100 g (3.5 oz))" vs "your 170 g (6 oz) cooked" across kcal/P/C/F.
+  Last item row draws no grey border (`.last`) so the totals' dark rule sits clean.
+- **Cooked-vs-raw clarity** (owner question 2026-07-06): any item with a `rawLabel` (meats,
+  rice) renders its amount with a " cooked" suffix — macros are computed from the cooked
+  weight; the raw ≈ line is what to weigh pre-cooking. Rice's raw ≈ 133 g line was always in
+  the app (only the mockups' sample data lacked it).
+- **Animation**: owner picked "Rise & sink" from `design/today-meal-popup-open-close-animations.html`
+  (round 3): card drifts up 26px + fades in (0.26s), sinks + fades out (0.17s). Enter = double-rAF
+  adds `.open`; close drops it and unmounts after 180ms. Pure transitions in `globals.css`.
+- **⚠️ Name-collision lesson**: first cut named the row button `.mrow`, which CLOBBERED the
+  Today macro-bars' existing `.mrow` (page.tsx) and broke that section — renamed to `.rowbtn`.
+  Before adding a class to `globals.css`, grep it first.
+
+## Unit-resolution fix + Seed v2 (2026-07-02) — COMMITTED (53b2271), live-data APPLIED
 
 The assistant had miscalculated macros 3× from one root cause: `meal_items.quantity` reached the
 model as a bare multiplier (`6× Chicken breast`) with no unit/macros, so it guessed serving sizes
@@ -478,12 +501,17 @@ app/groceries/page.tsx + groceries-list.tsx   Groceries screen (force-dynamic; v
 app/api/groceries/route.ts + [id]/route.ts    Groceries REST (list/create, patch/delete + 409 guard)
 docs/superpowers/{specs,plans}/2026-06-23-groceries-*   Groceries v1 spec + implementation plan
 — Groceries v2 (2026-06-26, uncommitted) —
-— Unit-resolution fix + Seed v2 (2026-07-02, uncommitted) —
+— Unit-resolution fix + Seed v2 (2026-07-02) —
 lib/resolve-item.ts (+test)       parseServing/resolveItem/formatPlanLine/buildPlanBlock — model/UI never see a multiplier
 db/seed-data.ts (+test)           Seed v2 foods/meals/items + computeTargets() (targets derive from food data)
 db/apply-seed-v2.ts               surgical in-place apply to live DB (preserves logs/photos; idempotent)
 db/migrations/0003_*.sql          foods.raw_to_cooked_yield (APPLIED to Neon)
-design/today-meal-popup-variants.html   NEXT TASK mockups: meal-tap popup, 3 variants (awaiting owner pick)
+— Today meal-detail popup (2026-07-06) —
+lib/today.test.ts                 getTodayView items: resolved amounts + 1-serving basis (sentinel 2099-04-04)
+app/meal-popup.tsx                the popup card (B + B3 expand + Rise & sink open/close)
+design/today-meal-popup-variants.html                 round 1: popup style, 3 variants (owner picked B)
+design/today-meal-popup-b-item-expand.html            round 2: per-serving expand, 3 variants (owner picked B3)
+design/today-meal-popup-open-close-animations.html    round 3: open/close motion, 3 variants (owner picked Rise & sink)
 lib/nutrition-lookup.ts (+test)   USDA FDC + OpenFoodFacts search, merged, scaled to label serving
 lib/label-vision.ts (+test)       Claude reads a Nutrition Facts photo → macros (parseLabelNutrition pure)
 app/api/nutrition/route.ts        GET ?q= → merged nutrition hits
@@ -505,10 +533,10 @@ design/groceries-{variants,combined,photo-options,bar-options}.html   v2 design 
 - **Groceries v2 — built 2026-06-26, MERGED + DEPLOYED 2026-06-29.** Card redesign, USDA+OFF
   nutrition auto-fill, label-photo vision, Vercel Blob product photos, middots removed. Live in
   prod for trial; **design not owner-approved** → rework is backlog item #1.
-- **Unit-resolution fix + Seed v2 — built + live-data-applied 2026-07-02, UNCOMMITTED.** Resolver
-  lib, per-100g basis, raw/cooked yields, computed targets. Commit + deploy pending owner go-ahead.
-- **Today meal-detail popup — NEXT.** Mockups done (`design/today-meal-popup-variants.html`);
-  implement the owner's picked variant.
+- **Unit-resolution fix + Seed v2 — built + live-data-applied 2026-07-02, COMMITTED.** Resolver
+  lib, per-100g basis, raw/cooked yields, computed targets. Deploy pending owner go-ahead.
+- **Today meal-detail popup — DONE 2026-07-06, owner-accepted.** Variant B card + B3 per-serving
+  expand + Rise & sink animation. Deploy pending (same `vercel --prod` as the unit fix).
 - **Phase 6 / v1.5+ — remaining deferrals:** prompt caching, inventory decrement,
   trends/weight-chart screen, chat history summarization.
 
