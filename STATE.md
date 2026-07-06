@@ -11,16 +11,14 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-07-06 · Today meal-detail popup BUILT + owner-accepted, committed to `main`.
-Unit-resolution fix + Seed v2 also committed (53b2271 + c717b04), Seed v2 applied to live Neon.
-NEITHER is deployed to prod yet — `vercel --prod` when the owner says go.*
+*Last updated: 2026-07-06 · Today meal-detail popup BUILT + owner-accepted + committed (44980d1),
+and **DEPLOYED to prod** together with the unit-resolution fix + Seed v2 (53b2271 + c717b04) via
+`vercel --prod` 2026-07-06. Prod, `main`, and live Neon are all in sync. No deploy pending.*
 
-**🚧 DEPLOY PENDING — read before doing anything:**
-- **Two accepted features are on `main` but NOT in prod**: the **unit-resolution fix + Seed v2**
-  (2026-07-02, section below; live Neon already has the v2 data + migration 0003) and the
-  **Today meal-detail popup** (2026-07-06, section below). Prod (kal-delta.vercel.app) still runs
-  pre-fix code — works, but its chat prompt renders bare multipliers and Today has no popup.
-  `vercel --prod` when the owner says go.
+**✅ Prod is current (verified 2026-07-06):** deployment `kal-4aabw2v1t` READY, aliased to
+kal-delta.vercel.app; unauth `/` → 307 /login, login 200; no runtime errors in fresh logs.
+NB: only smoke-checked unauthenticated routes (prod password is encrypted/write-only) — owner
+verifies the popup + chat on the phone.
 - ⚠️ `npm run db:seed` is a FULL WIPE (logs, statuses, ALL foods incl. owner-added + photos). To
   update live data in place use `npx tsx db/apply-seed-v2.ts` (idempotent, preserves everything).
 - `db/seed.ts`'s PROFILE block was hand-edited by the owner (175 cm / 170 lb / 30yo / goal 160 by
@@ -68,7 +66,7 @@ and copy individual keys). Also set this session: `FDC_API_KEY` (real USDA key, 
 **How to run / verify (do this first):**
 ```bash
 PORT=3100 npm run dev    # :3000 is taken by another local project ("Glass"); use 3100
-npm test                 # vitest 45/45 across 10 files (needs DATABASE_URL; hits live Neon)
+npm test                 # vitest 48/48 across 11 files (needs DATABASE_URL; hits live Neon)
 npx tsc --noEmit         # must stay clean
 ```
 Run the dev server backgrounded and DON'T start a duplicate (EADDRINUSE on 3100). Integration
@@ -80,21 +78,19 @@ then hard-refresh the browser (the CSS chunk URL is unchanged so a soft refresh 
 file). This cost a lot of debugging this session; route/TSX edits hot-reload fine, only CSS is cached.
 
 **🟢 Upcoming / backlog (confirm with owner before starting anything):**
-1. **Deploy to prod** — unit-resolution fix + meal popup are both committed + accepted;
-   `vercel --prod` when the owner says go, then update this file's 🚧 block.
-2. **Groceries v2 design rework** — owner dislikes the current v2 design (shipped to prod for the
+1. **Groceries v2 design rework** — owner dislikes the current v2 design (shipped to prod for the
    photo→label trial, not because the look is approved). Redo it WITH the 3-variant HTML mockup
    step first (see [[design-variants-for-new-screens]]). Leftover prod-env todos: add `FDC_API_KEY`
    to Vercel Prod (USDA name-search no-ops without it — label-photo flow unaffected); exercise the
    product-photo Blob upload live in prod to confirm OIDC. (Commit/merge/deploy: DONE 2026-06-29.)
-3. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
-4. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it.
-5. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD exists via `/groceries`).
-6. **Trends screen** — weight chart + weekly adherence (v1.5).
-7. **Chat history summarization** — currently a hard 30-message cap; summarize-and-truncate later.
-8. **Optimistic remaining-update after chat Undo** — card greys to "Undone"; numbers refresh next ask.
-9. **Surface `is_estimated` in the Groceries UI** — column + `add_grocery` set it, screen doesn't show provenance.
-10. **Correct remaining [est] food macros from real labels** — Seed v2 set honest `is_estimated`
+2. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
+3. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it.
+4. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD exists via `/groceries`).
+5. **Trends screen** — weight chart + weekly adherence (v1.5).
+6. **Chat history summarization** — currently a hard 30-message cap; summarize-and-truncate later.
+7. **Optimistic remaining-update after chat Undo** — card greys to "Undone"; numbers refresh next ask.
+8. **Surface `is_estimated` in the Groceries UI** — column + `add_grocery` set it, screen doesn't show provenance.
+9. **Correct remaining [est] food macros from real labels** — Seed v2 set honest `is_estimated`
     flags and fixed peanuts from its real label; eggs/banana/chicken/beef/rice/oil/veg are still
     estimates. Owner corrects via lookup/vision as labels come in; **re-derive profile targets after**
     (`computeTargets()` in `db/seed-data.ts` — owner rule: targets come from the food data, never
