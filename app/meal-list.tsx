@@ -58,7 +58,6 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
     <>
       <div className="meals-head">
         <div className="kicker">Meals</div>
-        <div className="hint">tap meal for details</div>
       </div>
       <ul className="checklist">
         {meals.map((m) => {
