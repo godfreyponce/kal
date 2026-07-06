@@ -12,9 +12,10 @@ this file is the quick-resume summary).
 ## ⏩ NEW AGENT — START HERE
 
 *Last updated: 2026-07-06 (later session) · Popup per-food stats RESTYLED to the E3 open-column
-strip + popup polish (hint/", cooked"), owner-accepted, committed (56548ae + 74f9665), and
-**DEPLOYED to prod** (`kal-l4skkkg43` READY, aliased to kal-delta.vercel.app; unauth 307→login,
-no runtime errors). Prod, `main`, and live Neon are all in sync. No deploy pending.*
+strip + popup polish (hint/", cooked") + Today's "tap meal for details" hint removed (0d043fb) —
+all owner-accepted, committed, and **DEPLOYED to prod** (`kal-l92p7c8jf` READY, aliased to
+kal-delta.vercel.app; unauth 307→login, no runtime errors). Prod, `main`, and live Neon are all
+in sync. No deploy pending.*
 
 **✅ Prod is current (verified 2026-07-06):** deployment `kal-4aabw2v1t` READY, aliased to
 kal-delta.vercel.app; unauth `/` → 307 /login, login 200; no runtime errors in fresh logs.
