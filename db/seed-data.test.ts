@@ -6,14 +6,22 @@ describe("seed v2 data", () => {
     const byName = new Map(FOODS_V2.map((f) => [f.name, f]));
     expect(byName.get("Chicken breast, cooked")).toMatchObject({ servingDesc: "100 g", servingGrams: 100 });
     expect(byName.get("Dry-roasted peanuts, salted")).toMatchObject({ servingDesc: "100 g", servingGrams: 100 });
-    expect(byName.get("Egg, large")).toMatchObject({ servingDesc: "1 egg", servingGrams: null });
+    expect(byName.get("Large Eggs")).toMatchObject({ servingDesc: "1 egg", servingGrams: null, displayQty: null });
     expect(byName.get("Peanut butter")).toMatchObject({ servingDesc: "1 tbsp" });
   });
 
-  it("includes ground beef with its raw yield, loggable but not in the plan", () => {
-    const beef = FOODS_V2.find((f) => f.name === "Ground beef 90/10, cooked");
-    expect(beef).toMatchObject({ kcal: 215, rawToCookedYield: 0.72 });
-    expect(MEAL_ITEMS_V2.some(([, food]) => food === "Ground beef 90/10, cooked")).toBe(false);
+  it("carries the owner's display servings (card-only multipliers of the basis)", () => {
+    const byName = new Map(FOODS_V2.map((f) => [f.name, f]));
+    expect(byName.get("Chicken breast, cooked")).toMatchObject({ displayQty: 1.7 });
+    expect(byName.get("White rice, cooked")).toMatchObject({ displayQty: 4 });
+    expect(byName.get("Frozen mixed vegetables, cooked")).toMatchObject({ displayQty: 2.5 });
+    expect(byName.get("Dry-roasted peanuts, salted")).toMatchObject({ displayQty: 0.4 });
+    expect(byName.get("Peanut butter")).toMatchObject({ displayQty: 2 });
+  });
+
+  it("has no ground beef — owner removed it from the live library (2026-07-07)", () => {
+    expect(FOODS_V2.some((f) => f.name.startsWith("Ground beef"))).toBe(false);
+    expect(MEAL_ITEMS_V2.some(([, food]) => food.startsWith("Ground beef"))).toBe(false);
   });
 
   it("plan quantities are absolute-amount multipliers of the new basis", () => {

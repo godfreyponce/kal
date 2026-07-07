@@ -24,21 +24,23 @@ export type SeedFood = {
   f: number;
   isEstimated: boolean; // false = straight off a product label
   rawToCookedYield: number | null; // meats: cooked/raw; rice: dry→cooked ×3
+  displayQty: number | null; // owner's card serving (multiplier of the basis); null = 1
   category: string;
 };
 
+// NB: no ground beef — the owner removed it from the live library (2026-07-07);
+// keeping it here would resurrect it on any re-apply.
 export const FOODS_V2: SeedFood[] = [
-  { name: "Egg, large",                      brand: null,                    servingDesc: "1 egg",    servingGrams: null, kcal: 70,  p: 6.0,  c: 0.5,  f: 5.0,  isEstimated: true,  rawToCookedYield: null, category: "protein" },
-  { name: "Whole wheat bread",               brand: "Nature's Own 100%",     servingDesc: "1 slice",  servingGrams: null, kcal: 60,  p: 4.0,  c: 11.0, f: 1.0,  isEstimated: false, rawToCookedYield: null, category: "carb" },
-  { name: "Peanut butter",                   brand: "SKIPPY Extra Crunchy",  servingDesc: "1 tbsp",   servingGrams: null, kcal: 95,  p: 3.5,  c: 3.5,  f: 8.0,  isEstimated: false, rawToCookedYield: null, category: "fat" },
-  { name: "Banana, medium",                  brand: null,                    servingDesc: "1 banana", servingGrams: null, kcal: 105, p: 1.3,  c: 27.0, f: 0.4,  isEstimated: true,  rawToCookedYield: null, category: "fruit" },
-  { name: "Chicken breast, cooked",          brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 165, p: 31.0, c: 0.0,  f: 3.6,  isEstimated: true,  rawToCookedYield: 0.75, category: "protein" },
-  { name: "Ground beef 90/10, cooked",       brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 215, p: 26.0, c: 0.0,  f: 12.0, isEstimated: true,  rawToCookedYield: 0.72, category: "protein" },
-  { name: "White rice, cooked",              brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 130, p: 2.7,  c: 28.0, f: 0.3,  isEstimated: true,  rawToCookedYield: 3.0,  category: "carb" },
-  { name: "Canola oil",                      brand: null,                    servingDesc: "1 tbsp",   servingGrams: null, kcal: 120, p: 0.0,  c: 0.0,  f: 14.0, isEstimated: true,  rawToCookedYield: null, category: "fat" },
-  { name: "Frozen mixed vegetables, cooked", brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 55,  p: 2.5,  c: 11.0, f: 0.4,  isEstimated: true,  rawToCookedYield: null, category: "veg" },
+  { name: "Large Eggs",                      brand: null,                    servingDesc: "1 egg",    servingGrams: null, kcal: 70,  p: 6.0,  c: 0.5,  f: 5.0,  isEstimated: true,  rawToCookedYield: null, displayQty: null, category: "protein" },
+  { name: "Whole wheat bread",               brand: "Nature's Own 100%",     servingDesc: "1 slice",  servingGrams: null, kcal: 60,  p: 4.0,  c: 11.0, f: 1.0,  isEstimated: false, rawToCookedYield: null, displayQty: null, category: "carb" },
+  { name: "Peanut butter",                   brand: "SKIPPY Extra Crunchy",  servingDesc: "1 tbsp",   servingGrams: null, kcal: 95,  p: 3.5,  c: 3.5,  f: 8.0,  isEstimated: false, rawToCookedYield: null, displayQty: 2,    category: "fat" },
+  { name: "Banana, medium",                  brand: null,                    servingDesc: "1 banana", servingGrams: null, kcal: 105, p: 1.3,  c: 27.0, f: 0.4,  isEstimated: true,  rawToCookedYield: null, displayQty: null, category: "fruit" },
+  { name: "Chicken breast, cooked",          brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 165, p: 31.0, c: 0.0,  f: 3.6,  isEstimated: true,  rawToCookedYield: 0.75, displayQty: 1.7,  category: "protein" },
+  { name: "White rice, cooked",              brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 130, p: 2.7,  c: 28.0, f: 0.3,  isEstimated: true,  rawToCookedYield: 3.0,  displayQty: 4,    category: "carb" },
+  { name: "Canola oil",                      brand: null,                    servingDesc: "1 tbsp",   servingGrams: null, kcal: 120, p: 0.0,  c: 0.0,  f: 14.0, isEstimated: true,  rawToCookedYield: null, displayQty: null, category: "fat" },
+  { name: "Frozen mixed vegetables, cooked", brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 55,  p: 2.5,  c: 11.0, f: 0.4,  isEstimated: true,  rawToCookedYield: null, displayQty: 2.5,  category: "veg" },
   // Real GV label (180 kcal / 8P / 4C / 15F per 28 g) scaled to 100 g — supersedes the plan doc's 590-kcal estimate.
-  { name: "Dry-roasted peanuts, salted",     brand: "Great Value",           servingDesc: "100 g",    servingGrams: 100,  kcal: 643, p: 28.6, c: 14.3, f: 53.6, isEstimated: false, rawToCookedYield: null, category: "fat" },
+  { name: "Dry-roasted peanuts, salted",     brand: "Great Value",           servingDesc: "100 g",    servingGrams: 100,  kcal: 643, p: 28.6, c: 14.3, f: 53.6, isEstimated: false, rawToCookedYield: null, displayQty: 0.4,  category: "fat" },
 ];
 
 export const MEALS_V2 = [
@@ -52,7 +54,7 @@ export const MEALS_V2 = [
 // [meal, food, quantity (multiplier of the food's serving basis)]
 // Weighed foods: quantity × 100 g, e.g. 1.7 = 170 g.
 export const MEAL_ITEMS_V2: Array<[string, string, number]> = [
-  ["Breakfast", "Egg, large", 4],
+  ["Breakfast", "Large Eggs", 4],
   ["Breakfast", "Whole wheat bread", 4],
   ["Breakfast", "Peanut butter", 2],
   ["Breakfast", "Banana, medium", 1],

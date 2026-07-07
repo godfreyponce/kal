@@ -27,7 +27,7 @@ describe("getTodayView meal items", () => {
   it("keeps counted foods in their natural unit", async () => {
     const view = await getTodayView(DATE);
     const breakfast = view.meals.find((m) => m.name === "Breakfast");
-    const eggs = breakfast!.items.find((i) => i.foodName === "Egg, large");
+    const eggs = breakfast!.items.find((i) => i.foodName === "Large Eggs");
     expect(eggs).toBeDefined();
     expect(eggs!.amountLabel).toBe("4 egg");
     expect(eggs!.rawLabel).toBeNull();

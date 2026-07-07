@@ -47,6 +47,7 @@ async function seed() {
         fatG: String(food.f),
         isEstimated: food.isEstimated,
         rawToCookedYield: food.rawToCookedYield === null ? null : String(food.rawToCookedYield),
+        displayQty: food.displayQty === null ? null : String(food.displayQty),
         category: food.category,
       })),
     )

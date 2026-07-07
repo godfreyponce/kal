@@ -18,6 +18,7 @@ import { FOODS_V2, MEAL_ITEMS_V2, computeTargets } from "./seed-data";
 const RENAMES: Record<string, string> = {
   "Frozen mixed vegetables": "Frozen mixed vegetables, cooked",
   "Dry-roasted peanuts": "Dry-roasted peanuts, salted",
+  "Egg, large": "Large Eggs",
 };
 
 async function apply() {
@@ -39,6 +40,7 @@ async function apply() {
       fatG: String(food.f),
       isEstimated: food.isEstimated,
       rawToCookedYield: food.rawToCookedYield === null ? null : String(food.rawToCookedYield),
+      displayQty: food.displayQty === null ? null : String(food.displayQty),
       category: food.category,
     };
     if (id !== undefined) {
