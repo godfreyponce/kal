@@ -1,0 +1,1 @@
+ALTER TABLE "foods" ADD COLUMN "display_qty" numeric(8, 3);

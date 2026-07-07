@@ -53,6 +53,9 @@ export const foods = pgTable("foods", {
   // ONLY for the future grocery/shopping feature (raw amounts to buy):
   // meats store cooked/raw (chicken 0.75); rice stores dry→cooked (3.0).
   rawToCookedYield: numeric("raw_to_cooked_yield", { precision: 5, scale: 2 }),
+  // Owner's own serving as a multiplier of serving_desc (1.7 × 100 g = 170 g).
+  // DISPLAY-ONLY (Groceries cards): never feeds targets, plan lines, or tools.
+  displayQty: numeric("display_qty", { precision: 8, scale: 3 }),
   purchaseWeight: numeric("purchase_weight", { precision: 8, scale: 2 }),
   price: numeric("price", { precision: 8, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
