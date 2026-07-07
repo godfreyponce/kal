@@ -6,6 +6,7 @@ import type { GroceryGroupItem, GroceryGroups } from "@/lib/groceries";
 import type { NutritionHit } from "@/lib/nutrition-lookup";
 import type { LabelNutrition } from "@/lib/label-vision";
 import { toGrams } from "@/lib/units";
+import { servingDisplay } from "@/lib/serving-display";
 
 // Shrink a chosen photo to ≤1024px JPEG so the vision request stays small (Vercel
 // caps request bodies ~4.5MB; full-res phone photos blow past that as base64).
@@ -54,9 +55,16 @@ function normCat(c: string | null): Cat {
   return "other";
 }
 
+// Known store logos; anything else renders as plain text.
+const STORE_LOGOS: Record<string, { src: string; cls: string }> = {
+  walmart: { src: "/stores/walmart.svg", cls: "" },
+  costco: { src: "/stores/costco.svg", cls: " costco" },
+};
+
+// $ for the DISPLAYED serving (my serving), not the storage basis.
 function costPerServing(g: GroceryGroupItem): string | null {
   return g.price != null && g.purchaseWeightG != null && g.servingGrams
-    ? (g.price / (g.purchaseWeightG / g.servingGrams)).toFixed(2)
+    ? ((g.price / (g.purchaseWeightG / g.servingGrams)) * g.displayQty).toFixed(2)
     : null;
 }
 
@@ -119,7 +127,17 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
   const [visioning, setVisioning] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [lookupMsg, setLookupMsg] = useState<string | null>(null);
+  const [flippedIds, setFlippedIds] = useState<Set<number>>(new Set());
   const [, startTransition] = useTransition();
+
+  // Same food on two shelves (chicken: Lunch + Dinner) flips in both — same id.
+  const toggleFlip = (id: number) =>
+    setFlippedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => (f ? { ...f, [k]: v } : f));
@@ -297,10 +315,14 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
   const renderCard = (g: GroceryGroupItem, key: string) => {
     const cat = normCat(g.category);
     const cost = costPerServing(g);
-    const meta = [g.brand, g.store, g.servingGrams != null ? `${g.servingGrams}g` : "no weight"].filter(Boolean);
+    const disp = servingDisplay(g);
+    const flipped = flippedIds.has(g.id) && disp.flip !== null;
+    const label = flipped ? disp.flip! : disp.base;
+    const macros = flipped ? disp.flip!.macros : disp.baseMacros;
+    const logo = g.store ? STORE_LOGOS[g.store.toLowerCase().trim()] : undefined;
     // Only macros present (>0) get a bar segment AND a number; both use flex = grams
     // so each number sits under its own segment and tracks its width.
-    const segs = ([["mp", "P", g.proteinG], ["mc", "C", g.carbsG], ["mf", "F", g.fatG]] as const).filter(([, , v]) => v > 0);
+    const segs = ([["mp", "P", macros.proteinG], ["mc", "C", macros.carbsG], ["mf", "F", macros.fatG]] as const).filter(([, , v]) => v > 0);
     return (
       <li className="gcard" key={key}>
         <div className={`gcard-photo${g.imageUrl ? "" : ` gcat-${cat}`}`}>
@@ -312,11 +334,25 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
           )}
         </div>
         <div className="gcard-body">
-          <div className="gcard-nm">{g.name}</div>
+          <div className="gcard-nm">{disp.title}</div>
           <div className="gcard-src">
-            {meta.map((m, i) => <span key={i}>{m}</span>)}
+            {g.brand && <span>{g.brand}</span>}
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className={`gcard-store${logo.cls}`} src={logo.src} alt={g.store!} />
+            ) : g.store ? (
+              <span>{g.store}</span>
+            ) : null}
+            <button
+              type="button"
+              className={`gcard-srv${disp.flip ? "" : " static"}`}
+              onClick={disp.flip ? () => toggleFlip(g.id) : undefined}
+            >
+              {label.amount}
+              {label.suffix && <> <span className="state">{label.suffix}</span></>}
+            </button>
           </div>
-          <div className="gcard-kc">{g.kcal}<span>kcal</span></div>
+          <div className="gcard-kc">{macros.kcal}<span>kcal</span></div>
           <div className="gcard-bar">
             {segs.length ? (
               segs.map(([cls, , v]) => <i key={cls} className={cls} style={{ flex: v }} />)
