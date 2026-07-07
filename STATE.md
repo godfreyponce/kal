@@ -20,10 +20,11 @@ Eggs** (live rename). Owner approved mockup + design + ordered the deploy; phone
 pending. Earlier same day: grocery product photos (data-only) + ground beef removed from live
 DB **and now from the seed data too** (a re-apply no longer resurrects it).*
 
-**✅ Prod is current (verified 2026-07-06):** deployment `kal-4aabw2v1t` READY, aliased to
-kal-delta.vercel.app; unauth `/` → 307 /login, login 200; no runtime errors in fresh logs.
-NB: only smoke-checked unauthenticated routes (prod password is encrypted/write-only) — owner
-verifies the popup + chat on the phone.
+**✅ Prod is current (verified 2026-07-07):** deployment `kal-c9rjd7xxt` READY, aliased to
+kal-delta.vercel.app; unauth `/` → 307 /login, login 200; a 5-minute prod log stream after the
+deploy showed ZERO runtime errors. NB: only smoke-checked unauthenticated routes (prod password
+is encrypted/write-only) — owner verifies the new Groceries cards on the phone. Prod, `main`,
+and live Neon are in sync; no deploy pending.
 - ⚠️ `npm run db:seed` is a FULL WIPE (logs, statuses, ALL foods incl. owner-added + photos). To
   update live data in place use `npx tsx db/apply-seed-v2.ts` (idempotent, preserves everything).
 - `db/seed.ts`'s PROFILE block was hand-edited by the owner (175 cm / 170 lb / 30yo / goal 160 by
@@ -74,7 +75,7 @@ and copy individual keys). Also set this session: `FDC_API_KEY` (real USDA key, 
 **How to run / verify (do this first):**
 ```bash
 PORT=3100 npm run dev    # :3000 is taken by another local project ("Glass"); use 3100
-npm test                 # vitest 48/48 across 11 files (needs DATABASE_URL; hits live Neon)
+npm test                 # vitest 56/56 across 12 files (needs DATABASE_URL; hits live Neon)
 npx tsc --noEmit         # must stay clean
 ```
 Run the dev server backgrounded and DON'T start a duplicate (EADDRINUSE on 3100). Integration
