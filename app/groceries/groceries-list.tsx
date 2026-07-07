@@ -7,6 +7,7 @@ import type { NutritionHit } from "@/lib/nutrition-lookup";
 import type { LabelNutrition } from "@/lib/label-vision";
 import { toGrams } from "@/lib/units";
 import { servingDisplay } from "@/lib/serving-display";
+import { parseServing } from "@/lib/resolve-item";
 
 // Shrink a chosen photo to ≤1024px JPEG so the vision request stays small (Vercel
 // caps request bodies ~4.5MB; full-res phone photos blow past that as base64).
@@ -78,6 +79,9 @@ type FormState = {
   category: string;
   serving: string;
   servingUnit: WeightUnit;
+  myServing: string;       // display serving: grams/oz for weighed, count for unit foods
+  myServingUnit: WeightUnit;
+  basisUnit: string | null; // "tbsp"/"egg"/… for count foods; null = weighed or new
   kcal: string;
   proteinG: string;
   carbsG: string;
@@ -89,7 +93,8 @@ type FormState = {
 
 const EMPTY: FormState = {
   id: null, name: "", brand: "", store: "", link: "", imageUrl: "", category: "",
-  serving: "", servingUnit: "g", kcal: "", proteinG: "", carbsG: "", fatG: "",
+  serving: "", servingUnit: "g", myServing: "", myServingUnit: "g", basisUnit: null,
+  kcal: "", proteinG: "", carbsG: "", fatG: "",
   purchase: "", purchaseUnit: "lb", price: "",
 };
 
@@ -104,6 +109,12 @@ function toForm(g: GroceryGroupItem): FormState {
     category: (CATEGORIES as readonly string[]).includes(g.category ?? "") ? g.category! : "",
     serving: g.servingGrams != null ? String(g.servingGrams) : "",
     servingUnit: "g",
+    myServing:
+      g.servingGrams != null
+        ? String(+(g.displayQty * g.servingGrams).toFixed(1))
+        : String(g.displayQty),
+    myServingUnit: "g",
+    basisUnit: g.servingGrams != null ? null : parseServing(g.servingDesc).unit,
     kcal: String(g.kcal),
     proteinG: String(g.proteinG),
     carbsG: String(g.carbsG),
@@ -145,11 +156,24 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!form || saving) return;
+    const isCount = form.basisUnit !== null;
     const serving = Number(form.serving);
     const kcal = Number(form.kcal);
-    if (!form.name.trim() || !Number.isFinite(serving) || serving <= 0 || !Number.isFinite(kcal)) {
-      setError("Name, a positive serving size, and calories are required.");
+    if (!form.name.trim() || !Number.isFinite(kcal) || (!isCount && (!Number.isFinite(serving) || serving <= 0))) {
+      setError("Name and calories are required (plus a positive serving size for weighed foods).");
       return;
+    }
+    // Count foods (eggs, tbsp, slices) must NOT send servingGrams — updateGrocery
+    // rewrites servingDesc to "<n> g" whenever it arrives, clobbering "1 tbsp".
+    const servingGrams = isCount ? null : toGrams(serving, form.servingUnit);
+    let displayQty: number | null = null;
+    if (form.myServing.trim() !== "") {
+      const v = Number(form.myServing);
+      if (!Number.isFinite(v) || v <= 0) {
+        setError("My serving must be a positive number.");
+        return;
+      }
+      displayQty = isCount ? v : toGrams(v, form.myServingUnit) / servingGrams!;
     }
     setSaving(true);
     setError(null);
@@ -160,7 +184,8 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
       link: form.link || null,
       imageUrl: form.imageUrl || null,
       category: form.category || null,
-      servingGrams: toGrams(serving, form.servingUnit),
+      ...(servingGrams != null ? { servingGrams } : {}),
+      displayQty,
       kcal,
       proteinG: Number(form.proteinG) || 0,
       carbsG: Number(form.carbsG) || 0,
@@ -498,6 +523,18 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
               <option value="oz">oz</option>
             </select>
             <span className="gr-hint">per serving →</span>
+          </div>
+          <div className="gr-row">
+            <input aria-label="My serving" inputMode="decimal" placeholder="My serving" value={form.myServing} onChange={(e) => set("myServing", e.target.value)} />
+            {form.basisUnit === null ? (
+              <select aria-label="My serving unit" value={form.myServingUnit} onChange={(e) => set("myServingUnit", e.target.value as WeightUnit)}>
+                <option value="g">g</option>
+                <option value="oz">oz</option>
+              </select>
+            ) : (
+              <span className="gr-hint">{form.basisUnit}</span>
+            )}
+            <span className="gr-hint">shown on the card</span>
           </div>
           <div className="gr-4">
             <input aria-label="Calories per serving" inputMode="decimal" placeholder="kcal" value={form.kcal} onChange={(e) => set("kcal", e.target.value)} />
