@@ -11,11 +11,12 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-07-06 (later session) · Popup per-food stats RESTYLED to the E3 open-column
-strip + popup polish (hint/", cooked") + Today's "tap meal for details" hint removed (0d043fb) —
-all owner-accepted, committed, and **DEPLOYED to prod** (`kal-l92p7c8jf` READY, aliased to
-kal-delta.vercel.app; unauth 307→login, no runtime errors). Prod, `main`, and live Neon are all
-in sync. No deploy pending.*
+*Last updated: 2026-07-07 · Grocery product photos DONE (data-only, no code change): every food
+in live Neon now has a Blob-hosted product image + `store` + `link` (8 Walmart, 2 Costco — owner
+shops both). Ground beef 90/10 removed from live `foods` at owner's request (had zero meal_item/
+log refs; NB `db/seed-data.ts`/`apply-seed-v2.ts` still contain it — a rerun re-inserts it).
+Prod code unchanged since `kal-l92p7c8jf` (2026-07-06); Groceries is force-dynamic so the photos
+show without a deploy.*
 
 **✅ Prod is current (verified 2026-07-06):** deployment `kal-4aabw2v1t` READY, aliased to
 kal-delta.vercel.app; unauth `/` → 307 /login, login 200; no runtime errors in fresh logs.
@@ -54,11 +55,14 @@ section below; original spec/plan in `docs/superpowers/{specs,plans}/2026-06-23-
   only OpenFoodFacts (USDA half silently no-ops). Add it to Prod env to enable USDA name-search.
   Does NOT affect the label-photo flow.
 
-**⚠️ Demo data NOT reverted:** to test/demo v2 this session I edited live Neon data — assigned
-`category` to all 9 seeded foods (chicken→protein, canola/peanut butter→fat, rice/bread→carb,
-banana→fruit, mixed veg→veg) and set `Dry-roasted peanuts`' `image_url` to a Walmart photo.
-Owner hasn't decided keep-vs-revert. (The seed macros are still the original ESTIMATES, not
-real labels — see the data-provenance note in the Groceries section.)
+**Grocery photos + store/link (2026-07-07, owner-directed):** all 9 foods have real product
+images re-hosted on Vercel Blob (`groceries/<slug>.jpg`, `allowOverwrite`) + `store` + product
+`link` — owner pasted the product pages; images grabbed via og:image (Walmart pages bot-wall
+server fetches → opened in owner's Chrome via the extension; the image CDNs i5.walmartimages.com
+and cdn.bfldr.com fetch fine server-side). The 2026-06-26 demo categories were kept. Peanuts'
+old hotlinked Walmart URL was re-hosted too (its `link` is still null — page unknown). (The seed
+macros are still the original ESTIMATES, not real labels — see the data-provenance note in the
+Groceries section.)
 
 **Local env (`.env.local`, git-ignored):** `APP_PASSWORD=devpass` (prod value is encrypted/
 write-only; a `vercel env pull` blanks it — NEVER pull into `.env.local`, pull to a temp file
@@ -82,9 +86,12 @@ file). This cost a lot of debugging this session; route/TSX edits hot-reload fin
 **🟢 Upcoming / backlog (confirm with owner before starting anything):**
 1. **Groceries v2 design rework** — owner dislikes the current v2 design (shipped to prod for the
    photo→label trial, not because the look is approved). Redo it WITH the 3-variant HTML mockup
-   step first (see [[design-variants-for-new-screens]]). Leftover prod-env todos: add `FDC_API_KEY`
-   to Vercel Prod (USDA name-search no-ops without it — label-photo flow unaffected); exercise the
-   product-photo Blob upload live in prod to confirm OIDC. (Commit/merge/deploy: DONE 2026-06-29.)
+   step first (see [[design-variants-for-new-screens]]). **Owner requirement (2026-07-07): a small
+   per-item store badge on each card**, driven by `foods.store` (now populated: Walmart + Costco —
+   owner notes where each grocery was bought; NOT a hardcoded Walmart logo). Leftover prod-env
+   todos: add `FDC_API_KEY` to Vercel Prod (USDA name-search no-ops without it — label-photo flow
+   unaffected); exercise the product-photo Blob upload live in prod to confirm OIDC.
+   (Commit/merge/deploy: DONE 2026-06-29.)
 2. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
 3. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it.
 4. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD exists via `/groceries`).
