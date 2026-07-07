@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Groceries — “my serving” display mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --font-sans-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --canvas: #f7f6f3;
+    --surface-2: #f0efeb;
+    --ink: #1f2421;
+    --muted: #787774;
+    --faint: #9b9a96;
+    --border: #e6e4df;
+    --seg-empty: #e9e7e1;
+    --protein: #9f2f2d;
+    --carbs: #8a6a1f;
+    --fat: #1f6c9f;
+    --accent: #d97757;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans-stack);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { width: 100%; max-width: 440px; margin: 0 auto; padding: 28px 22px 64px; }
+  h1 { font-family: var(--font-serif); font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .note {
+    font-size: 12.5px; color: var(--muted); margin-bottom: 26px;
+  }
+  .kicker {
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--faint); margin: 26px 0 10px;
+  }
+  .callout {
+    border: 1px dashed var(--border); background: var(--surface-2);
+    border-radius: 10px; padding: 9px 12px; font-size: 12px; color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .callout b { color: var(--ink); font-weight: 600; }
+
+  /* ---- card styles copied from globals.css ---- */
+  .gcard-grid { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+  .gcard { background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; }
+  .gcard-photo {
+    width: 116px; flex-shrink: 0; padding: 8px; background: #fff;
+    border-right: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gcard-photo img { width: 100%; height: 100%; object-fit: contain; }
+  .gcard-body { padding: 11px 12px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .gcard-nm { font-family: var(--font-serif); font-size: 15px; font-weight: 500; line-height: 1.15; color: var(--ink); }
+  .gcard-src { display: flex; flex-wrap: wrap; gap: 2px 9px; font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); margin-top: -4px; }
+  .gcard-kc { font-family: var(--font-mono); font-size: 24px; font-weight: 500; line-height: 1; letter-spacing: -0.01em; }
+  .gcard-kc span { font-size: 10px; color: var(--faint); margin-left: 4px; }
+  .gcard-bar { display: flex; gap: 4px; height: 8px; }
+  .gcard-bar i { border-radius: 3px; min-width: 4px; }
+  .gcard-bar .mp { background: var(--protein); }
+  .gcard-bar .mc { background: var(--carbs); }
+  .gcard-bar .mf { background: var(--fat); }
+  .gcard-macnums { display: flex; gap: 4px; margin-top: 1px; font-family: var(--font-mono); font-size: 10px; }
+  .gcard-macnums span { min-width: 2.4em; text-align: center; white-space: nowrap; }
+  .gcard-macnums .mp { color: var(--protein); }
+  .gcard-macnums .mc { color: var(--carbs); }
+  .gcard-macnums .mf { color: var(--fat); }
+  .gcard-foot {
+    margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; gap: 6px;
+  }
+  .gcard-cost { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 500; }
+  .gcard-actions { display: flex; gap: 8px; }
+  .gcard-actions button {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+    background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px 0;
+  }
+
+  /* ---- NEW: the tappable serving amount ---- */
+  .gcard-srv {
+    background: none; border: none; padding: 0; font: inherit; color: inherit;
+    font-family: var(--font-mono); font-size: 9.5px; cursor: pointer;
+    border-bottom: 1px dotted var(--faint);
+  }
+  .gcard-srv.static { cursor: default; border-bottom: none; }
+  .gcard-srv .state { color: var(--accent); }
+
+  /* ---- NEW: store logo replaces the store word ---- */
+  .gcard-src { align-items: center; }
+  .gcard-store { height: 11px; width: auto; display: block; }
+  .gcard-store.costco { height: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>“My serving” on grocery cards</h1>
+  <p class="note">The macros on each card scale to the amount you actually aim for, shown
+  oz-first. Chicken and rice have a stored cooked↔raw yield, so their amount is
+  <b>tappable</b> — tap it below to flip. Macros don’t change when flipped: 6&nbsp;oz cooked
+  and 8&nbsp;oz raw are the same food. (Storage approaches A and B render identically —
+  this is the shared visible result.)</p>
+
+  <div class="kicker">Before — today</div>
+  <ul class="gcard-grid">
+    <li class="gcard">
+      <div class="gcard-photo"><img src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt=""></div>
+      <div class="gcard-body">
+        <div class="gcard-nm">Chicken breast, cooked</div>
+        <div class="gcard-src"><span>Walmart</span><span>100g</span></div>
+        <div class="gcard-kc">165<span>kcal</span></div>
+        <div class="gcard-bar"><i class="mp" style="flex:31"></i><i class="mf" style="flex:3.6"></i></div>
+        <div class="gcard-macnums"><span class="mp" style="flex:31">31P</span><span class="mf" style="flex:3.6">3.6F</span></div>
+        <div class="gcard-foot"><span class="gcard-cost"></span><span class="gcard-actions"><button>Edit</button><button>Delete</button></span></div>
+      </div>
+    </li>
+    <li class="gcard">
+      <div class="gcard-photo"><img src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/eggs.jpg" alt=""></div>
+      <div class="gcard-body">
+        <div class="gcard-nm">Egg, large</div>
+        <div class="gcard-src"><span>Walmart</span><span>no weight</span></div>
+        <div class="gcard-kc">70<span>kcal</span></div>
+        <div class="gcard-bar"><i class="mp" style="flex:6"></i><i class="mc" style="flex:0.5"></i><i class="mf" style="flex:5"></i></div>
+        <div class="gcard-macnums"><span class="mp" style="flex:6">6P</span><span class="mc" style="flex:0.5">0.5C</span><span class="mf" style="flex:5">5F</span></div>
+        <div class="gcard-foot"><span class="gcard-cost"></span><span class="gcard-actions"><button>Edit</button><button>Delete</button></span></div>
+      </div>
+    </li>
+  </ul>
+
+  <div class="kicker">After — my serving (tap the underlined amount)</div>
+  <div class="callout">Store words are now logos. Tap <b>“6 oz (170 g) cooked”</b> on chicken
+  or rice — it flips to the raw / dry weight you’d measure before cooking (macros stay).
+  Tap <b>“2 tbsp”</b> on peanut butter — it flips to what <b>1 tbsp</b> is worth
+  (macros change with it).</div>
+  <ul class="gcard-grid">
+    <li class="gcard">
+      <div class="gcard-photo"><img src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt=""></div>
+      <div class="gcard-body">
+        <div class="gcard-nm">Chicken breast</div>
+        <div class="gcard-src"><img class="gcard-store" src="logos/walmart.svg" alt="Walmart">
+          <button class="gcard-srv" data-cooked="6 oz (170 g) <span class=&quot;state&quot;>cooked</span>" data-raw="8 oz (227 g) <span class=&quot;state&quot;>uncooked</span>"></button>
+        </div>
+        <div class="gcard-kc">281<span>kcal</span></div>
+        <div class="gcard-bar"><i class="mp" style="flex:52.7"></i><i class="mf" style="flex:6.1"></i></div>
+        <div class="gcard-macnums"><span class="mp" style="flex:52.7">52.7P</span><span class="mf" style="flex:6.1">6.1F</span></div>
+        <div class="gcard-foot"><span class="gcard-cost"></span><span class="gcard-actions"><button>Edit</button><button>Delete</button></span></div>
+      </div>
+    </li>
+    <li class="gcard">
+      <div class="gcard-photo"><img src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/jasmine-rice.jpg" alt=""></div>
+      <div class="gcard-body">
+        <div class="gcard-nm">White rice</div>
+        <div class="gcard-src"><img class="gcard-store costco" src="logos/costco.svg" alt="Costco">
+          <button class="gcard-srv" data-cooked="14 oz (400 g) <span class=&quot;state&quot;>cooked</span>" data-raw="4.5 oz (133 g) <span class=&quot;state&quot;>uncooked</span>"></button>
+        </div>
+        <div class="gcard-kc">520<span>kcal</span></div>
+        <div class="gcard-bar"><i class="mp" style="flex:10.8"></i><i class="mc" style="flex:112"></i><i class="mf" style="flex:1.2"></i></div>
+        <div class="gcard-macnums"><span class="mp" style="flex:10.8">10.8P</span><span class="mc" style="flex:112">112C</span><span class="mf" style="flex:1.2">1.2F</span></div>
+        <div class="gcard-foot"><span class="gcard-cost"></span><span class="gcard-actions"><button>Edit</button><button>Delete</button></span></div>
+      </div>
+    </li>
+    <li class="gcard">
+      <div class="gcard-photo"><img src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/eggs.jpg" alt=""></div>
+      <div class="gcard-body">
+        <div class="gcard-nm">Large Eggs</div>
+        <div class="gcard-src"><img class="gcard-store" src="logos/walmart.svg" alt="Walmart"><button class="gcard-srv static">1 egg</button></div>
+        <div class="gcard-kc">70<span>kcal</span></div>
+        <div class="gcard-bar"><i class="mp" style="flex:6"></i><i class="mc" style="flex:0.5"></i><i class="mf" style="flex:5"></i></div>
+        <div class="gcard-macnums"><span class="mp" style="flex:6">6P</span><span class="mc" style="flex:0.5">0.5C</span><span class="mf" style="flex:5">5F</span></div>
+        <div class="gcard-foot"><span class="gcard-cost"></span><span class="gcard-actions"><button>Edit</button><button>Delete</button></span></div>
+      </div>
+    </li>
+    <li class="gcard">
+      <div class="gcard-photo"><img src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/peanut-butter.jpg" alt=""></div>
+      <div class="gcard-body">
+        <div class="gcard-nm">Peanut butter</div>
+        <div class="gcard-src"><img class="gcard-store" src="logos/walmart.svg" alt="Walmart"><button class="gcard-srv" id="pb-srv">2 tbsp</button></div>
+        <div class="gcard-kc" id="pb-kc">190<span>kcal</span></div>
+        <div class="gcard-bar"><i class="mp" style="flex:7"></i><i class="mc" style="flex:7"></i><i class="mf" style="flex:16"></i></div>
+        <div class="gcard-macnums" id="pb-nums"><span class="mp" style="flex:7">7P</span><span class="mc" style="flex:7">7C</span><span class="mf" style="flex:16">16F</span></div>
+        <div class="gcard-foot"><span class="gcard-cost"></span><span class="gcard-actions"><button>Edit</button><button>Delete</button></span></div>
+      </div>
+    </li>
+  </ul>
+</div>
+<script>
+  document.querySelectorAll(".gcard-srv[data-cooked]").forEach((btn) => {
+    let raw = false;
+    const render = () => { btn.innerHTML = raw ? btn.dataset.raw : btn.dataset.cooked; };
+    btn.addEventListener("click", () => { raw = !raw; render(); });
+    render();
+  });
+
+  // PB: my-serving <-> 1-unit flip. Macros CHANGE with the amount (unlike the
+  // cooked/raw flip, which is the same food). Bar widths are ratios, so only
+  // the numbers move.
+  const pbStates = [
+    { label: "2 tbsp", kcal: 190, nums: ["7P", "7C", "16F"] },
+    { label: "1 tbsp", kcal: 95, nums: ["3.5P", "3.5C", "8F"] },
+  ];
+  let pbIdx = 0;
+  const pbRender = () => {
+    const s = pbStates[pbIdx];
+    document.getElementById("pb-srv").textContent = s.label;
+    document.getElementById("pb-kc").innerHTML = `${s.kcal}<span>kcal</span>`;
+    document.querySelectorAll("#pb-nums span").forEach((el, i) => { el.textContent = s.nums[i]; });
+  };
+  document.getElementById("pb-srv").addEventListener("click", () => { pbIdx = 1 - pbIdx; pbRender(); });
+  pbRender();
+</script>
+</body>
+</html>
