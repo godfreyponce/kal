@@ -17,6 +17,7 @@ export type GroceryInput = {
   purchaseWeightG?: number | null;
   price?: number | null;
   isEstimated?: boolean;
+  displayQty?: number | null;
 };
 
 export type GroceryView = {
@@ -28,6 +29,9 @@ export type GroceryView = {
   imageUrl: string | null;
   category: string | null;
   servingGrams: number | null;
+  servingDesc: string;
+  rawToCookedYield: number | null;
+  displayQty: number; // DB null = 1 (display the serving basis as-is)
   kcal: number;
   proteinG: number;
   carbsG: number;
@@ -56,6 +60,9 @@ function toView(r: Row): GroceryView {
     imageUrl: r.imageUrl,
     category: r.category,
     servingGrams: numOrNull(r.servingGrams),
+    servingDesc: r.servingDesc,
+    rawToCookedYield: numOrNull(r.rawToCookedYield),
+    displayQty: r.displayQty === null ? 1 : Number(r.displayQty),
     kcal: r.kcal,
     proteinG: Number(r.proteinG),
     carbsG: Number(r.carbsG),
@@ -128,6 +135,7 @@ export async function createGrocery(input: GroceryInput): Promise<GroceryView> {
       carbsG: input.carbsG.toFixed(2),
       fatG: input.fatG.toFixed(2),
       isEstimated: input.isEstimated ?? false,
+      displayQty: input.displayQty == null ? null : input.displayQty.toFixed(3),
       purchaseWeight: strOrNull(input.purchaseWeightG),
       price: strOrNull(input.price),
     })
@@ -155,6 +163,9 @@ export async function updateGrocery(
   if (patch.carbsG !== undefined) set.carbsG = patch.carbsG.toFixed(2);
   if (patch.fatG !== undefined) set.fatG = patch.fatG.toFixed(2);
   if (patch.isEstimated !== undefined) set.isEstimated = patch.isEstimated;
+  if (patch.displayQty !== undefined) {
+    set.displayQty = patch.displayQty === null ? null : patch.displayQty.toFixed(3);
+  }
   if (patch.purchaseWeightG !== undefined) set.purchaseWeight = strOrNull(patch.purchaseWeightG);
   if (patch.price !== undefined) set.price = strOrNull(patch.price);
 

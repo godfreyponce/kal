@@ -19,6 +19,9 @@ export async function POST(req: NextRequest) {
   if (!Number.isFinite(kcal) || kcal < 0) {
     return Response.json({ error: "kcal must be a non-negative number" }, { status: 400 });
   }
+  if (body.displayQty != null && (!Number.isFinite(Number(body.displayQty)) || Number(body.displayQty) <= 0)) {
+    return Response.json({ error: "displayQty must be a positive number" }, { status: 400 });
+  }
 
   // Photo is the pasted image address (reliable); the link is just a rebuy reference.
   const imageUrl =
@@ -35,6 +38,7 @@ export async function POST(req: NextRequest) {
     proteinG: Number(body.proteinG) || 0,
     carbsG: Number(body.carbsG) || 0,
     fatG: Number(body.fatG) || 0,
+    displayQty: body.displayQty == null ? null : Number(body.displayQty),
     purchaseWeightG: body.purchaseWeightG == null ? null : Number(body.purchaseWeightG),
     price: body.price == null ? null : Number(body.price),
   };

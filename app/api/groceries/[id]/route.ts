@@ -28,6 +28,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   for (const k of ["purchaseWeightG", "price"] as const) {
     if (body[k] !== undefined) patch[k] = body[k] === null ? null : Number(body[k]);
   }
+  // displayQty: null clears (card falls back to 1 × basis); must be > 0 when set.
+  if (body.displayQty !== undefined) {
+    if (body.displayQty !== null && (!Number.isFinite(Number(body.displayQty)) || Number(body.displayQty) <= 0)) {
+      return Response.json({ error: "displayQty must be a positive number" }, { status: 400 });
+    }
+    patch.displayQty = body.displayQty === null ? null : Number(body.displayQty);
+  }
 
   const updated = await updateGrocery(groceryId, patch);
   if (!updated) return Response.json({ error: "not found" }, { status: 404 });

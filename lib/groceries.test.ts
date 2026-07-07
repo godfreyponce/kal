@@ -61,6 +61,24 @@ describe("grocery CRUD", () => {
     const [gone] = await db.select().from(foods).where(eq(foods.id, created.id));
     expect(gone).toBeUndefined();
   });
+
+  it("round-trips displayQty and defaults it to 1", async () => {
+    const created = await createGrocery({
+      name: `${SENTINEL}_dq`, servingGrams: 100, kcal: 100,
+      proteinG: 10, carbsG: 10, fatG: 10,
+    });
+    expect(created.displayQty).toBe(1);          // null in DB reads as 1
+    expect(created.servingDesc).toBe("100 g");   // view now exposes the basis
+    expect(created.rawToCookedYield).toBeNull();
+
+    const updated = await updateGrocery(created.id, { displayQty: 1.7 });
+    expect(updated!.displayQty).toBe(1.7);
+
+    const cleared = await updateGrocery(created.id, { displayQty: null });
+    expect(cleared!.displayQty).toBe(1);
+
+    await deleteGrocery(created.id);
+  });
 });
 
 describe("getGroceryGroups", () => {
