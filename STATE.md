@@ -11,12 +11,14 @@ this file is the quick-resume summary).
 
 ## ⏩ NEW AGENT — START HERE
 
-*Last updated: 2026-07-07 · Grocery product photos DONE (data-only, no code change): every food
-in live Neon now has a Blob-hosted product image + `store` + `link` (8 Walmart, 2 Costco — owner
-shops both). Ground beef 90/10 removed from live `foods` at owner's request (had zero meal_item/
-log refs; NB `db/seed-data.ts`/`apply-seed-v2.ts` still contain it — a rerun re-inserts it).
-Prod code unchanged since `kal-l92p7c8jf` (2026-07-06); Groceries is force-dynamic so the photos
-show without a deploy.*
+*Last updated: 2026-07-07 (later) · Groceries "MY SERVING" DISPLAY built (spec'd + planned +
+TDD'd) and **DEPLOYED to prod** (`kal-c9rjd7xxt` READY, aliased kal-delta.vercel.app; unauth
+307→login, login 200, no runtime errors). Suite 56/56 (12 files), `tsc` clean. Cards now show
+macros at the owner's serving (chicken `6 oz (170 g) cooked` → 281 kcal, tap → `8 oz (227 g)
+uncooked`; PB `2 tbsp` ↔ `1 tbsp`), store LOGOS replace store text, `Egg, large` → **Large
+Eggs** (live rename). Owner approved mockup + design + ordered the deploy; phone verification
+pending. Earlier same day: grocery product photos (data-only) + ground beef removed from live
+DB **and now from the seed data too** (a re-apply no longer resurrects it).*
 
 **✅ Prod is current (verified 2026-07-06):** deployment `kal-4aabw2v1t` READY, aliased to
 kal-delta.vercel.app; unauth `/` → 307 /login, login 200; no runtime errors in fresh logs.
@@ -86,12 +88,11 @@ file). This cost a lot of debugging this session; route/TSX edits hot-reload fin
 **🟢 Upcoming / backlog (confirm with owner before starting anything):**
 1. **Groceries v2 design rework** — owner dislikes the current v2 design (shipped to prod for the
    photo→label trial, not because the look is approved). Redo it WITH the 3-variant HTML mockup
-   step first (see [[design-variants-for-new-screens]]). **Owner requirement (2026-07-07): a small
-   per-item store badge on each card**, driven by `foods.store` (now populated: Walmart + Costco —
-   owner notes where each grocery was bought; NOT a hardcoded Walmart logo). Leftover prod-env
-   todos: add `FDC_API_KEY` to Vercel Prod (USDA name-search no-ops without it — label-photo flow
-   unaffected); exercise the product-photo Blob upload live in prod to confirm OIDC.
-   (Commit/merge/deploy: DONE 2026-06-29.)
+   step first (see [[design-variants-for-new-screens]]). *(The store-badge requirement was
+   ABSORBED by the 2026-07-07 my-serving feature — store logos now render on cards.)* Leftover
+   prod-env todos: add `FDC_API_KEY` to Vercel Prod (USDA name-search no-ops without it —
+   label-photo flow unaffected); exercise the product-photo Blob upload live in prod to confirm
+   OIDC. (Commit/merge/deploy: DONE 2026-06-29.)
 2. **Prompt caching** on the chat system-prompt/tools prefix — ~10× cheaper repeat turns. Highest-value next.
 3. **Inventory decrement** — `foods.purchase_weight` is recorded but logging does NOT subtract from it.
 4. **Plan screen** — profile/meals editor + the memory-facts editor (grocery/foods CRUD exists via `/groceries`).
@@ -185,6 +186,35 @@ bare multiplier. TDD on the data layer; suite 48/48 (11 files), `tsc` clean.
   Data layer untouched; `tsc` clean, 48/48. Same-day polish (owner-accepted): hint line now shows
   only the timeHint (the "tap a food for one serving" text is gone), and a trailing ", cooked" is
   stripped from popup food names (display-only — the amount already says cooked; DB/chat unchanged).
+
+## Groceries "my serving" display (2026-07-07) — DEPLOYED to prod
+
+Cards show macros at the owner's own serving instead of the 100 g/1-unit basis. Spec:
+`docs/superpowers/specs/2026-07-07-groceries-serving-display-design.md`; plan (all 8 tasks
+executed): `docs/superpowers/plans/2026-07-07-groceries-serving-display.md`; owner-approved
+mockup: `design/groceries-serving-display.html`.
+
+- **Data**: `foods.display_qty numeric(8,3)` (migration `0004`, APPLIED) — a multiplier of the
+  serving basis, same convention as `meal_items.quantity`; null = 1. DISPLAY-ONLY: never feeds
+  targets, plan lines, or tools (verified: prompt unchanged). Live pre-fill via
+  `db/apply-display-qty.ts` (idempotent): chicken 1.7, rice 4, veg 2.5, peanuts 0.4, PB 2;
+  `Egg, large` → **Large Eggs** (real rename; `apply-seed-v2.ts` RENAMES map knows it).
+- **Lib**: `lib/serving-display.ts` (+6 tests) — `servingDisplay(food)` → title (", cooked"
+  stripped), oz-first label (`6 oz (170 g)` via the exported `ozHint`), macros via `resolveItem`
+  (never hand-scaled), and the flip: cooked↔uncooked for gram foods with a yield (macros
+  identical), my-serving↔1-unit for count foods with qty>1 (macros scale). `GroceryView` gained
+  `servingDesc`/`rawToCookedYield`/`displayQty` (null→1); REST accepts `displayQty` (400 if ≤0).
+- **Card**: store LOGOS (`public/stores/{walmart,costco}.svg`, matched case-insensitively from
+  `foods.store`, plain-text fallback; gated by the auth proxy like everything — serves fine
+  logged-in). Serving is a tappable dotted-underline button (`.gcard-srv`); flip state is
+  ephemeral client state keyed by food id (same food on two shelves flips together). `$/srv`
+  scales to the displayed serving.
+- **Form**: "My serving" row — weighed foods take g/oz (converted to the multiplier on save);
+  count foods take a count with the basis unit shown. **Count-food edit fix**: the form no longer
+  sends `servingGrams` for count foods (previously saving eggs/PB was impossible AND would have
+  clobbered `"1 tbsp"` → `"x g"` via updateGrocery's servingDesc rewrite).
+- **Seed**: `SeedFood.displayQty` in seed-data + both seed paths; **ground beef row deleted**
+  from `FOODS_V2` (owner removed it 2026-07-07; a re-apply no longer resurrects it).
 
 ## Unit-resolution fix + Seed v2 (2026-07-02) — COMMITTED (53b2271), live-data APPLIED
 
@@ -534,6 +564,12 @@ app/api/nutrition/route.ts        GET ?q= → merged nutrition hits
 app/api/nutrition/vision/route.ts POST {imageBase64,mediaType} → label macros
 app/api/upload/route.ts           POST → Vercel Blob product photo → public URL (image_url)
 design/groceries-{variants,combined,photo-options,bar-options}.html   v2 design mockups
+— Groceries "my serving" display (2026-07-07) —
+lib/serving-display.ts (+test)    servingDisplay() — card labels/flips/macros (via resolveItem)
+db/apply-display-qty.ts           one-time live apply: Large Eggs rename + display_qty pre-fill
+db/migrations/0004_*.sql          foods.display_qty (APPLIED to Neon)
+public/stores/{walmart,costco}.svg   store logos (card meta row)
+design/groceries-serving-display.html   owner-approved mockup (before/after + flips)
 ```
 
 ---
@@ -554,6 +590,9 @@ design/groceries-{variants,combined,photo-options,bar-options}.html   v2 design 
 - **Today meal-detail popup — DONE 2026-07-06, owner-accepted.** Variant B card + B3 per-serving
   expand + Rise & sink animation. Per-food stats restyled to the **E3 open-column strip** + polish
   later that day (owner-accepted). All deployed to prod 2026-07-06.
+- **Groceries "my serving" display — DONE 2026-07-07, deployed to prod.** display_qty column,
+  servingDisplay lib, store logos, tappable cooked↔raw / 2↔1-tbsp flips, Large Eggs rename,
+  My-serving form field. Store-badge backlog requirement absorbed.
 - **Phase 6 / v1.5+ — remaining deferrals:** prompt caching, inventory decrement,
   trends/weight-chart screen, chat history summarization.
 
