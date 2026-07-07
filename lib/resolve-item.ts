@@ -38,7 +38,7 @@ export function parseServing(desc: string): ServingBasis {
 const trim1 = (x: number) => +x.toFixed(1);
 
 /** Kitchen-scale oz hint, rounded to the nearest 0.5 oz. */
-const ozHint = (grams: number) => {
+export const ozHint = (grams: number) => {
   const oz = Math.round((grams / OZ_TO_G) * 2) / 2;
   return `${oz % 1 === 0 ? oz : oz.toFixed(1)} oz`;
 };
