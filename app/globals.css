@@ -1087,7 +1087,7 @@ body {
 
 .gcard-body { padding: 11px 12px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .gcard-nm { font-family: var(--font-serif); font-size: 15px; font-weight: 500; line-height: 1.15; color: var(--ink); }
-.gcard-src { display: flex; flex-wrap: wrap; gap: 2px 9px; font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); margin-top: -4px; }
+.gcard-src { display: flex; flex-wrap: wrap; gap: 2px 9px; font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); margin-top: -4px; align-items: center; }
 .gcard-kc { font-family: var(--font-mono); font-size: 24px; font-weight: 500; color: var(--ink); line-height: 1; letter-spacing: -0.01em; }
 .gcard-kc span { font-size: 10px; color: var(--faint); margin-left: 4px; }
 
@@ -1105,6 +1105,24 @@ body {
 .gcard-macnums .mp { color: var(--protein); }
 .gcard-macnums .mc { color: var(--carbs); }
 .gcard-macnums .mf { color: var(--fat); }
+
+/* Store logo in the meta row (falls back to plain text for unknown stores). */
+.gcard-store { height: 11px; width: auto; display: block; }
+.gcard-store.costco { height: 13px; }
+
+/* The tappable "my serving" amount. Dotted underline = flippable. */
+.gcard-srv {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 1px dotted var(--faint);
+}
+.gcard-srv.static { cursor: default; border-bottom: none; }
+.gcard-srv .state { color: var(--accent); }
 
 .gcard-foot {
   margin-top: auto;
