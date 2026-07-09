@@ -118,3 +118,37 @@ describe("getGroceryGroups", () => {
     expect(mg?.plannedKcal).toBe(400); // 200 kcal × quantity 2
   });
 });
+
+describe("one_off foods are hidden from Groceries", () => {
+  let oneOffId: number;
+
+  beforeAll(async () => {
+    const [row] = await db
+      .insert(foods)
+      .values({
+        name: "ZZOFF Chipotle bowl (test)",
+        servingDesc: "1 bowl",
+        kcal: 650,
+        proteinG: "45.00",
+        carbsG: "60.00",
+        fatG: "22.00",
+        oneOff: true,
+      })
+      .returning({ id: foods.id });
+    oneOffId = row.id;
+  });
+
+  afterAll(async () => {
+    await db.delete(foods).where(eq(foods.id, oneOffId));
+  });
+
+  it("listGroceries excludes one_off foods", async () => {
+    const list = await listGroceries();
+    expect(list.some((g) => g.id === oneOffId)).toBe(false);
+  });
+
+  it("getGroceryGroups excludes one_off foods", async () => {
+    const groups = await getGroceryGroups();
+    expect(groups.groceries.some((g) => g.id === oneOffId)).toBe(false);
+  });
+});

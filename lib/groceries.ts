@@ -73,7 +73,11 @@ function toView(r: Row): GroceryView {
 }
 
 export async function listGroceries(): Promise<GroceryView[]> {
-  const rows = await db.select().from(foods).orderBy(asc(foods.name));
+  const rows = await db
+    .select()
+    .from(foods)
+    .where(eq(foods.oneOff, false))
+    .orderBy(asc(foods.name));
   return rows.map(toView);
 }
 
@@ -84,7 +88,7 @@ export async function listGroceries(): Promise<GroceryView[]> {
  */
 export async function getGroceryGroups(): Promise<GroceryGroups> {
   const [rows, items, mealRows] = await Promise.all([
-    db.select().from(foods).orderBy(asc(foods.name)),
+    db.select().from(foods).where(eq(foods.oneOff, false)).orderBy(asc(foods.name)),
     db
       .select({
         mealId: mealItems.mealId,
