@@ -65,12 +65,19 @@ describe("setMealOverride", () => {
     expect(lines[0].quantity).toBe(3);
   });
 
-  it("rejects unknown food ids and empty item lists", async () => {
+  it("rejects unknown food ids, empty item lists, and non-positive quantities", async () => {
+    const [f1] = await anyTwoFoods();
     const meal = await firstMeal();
     await expect(
       setMealOverride(DATE, meal.id, [{ foodId: 999999, quantity: 1 }]),
     ).rejects.toThrow(/No food/);
     await expect(setMealOverride(DATE, meal.id, [])).rejects.toThrow(/non-empty/);
+    await expect(
+      setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 0 }]),
+    ).rejects.toThrow(/positive/);
+    await expect(
+      setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: -1 }]),
+    ).rejects.toThrow(/positive/);
   });
 });
 
