@@ -4,6 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { foods, logEntries, mealOverrides, meals, mealStatus } from "../db/schema";
 import { getOverridesForDate, setMealOverride } from "./overrides";
+import { getTodayView } from "./today";
 import { revertWriteBatch } from "./undo";
 
 // Own sentinel per test FILE — vitest runs files in parallel against live Neon.
@@ -89,5 +90,20 @@ describe("undo", () => {
     await revertWriteBatch(res.writeBatchId);
     const map = await getOverridesForDate(DATE);
     expect(map.has(meal.id)).toBe(false);
+  });
+});
+
+describe("getTodayView with overrides", () => {
+  it("renders override items, recomputes plannedKcal, and marks the meal adjusted", async () => {
+    const [f1] = await anyTwoFoods();
+    const meal = await firstMeal();
+    await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 2 }]);
+    const view = await getTodayView(DATE);
+    const m = view.meals.find((x) => x.id === meal.id)!;
+    expect(m.adjusted).toBe(true);
+    expect(m.items).toHaveLength(1);
+    expect(m.items[0].foodName).toBe(f1.name);
+    expect(m.plannedKcal).toBe(m.items[0].kcal);
+    expect(view.meals.filter((x) => x.id !== meal.id).every((x) => !x.adjusted)).toBe(true);
   });
 });

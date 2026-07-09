@@ -3,6 +3,7 @@ import { db } from "../db";
 import { foods, mealItems, meals, mealStatus, weighIns } from "../db/schema";
 import { getDaySummary, type DaySummary } from "./day-summary";
 import type { MealStatusValue } from "./meal-status";
+import { getOverridesForDate } from "./overrides";
 import { resolveItem } from "./resolve-item";
 
 /** One plan item, resolved for display — never a bare multiplier. */
@@ -29,6 +30,8 @@ export type TodayMeal = {
   /** The next meal still to eat — highlighted as "now" in the UI. */
   isNow: boolean;
   items: TodayMealItem[];
+  /** True when meal_overrides replaced this meal's items for `date` (today only). */
+  adjusted: boolean;
 };
 
 export type WeighIn = { date: string; weightLb: number };
@@ -45,9 +48,9 @@ export type TodayView = {
 
 /** Everything the Today screen renders, in one read. No LLM involved. */
 export async function getTodayView(date: string): Promise<TodayView> {
-  // All five reads are independent — fire them in one parallel batch so the
-  // page (and every router.refresh after a log) pays one round-trip, not five.
-  const [summary, items, mealRows, statusRows, latestRows] = await Promise.all([
+  // All six reads are independent — fire them in one parallel batch so the
+  // page (and every router.refresh after a log) pays one round-trip, not six.
+  const [summary, items, mealRows, statusRows, latestRows, overrides] = await Promise.all([
     getDaySummary(date),
     db
       .select({
@@ -77,6 +80,7 @@ export async function getTodayView(date: string): Promise<TodayView> {
       .from(weighIns)
       .orderBy(desc(weighIns.date))
       .limit(1),
+    getOverridesForDate(date),
   ]);
 
   // Resolve every plan item once (absolute amount + macros + 1-serving basis);
@@ -112,6 +116,30 @@ export async function getTodayView(date: string): Promise<TodayView> {
     plannedKcal.set(it.mealId, (plannedKcal.get(it.mealId) ?? 0) + plate.kcal);
   }
 
+  // Day-scoped overrides replace the template's items for this date only.
+  for (const [mealId, lines] of overrides) {
+    const list: TodayMealItem[] = [];
+    let kcalSum = 0;
+    for (const line of lines) {
+      const plate = resolveItem(line.quantity, line.food);
+      const one = resolveItem(1, line.food);
+      list.push({
+        foodName: line.food.name,
+        amountLabel: plate.amountLabel,
+        rawLabel: plate.rawLabel,
+        kcal: plate.kcal,
+        proteinG: plate.proteinG,
+        carbsG: plate.carbsG,
+        fatG: plate.fatG,
+        servingLabel: one.amountLabel,
+        serving: { kcal: one.kcal, proteinG: one.proteinG, carbsG: one.carbsG, fatG: one.fatG },
+      });
+      kcalSum += plate.kcal;
+    }
+    itemsByMeal.set(mealId, list);
+    plannedKcal.set(mealId, kcalSum);
+  }
+
   const statusByMeal = new Map(statusRows.map((s) => [s.mealId, s.status as MealStatusValue]));
 
   let nowAssigned = false;
@@ -127,6 +155,7 @@ export async function getTodayView(date: string): Promise<TodayView> {
       status,
       isNow,
       items: itemsByMeal.get(m.id) ?? [],
+      adjusted: overrides.has(m.id),
     };
   });
 
