@@ -1,6 +1,6 @@
 import "./env";
 import { db } from "./index";
-import { profile, foods, meals, mealItems, mealStatus, logEntries } from "./schema";
+import { profile, foods, meals, mealItems, mealStatus, logEntries, mealOverrides } from "./schema";
 import { FOODS_V2, MEALS_V2, MEAL_ITEMS_V2, computeTargets } from "./seed-data";
 
 // ---------------------------------------------------------------------------
@@ -26,6 +26,7 @@ const PROFILE = {
 
 async function seed() {
   // FK-safe wipe so the seed is repeatable.
+  await db.delete(mealOverrides);
   await db.delete(logEntries);
   await db.delete(mealStatus);
   await db.delete(mealItems);

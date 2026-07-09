@@ -56,6 +56,10 @@ export const foods = pgTable("foods", {
   // Owner's own serving as a multiplier of serving_desc (1.7 × 100 g = 170 g).
   // DISPLAY-ONLY (Groceries cards): never feeds targets, plan lines, or tools.
   displayQty: numeric("display_qty", { precision: 8, scale: 3 }),
+  // Off-plan foods captured by chat (restaurant meals, estimates). They must live
+  // in foods so macros resolve via resolveItem, but they are not groceries — the
+  // Groceries screen hides one_off rows.
+  oneOff: boolean("one_off").notNull().default(false),
   purchaseWeight: numeric("purchase_weight", { precision: 8, scale: 2 }),
   price: numeric("price", { precision: 8, scale: 2 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -117,6 +121,24 @@ export const mealStatus = pgTable(
   },
   (t) => [unique("meal_status_date_meal_unique").on(t.date, t.mealId)],
 );
+
+// Day-scoped plan adaptation (chat deviation feature). Rows for (date, meal_id)
+// replace that meal's template meal_items FOR THAT DATE ONLY; no rows = template
+// applies, so tomorrow auto-reverts with nothing to clean up. write_batch_id
+// groups one override_meal call for batch Undo.
+export const mealOverrides = pgTable("meal_overrides", {
+  id: serial("id").primaryKey(),
+  date: date("date").notNull(),
+  mealId: integer("meal_id")
+    .notNull()
+    .references(() => meals.id, { onDelete: "cascade" }),
+  foodId: integer("food_id")
+    .notNull()
+    .references(() => foods.id, { onDelete: "restrict" }),
+  quantity: numeric("quantity", { precision: 8, scale: 3 }).notNull(),
+  writeBatchId: uuid("write_batch_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const weighIns = pgTable("weigh_ins", {
   id: serial("id").primaryKey(),
