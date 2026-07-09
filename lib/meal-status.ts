@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db";
 import { foods, logEntries, mealItems, mealStatus } from "../db/schema";
+import { getOverridesForDate } from "./overrides";
 
 export type MealStatusValue = "eaten" | "missed" | "substituted" | "pending";
 
@@ -53,7 +54,7 @@ export async function setMealStatus(
 
   const writeBatchId = randomUUID();
 
-  const [planned, existing] = await Promise.all([
+  const [templatePlanned, existing, overridesMap] = await Promise.all([
     db
       .select({
         foodId: mealItems.foodId,
@@ -70,7 +71,21 @@ export async function setMealStatus(
       .select({ foodId: logEntries.foodId })
       .from(logEntries)
       .where(and(eq(logEntries.date, date), eq(logEntries.mealId, mealId))),
+    getOverridesForDate(date),
   ]);
+
+  // A day-scoped override replaces the template as "what was planned" for today.
+  const ov = overridesMap.get(mealId);
+  const planned = ov
+    ? ov.map((l) => ({
+        foodId: l.foodId,
+        quantity: String(l.quantity),
+        kcal: l.food.kcal,
+        proteinG: l.food.proteinG.toFixed(2),
+        carbsG: l.food.carbsG.toFixed(2),
+        fatG: l.food.fatG.toFixed(2),
+      }))
+    : templatePlanned;
   const alreadyLogged = new Set(existing.map((e) => e.foodId));
 
   const gaps = planned.filter((p) => !alreadyLogged.has(p.foodId));

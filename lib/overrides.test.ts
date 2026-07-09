@@ -6,6 +6,7 @@ import { foods, logEntries, mealOverrides, meals, mealStatus } from "../db/schem
 import { getOverridesForDate, setMealOverride } from "./overrides";
 import { getTodayView } from "./today";
 import { revertWriteBatch } from "./undo";
+import { setMealStatus } from "./meal-status";
 
 // Own sentinel per test FILE — vitest runs files in parallel against live Neon.
 const DATE = "2099-05-05";
@@ -105,5 +106,34 @@ describe("getTodayView with overrides", () => {
     expect(m.items[0].foodName).toBe(f1.name);
     expect(m.plannedKcal).toBe(m.items[0].kcal);
     expect(view.meals.filter((x) => x.id !== meal.id).every((x) => !x.adjusted)).toBe(true);
+  });
+});
+
+describe("mark-eaten with an override", () => {
+  it("logs the override items, not the template's", async () => {
+    const [f1] = await anyTwoFoods();
+    const meal = await firstMeal();
+    await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 2 }]);
+    const res = await setMealStatus(DATE, meal.id, "eaten");
+    expect(res.loggedFoodIds).toEqual([f1.id]);
+    const rows = await db
+      .select()
+      .from(logEntries)
+      .where(and(eq(logEntries.date, DATE), eq(logEntries.mealId, meal.id)));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].foodId).toBe(f1.id);
+    expect(rows[0].kcal).toBe(Math.round(f1.kcal * 2));
+  });
+
+  it("undoing mark-eaten reverts the logs but keeps the override", async () => {
+    const [f1] = await anyTwoFoods();
+    const meal = await firstMeal();
+    await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 1 }]);
+    await setMealStatus(DATE, meal.id, "eaten");
+    await setMealStatus(DATE, meal.id, "pending");
+    const logs = await db.select().from(logEntries).where(eq(logEntries.date, DATE));
+    expect(logs).toHaveLength(0);
+    const map = await getOverridesForDate(DATE);
+    expect(map.get(meal.id)).toHaveLength(1); // separate batch — override survives
   });
 });
