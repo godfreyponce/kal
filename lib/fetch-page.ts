@@ -73,6 +73,10 @@ export async function fetchPage(
         Accept: "text/html,application/xhtml+xml,text/plain",
       },
     });
+    // redirect:"follow" can hop anywhere — re-guard the FINAL url so a public
+    // link that 302s to a private address never gets its content read.
+    const finalGuard = urlGuardError(res.url || url);
+    if (finalGuard) return { ok: false, error: `Redirected to a blocked address. ${finalGuard}` };
     if (!res.ok) return { ok: false, error: `Fetch failed: HTTP ${res.status}.` };
     const ct = res.headers.get("content-type") ?? "";
     if (!/text\/html|application\/xhtml|text\/plain/.test(ct)) {
