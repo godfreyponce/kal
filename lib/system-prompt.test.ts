@@ -32,3 +32,12 @@ it("keeps staticText byte-identical across calls; overrides render only dynamica
   expect(after.dynamicText).toContain("ADJUSTED MEALS");
   expect(after.dynamicText).toContain(f.name);
 });
+
+it("static rules encode the off-plan knowledge ladder", async () => {
+  const { staticText } = await assembleSystemPrompt(DATE);
+  expect(staticText).toContain("OFF-PLAN FOODS");
+  expect(staticText).toContain("search_nutrition");
+  expect(staticText).toContain("fetch_page");
+  expect(staticText).toContain("override_meal");
+  expect(staticText).toContain("is_estimated=true");
+});
