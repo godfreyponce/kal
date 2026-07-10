@@ -178,7 +178,7 @@ export const TOOLS: Anthropic.Tool[] = [
   {
     name: "override_meal",
     description:
-      "Adapt TODAY'S plan only: replace one meal's planned items for one date (a deviation — traveling, eating out). The template plan is NEVER changed. Pass the FULL replacement item list (include any kept items). Foods must already exist in the library — for off-plan foods use log_food's new-food path or add_grocery first. quantity is a multiplier of the food's serving basis (per-100 g foods: 1.7 means 170 g).",
+      "Adapt TODAY'S plan only: replace one meal's planned items for one date (a deviation — traveling, eating out). The template plan is NEVER changed. Pass the FULL replacement item list (include any kept items). Foods must already exist in the library — for off-plan foods use log_food's new-food path or add_grocery FIRST and take the food id from its result. Every food_id must come from a tool result in this conversation (search_foods hit, or the id returned by log_food/add_grocery) — NEVER guess a food_id. quantity is a multiplier of the food's serving basis (per-100 g foods: 1.7 means 170 g).",
     input_schema: {
       type: "object",
       properties: {
@@ -360,7 +360,7 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
       // Never surface the servings multiplier — always an absolute amount.
       const amountLabel = weightLabel ?? resolveItem(qty, per).amountLabel;
       return ok(
-        { logged: { name: per.name, amount: amountLabel, kcal: entry.kcal }, writeBatchId },
+        { logged: { foodId, name: per.name, amount: amountLabel, kcal: entry.kcal }, writeBatchId },
         `Logged ${per.name}, ${amountLabel} (${entry.kcal} kcal)`,
         {
           writeBatchId,

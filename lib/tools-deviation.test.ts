@@ -90,8 +90,11 @@ describe("log_food off-plan flags", () => {
       one_off: true,
       date: DATE,
     });
-    expect(JSON.parse(run.forModel).logged.name).toBe("ZZDEV test bowl");
+    const parsed = JSON.parse(run.forModel);
+    expect(parsed.logged.name).toBe("ZZDEV test bowl");
     const [f] = await db.select().from(foods).where(eq(foods.name, "ZZDEV test bowl"));
+    // The model must learn the created food's id from the result (it feeds override_meal).
+    expect(parsed.logged.foodId).toBe(f.id);
     expect(f.isEstimated).toBe(true);
     expect(f.oneOff).toBe(true);
     // Cleanup: log rows first (foods FK is restrict), then the food itself.
