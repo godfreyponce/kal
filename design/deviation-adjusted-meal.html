@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kal — Deviation-adjusted meal mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --canvas: #F7F6F3;
+    --surface: #FFFFFF;
+    --surface-2: #F0EFEB;
+    --ink: #1F2421;
+    --ink-soft: #2F3437;
+    --muted: #787774;
+    --faint: #9B9A96;
+    --border: #E6E4DF;
+    --green-bg: #E6EFE5; --green-tx: #346538;
+    --protein: #9F2F2D; --carbs: #8A6A1F; --fat: #1F6C9F;
+    --accent: #D97757;
+    --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+    --serif: 'Newsreader', 'Lyon Text', Georgia, serif;
+    --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans); background: var(--canvas); color: var(--ink);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; padding: 64px 24px 96px;
+  }
+
+  /* ---- Gallery scaffolding (matches today-meal-popup-variants.html) ---- */
+  .page-head { max-width: 900px; margin: 0 auto 48px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 14px; }
+  .page-head h1 { font-family: var(--serif); font-weight: 500; font-size: 40px; line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 16px; }
+  .page-head p { color: var(--muted); max-width: 66ch; font-size: 15.5px; }
+
+  .variants { max-width: 1360px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 48px; justify-content: center; }
+  .variant { width: 380px; }
+  .v-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+  .v-name { font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .v-desc { color: var(--muted); font-size: 13.5px; margin-bottom: 20px; }
+  .v-desc code { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  .section-lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin: 22px 0 10px; }
+
+  /* ---- phone frame (mirrors today screen) ---- */
+  .phone {
+    width: 100%; background: var(--canvas); border: 1px solid var(--border);
+    border-radius: 26px; box-shadow: 0 20px 50px rgba(31,36,33,0.09); overflow: hidden;
+  }
+  .statusbar { display: flex; justify-content: space-between; align-items: center; padding: 13px 22px 0; font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .statusbar .dots { display: flex; gap: 4px; }
+  .statusbar .dots i { width: 5px; height: 5px; border-radius: 9999px; background: #D8D7D3; }
+  .screen { padding: 16px 20px 20px; }
+  .kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+
+  /* meals checklist — exact classes/markup from app/meal-list.tsx + globals.css */
+  .checklist { list-style: none; }
+  .checklist li { display: flex; align-items: center; gap: 13px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .checklist li:last-child { border-bottom: none; }
+  .box {
+    width: 24px; height: 24px; border-radius: 7px; border: 1px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; background: #fff; padding: 0;
+  }
+  .box.done { background: var(--green-bg); border-color: var(--green-bg); }
+  .box.done svg { stroke: var(--green-tx); }
+  .rowbtn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 13px; }
+  .ct { flex: 1; min-width: 0; }
+  .ct .n { font-size: 14.5px; color: var(--ink-soft); }
+  .ct .n.done { color: var(--faint); }
+  .ct small { display: block; font-family: var(--mono); font-size: 10px; color: var(--faint); margin-top: 1px; }
+  .ck { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .mchev { color: var(--faint); font-size: 13px; }
+
+  /* ---- meal-detail popup (exact classes from globals.css) ---- */
+  .popup-stage { padding: 26px 18px; background: rgba(31,36,33,0.32); border-radius: 18px; display: flex; justify-content: center; }
+  .mpop-card {
+    width: 100%; max-width: 336px; background: var(--canvas); border: 1px solid var(--border);
+    border-radius: 18px; padding: 18px 20px 20px; box-shadow: 0 20px 60px rgba(31,36,33,0.22);
+  }
+  .mpop-head { display: flex; align-items: center; gap: 12px; margin-bottom: 2px; }
+  .mpop-title { font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -0.02em; flex: 1; min-width: 0; line-height: 1.2; }
+  .mpop-kcal { font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .mpop-x { flex-shrink: 0; width: 26px; height: 26px; border-radius: 9999px; border: 0; background: var(--surface-2); color: var(--muted); font-size: 12px; }
+  .mpop-hint { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-bottom: 12px; }
+  .mpop-item { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .mpop-item.last { border-bottom-color: transparent; }
+  .mi-name { flex: 1; min-width: 0; font-size: 14px; color: var(--ink-soft); }
+  .mi-raw { display: block; font-family: var(--mono); font-size: 10px; color: var(--faint); }
+  .mi-amt { font-family: var(--mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .mi-kcal { font-family: var(--mono); font-size: 11.5px; color: var(--faint); width: 38px; text-align: right; }
+  .mpop-totals { display: flex; gap: 16px; padding-top: 12px; margin-top: 4px; border-top: 1px solid var(--ink); font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  .mpop-totals b { color: var(--ink); font-weight: 500; }
+  .mpop-totals .p b { color: var(--protein); } .mpop-totals .c b { color: var(--carbs); } .mpop-totals .f b { color: var(--fat); }
+  .mpop-btn { width: 100%; margin-top: 16px; padding: 11px; border-radius: 12px; border: 1px solid var(--ink); background: var(--ink); color: var(--canvas); font-family: var(--sans); font-size: 14px; }
+
+  /* =========================================================
+     C final — the refined swap glyph
+     Original C was faint and 10px. Refined: terracotta (the
+     accent color Treatment B used for its dot) and one step
+     larger, so it registers at a glance without shouting.
+     ========================================================= */
+  .dev-swap {
+    display: inline-block; margin-right: 5px; color: var(--accent);
+    font-size: 12px; vertical-align: 0.5px;
+  }
+  .mpop-kcal .dev-swap { font-size: 13px; }
+
+  /* original C, kept only for the before/after strip */
+  .dev-swap.old { color: var(--faint); font-size: 10px; vertical-align: 1px; }
+
+  /* before/after comparison strip */
+  .compare { display: flex; gap: 14px; margin-top: 10px; }
+  .compare .cell { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px 14px; }
+  .compare .cell .lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+  .compare .row { display: flex; align-items: center; gap: 13px; }
+
+  .footer-note { max-width: 900px; margin: 56px auto 0; padding-top: 26px; border-top: 1px solid var(--border); color: var(--faint); font-size: 13px; line-height: 1.6; }
+  .footer-note code { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="eyebrow">Kal — Chat deviation copilot</div>
+  <h1>Adjusted-meal mark, refined</h1>
+  <p>Chosen direction: the swap glyph before the kcal figure (Treatment C), refined per review —
+     the glyph now takes the terracotta accent that Treatment B used for its dot, and steps up a
+     size so it reads at a glance without becoming a badge. It marks the one number that actually
+     changed, leaving the meal name and time hint untouched. Shown on a realistic checklist (one
+     adjusted Dinner among normal rows) and in the popup it opens into.</p>
+</div>
+
+<div class="variants">
+
+  <!-- ============ C FINAL — CHECKLIST ============ -->
+  <section class="variant">
+    <div class="v-label">C final</div>
+    <div class="v-name">On the Today checklist</div>
+    <div class="v-desc">A terracotta ⇄, sized up slightly, sits right before the kcal value on
+      the adjusted row. Dinner was re-portioned for today (less rice after a heavy lunch), so its
+      number moved from 1,059 to 876. Every other row is untouched.</div>
+
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+      <div class="screen">
+        <div class="kicker">Meals</div>
+        <ul class="checklist">
+          <li>
+            <button type="button" class="box done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7" /></svg></button>
+            <span class="rowbtn"><span class="ct"><span class="n done">Breakfast</span></span><span class="ck">815</span><span class="mchev">›</span></span>
+          </li>
+          <li>
+            <button type="button" class="box done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7" /></svg></button>
+            <span class="rowbtn"><span class="ct"><span class="n done">Lunch</span></span><span class="ck">1,059</span><span class="mchev">›</span></span>
+          </li>
+          <li>
+            <button type="button" class="box"></button>
+            <span class="rowbtn"><span class="ct"><span class="n">Snack</span><small>afternoon</small></span><span class="ck">415</span><span class="mchev">›</span></span>
+          </li>
+          <li>
+            <button type="button" class="box"></button>
+            <span class="rowbtn"><span class="ct"><span class="n">Dinner</span><small>post-soccer ~11pm</small></span><span class="ck"><span class="dev-swap">⇄</span>876</span><span class="mchev">›</span></span>
+          </li>
+          <li>
+            <button type="button" class="box"></button>
+            <span class="rowbtn"><span class="ct"><span class="n">Peanuts (graze)</span><small>throughout day</small></span><span class="ck">257</span><span class="mchev">›</span></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-lbl">Original C vs refined</div>
+    <div class="compare">
+      <div class="cell">
+        <div class="lbl">Original</div>
+        <div class="row">
+          <span class="ct"><span class="n">Dinner</span><small>post-soccer ~11pm</small></span>
+          <span class="ck"><span class="dev-swap old">⇄</span>876</span>
+          <span class="mchev">›</span>
+        </div>
+      </div>
+      <div class="cell">
+        <div class="lbl">Refined</div>
+        <div class="row">
+          <span class="ct"><span class="n">Dinner</span><small>post-soccer ~11pm</small></span>
+          <span class="ck"><span class="dev-swap">⇄</span>876</span>
+          <span class="mchev">›</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ C FINAL — POPUP ============ -->
+  <section class="variant">
+    <div class="v-label">C final</div>
+    <div class="v-name">In the meal popup</div>
+    <div class="v-desc">The same glyph carries into the popup header on <code>.mpop-kcal</code>,
+      one point larger to match the header's scale. The item list shows the re-portioned amounts
+      the copilot wrote for today (rice 400 g down to 260 g).</div>
+
+    <div class="popup-stage">
+      <div class="mpop-card">
+        <div class="mpop-head">
+          <span class="mpop-title">Dinner</span>
+          <span class="mpop-kcal"><span class="dev-swap">⇄</span>876 kcal</span>
+          <button type="button" class="mpop-x">✕</button>
+        </div>
+        <div class="mpop-hint">post-soccer ~11pm</div>
+        <div class="mpop-item"><span class="mi-name">Chicken breast, cooked<span class="mi-raw">raw ≈ 227 g (8 oz)</span></span><span class="mi-amt">170 g (6 oz)</span><span class="mi-kcal">281</span></div>
+        <div class="mpop-item"><span class="mi-name">White rice, cooked</span><span class="mi-amt">260 g</span><span class="mi-kcal">338</span></div>
+        <div class="mpop-item"><span class="mi-name">Canola oil</span><span class="mi-amt">1 tbsp</span><span class="mi-kcal">120</span></div>
+        <div class="mpop-item last"><span class="mi-name">Frozen mixed vegetables</span><span class="mi-amt">250 g</span><span class="mi-kcal">138</span></div>
+        <div class="mpop-totals">
+          <span><b>876</b> kcal</span><span class="p"><b>68g</b> P</span><span class="c"><b>96g</b> C</span><span class="f"><b>22g</b> F</span>
+        </div>
+        <button type="button" class="mpop-btn">Mark eaten</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<p class="footer-note">
+  Markup unchanged from the live screens (<code>.checklist</code>, <code>.box</code>,
+  <code>.ct</code>, <code>.ck</code>, <code>.mchev</code>, <code>.mpop-head</code>,
+  <code>.mpop-kcal</code>) plus one new span: <code>.dev-swap</code> — terracotta
+  <code>var(--accent)</code> (#D97757), 12px on the row and 13px in the popup, versus the
+  original's faint 10px. The adjusted Dinner shows a plausible day-scoped re-portion so the mark
+  sits next to a number that genuinely moved.
+</p>
+
+</body>
+</html>

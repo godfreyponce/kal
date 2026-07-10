@@ -100,7 +100,10 @@ export function MealPopup({
       <div className="mpop-card" role="dialog" aria-modal="true" aria-label={`${meal.name} details`}>
         <div className="mpop-head">
           <span className="mpop-title">{meal.name}</span>
-          <span className="mpop-kcal">{n(meal.plannedKcal)} kcal</span>
+          <span className="mpop-kcal">
+            {meal.adjusted && <span className="adjmark">⇄</span>}
+            {n(meal.plannedKcal)} kcal
+          </span>
           <button type="button" className="mpop-x" onClick={close} aria-label="Close">
             ✕
           </button>

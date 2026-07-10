@@ -87,7 +87,10 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
                   <span className={`n${eaten ? " done" : ""}`}>{m.name}</span>
                   {!eaten && m.timeHint && <small>{m.timeHint}</small>}
                 </span>
-                <span className="ck">{n(m.plannedKcal)}</span>
+                <span className="ck">
+                  {m.adjusted && <span className="adjmark">⇄</span>}
+                  {n(m.plannedKcal)}
+                </span>
                 <span className="mchev">›</span>
               </button>
             </li>

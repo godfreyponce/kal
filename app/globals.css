@@ -276,6 +276,15 @@ body {
   font-size: 11px;
   color: var(--faint);
 }
+/* deviation copilot: marks a meal re-portioned for today (owner-picked
+   treatment C — a terracotta swap glyph before the kcal figure) */
+.adjmark {
+  display: inline-block;
+  margin-right: 5px;
+  color: var(--accent);
+  font-size: 12px;
+  vertical-align: 0.5px;
+}
 .rowbtn {
   flex: 1;
   min-width: 0;
@@ -361,6 +370,9 @@ body {
   font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
+}
+.mpop-kcal .adjmark {
+  font-size: 13px;
 }
 .mpop-x {
   flex-shrink: 0;
