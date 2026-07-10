@@ -1,13 +1,21 @@
-# Read STATE.md first
+# Read STATE.md first, then check the issue queue
 
-`STATE.md` is the project's living memory. **Read its "⏩ NEW AGENT — START HERE" section
-before doing anything** — it has the current status, how to run/verify, the backlog, and the
-gotchas that have already bitten.
+`STATE.md` is a **thin snapshot** of right-now state: what's mid-flight, how to run/verify,
+and the gotchas that have already bitten. Read it before doing anything. The full build
+archive, file map, and per-feature detail live in `docs/HISTORY.md`.
 
-**Keep it current.** After you build a feature **and the owner confirms it's good**, update
-`STATE.md` in the same change (bump *Last updated*, move the item out of the backlog, add/refresh
-its section, adjust the roadmap) and commit it alongside the feature. Don't update it for work
-the owner hasn't accepted yet.
+**The work queue is GitHub Issues** (`gh issue list`). The `ready-for-agent` label means the
+owner has green-lit that item; anything unlabeled still needs owner confirmation before
+starting. Reference issues in commits (`fixes #N`) so they close automatically.
+⚠️ This repo is PUBLIC (recruiter-visible): write issues about features and architecture —
+never env values, credentials, or the owner's personal data.
+
+**Keep state current as you work, not as an end-of-session dump:**
+- Update STATE.md's "Now" section when what's mid-flight changes; keep the file under ~40 lines.
+- New work discovered mid-session → `gh issue create` immediately; don't let it live only in conversation.
+- After a feature is built **and the owner confirms it's good**: close its issue, refresh
+  STATE.md, add the feature's detail section to `docs/HISTORY.md`, and commit them alongside
+  the feature. Don't record work the owner hasn't accepted yet.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
