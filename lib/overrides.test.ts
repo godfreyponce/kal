@@ -125,6 +125,28 @@ describe("mark-eaten with an override", () => {
     expect(rows[0].kcal).toBe(Math.round(f1.kcal * 2));
   });
 
+  it("gap-fill skips an override food already logged without a meal_id (no double count)", async () => {
+    const [f1] = await anyTwoFoods();
+    const meal = await firstMeal();
+    await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 2 }]);
+    // The chat's deviation flow may log the replacement unattached (meal_id null).
+    await db.insert(logEntries).values({
+      date: DATE,
+      mealId: null,
+      foodId: f1.id,
+      quantity: "2",
+      kcal: Math.round(f1.kcal * 2),
+      proteinG: (Number(f1.proteinG) * 2).toFixed(2),
+      carbsG: (Number(f1.carbsG) * 2).toFixed(2),
+      fatG: (Number(f1.fatG) * 2).toFixed(2),
+      source: "assistant_tool",
+    });
+    const res = await setMealStatus(DATE, meal.id, "eaten");
+    expect(res.loggedFoodIds).toEqual([]);
+    const rows = await db.select().from(logEntries).where(eq(logEntries.date, DATE));
+    expect(rows).toHaveLength(1);
+  });
+
   it("undoing mark-eaten reverts the logs but keeps the override", async () => {
     const [f1] = await anyTwoFoods();
     const meal = await firstMeal();

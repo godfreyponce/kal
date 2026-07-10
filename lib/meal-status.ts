@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../db";
 import { foods, logEntries, mealItems, mealStatus } from "../db/schema";
 import { getOverridesForDate } from "./overrides";
@@ -87,6 +87,23 @@ export async function setMealStatus(
       }))
     : templatePlanned;
   const alreadyLogged = new Set(existing.map((e) => e.foodId));
+
+  // Deviation flow: the chat may log an override's replacement food without a
+  // meal_id. An unattached same-day log of an override food IS this meal —
+  // count it as logged so gap-fill never double-counts (locked invariant #1).
+  if (ov) {
+    const unattached = await db
+      .select({ foodId: logEntries.foodId })
+      .from(logEntries)
+      .where(
+        and(
+          eq(logEntries.date, date),
+          isNull(logEntries.mealId),
+          inArray(logEntries.foodId, ov.map((l) => l.foodId)),
+        ),
+      );
+    for (const e of unattached) alreadyLogged.add(e.foodId);
+  }
 
   const gaps = planned.filter((p) => !alreadyLogged.has(p.foodId));
 

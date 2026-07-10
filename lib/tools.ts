@@ -52,7 +52,7 @@ export const TOOLS: Anthropic.Tool[] = [
         quantity: { type: "number", description: "Servings eaten. Defaults to 1." },
         oz: { type: "number", description: "Amount eaten in ounces (weight-based logging; needs an existing food_id with a serving weight)." },
         grams: { type: "number", description: "Amount eaten in grams (weight-based logging; needs an existing food_id with a serving weight)." },
-        meal_id: { type: "integer", description: "Optional meal to attach this entry to." },
+        meal_id: { type: "integer", description: "The meal this food belongs to or replaces (e.g. a swapped dinner) — pass it whenever the food is part of a specific meal." },
         date: { type: "string", description: "YYYY-MM-DD. Defaults to today." },
         kcal: { type: "number", description: "Per-serving calories (new food only)." },
         protein_g: { type: "number", description: "Per-serving protein grams (new food only)." },
