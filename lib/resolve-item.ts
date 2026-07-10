@@ -74,7 +74,8 @@ export function formatPlanLine(item: ResolvedItem, foodName: string): string {
 export type PlanMeal = {
   id: number;
   name: string;
-  status: string;
+  /** Per-day status — omit for the date-independent template rendering. */
+  status?: string;
   items: Array<{ quantity: number; food: FoodBasis }>;
 };
 
@@ -86,7 +87,8 @@ export type PlanMeal = {
 export function buildPlanBlock(meals: PlanMeal[]): string {
   return meals
     .map((meal) => {
-      const header = `${meal.name.toUpperCase()} [meal id ${meal.id}] [${meal.status}]`;
+      const status = meal.status ? ` [${meal.status}]` : "";
+      const header = `${meal.name.toUpperCase()} [meal id ${meal.id}]${status}`;
       if (meal.items.length === 0) return `${header}\n(no items)`;
       const resolved = meal.items.map((it) => resolveItem(it.quantity, it.food));
       const lines = resolved.map((r, i) => formatPlanLine(r, meal.items[i].food.name));

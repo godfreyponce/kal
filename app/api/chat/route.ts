@@ -44,6 +44,23 @@ async function persist(sessionId: string, role: "user" | "assistant", content: u
   await db.insert(chatMessages).values({ sessionId, role, content });
 }
 
+// Breakpoint (3): keep one rolling cache marker on the conversation's last block
+// so each tool-loop iteration (which replays the whole history) reads everything
+// before it from cache. Old marks are stripped first — max 4 breakpoints total.
+function setRollingCacheMark(messages: Msg[]) {
+  for (const msg of messages) {
+    if (Array.isArray(msg.content)) {
+      for (const b of msg.content) delete (b as { cache_control?: unknown }).cache_control;
+    }
+  }
+  const last = messages[messages.length - 1];
+  if (Array.isArray(last?.content) && last.content.length > 0) {
+    (last.content[last.content.length - 1] as { cache_control?: unknown }).cache_control = {
+      type: "ephemeral",
+    };
+  }
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
@@ -60,7 +77,16 @@ export async function POST(req: NextRequest) {
   }
 
   const date = todayInAppTz();
-  const system = await assembleSystemPrompt(date);
+  const { staticText, dynamicText } = await assembleSystemPrompt(date);
+  // Cache breakpoints: (1) last tool, (2) static system block. The dynamic block
+  // sits after them so per-day numbers never bust the tools+static prefix.
+  const system: Anthropic.TextBlockParam[] = [
+    { type: "text", text: staticText, cache_control: { type: "ephemeral" } },
+    { type: "text", text: dynamicText },
+  ];
+  const tools: Anthropic.Tool[] = TOOLS.map((t, i) =>
+    i === TOOLS.length - 1 ? { ...t, cache_control: { type: "ephemeral" } } : t,
+  );
 
   const history = await loadHistory(sessionId);
   const userBlocks: Anthropic.ContentBlockParam[] = [{ type: "text", text: message }];
@@ -76,11 +102,12 @@ export async function POST(req: NextRequest) {
       const acc = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
       try {
         for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+          setRollingCacheMark(messages);
           const ms = client.messages.stream({
             model: CHAT_MODEL,
             max_tokens: MAX_TOKENS,
             system,
-            tools: TOOLS,
+            tools,
             messages,
           });
 
