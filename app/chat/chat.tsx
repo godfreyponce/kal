@@ -67,8 +67,15 @@ export function Chat({ model }: { model: string }) {
     e.target.value = "";
     setAttachOpen(false);
     if (!f) return;
-    const scaled = await fileToScaledJpeg(f);
-    setPhoto({ ...scaled, preview: `data:image/jpeg;base64,${scaled.base64}` });
+    try {
+      const scaled = await fileToScaledJpeg(f);
+      setPhoto({ ...scaled, preview: `data:image/jpeg;base64,${scaled.base64}` });
+    } catch {
+      setItems((p) => [
+        ...p,
+        { id: nid(), kind: "ai", text: "Couldn't read that photo — try a different one.", error: true },
+      ]);
+    }
   }
 
   function newSession() {
@@ -93,6 +100,7 @@ export function Chat({ model }: { model: string }) {
   async function send() {
     const text = input.trim();
     if ((!text && !photo) || sending || !sessionId) return;
+    setAttachOpen(false);
     const sentPhoto = photo;
     setInput("");
     setPhoto(null);
@@ -202,7 +210,7 @@ export function Chat({ model }: { model: string }) {
           if (it.kind === "user")
             return it.imageUrl ? (
               <div key={it.id} className="bub-user photo-bubble">
-                <img className="photo-img" src={it.imageUrl} alt="" />
+                <img className="photo-img" src={it.imageUrl} alt="Attached photo" />
                 {it.text && <div className="cap">{it.text}</div>}
               </div>
             ) : (
@@ -252,13 +260,13 @@ export function Chat({ model }: { model: string }) {
       <div className={`composer${attachOpen ? " has-pop" : ""}`} ref={composerRef}>
         {attachOpen && (
           <div className="attach-pop">
-            <button type="button" onClick={() => cameraRef.current?.click()}>
+            <button type="button" disabled={sending} onClick={() => cameraRef.current?.click()}>
               <span className="ic">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
               </span>
               Take photo
             </button>
-            <button type="button" onClick={() => libraryRef.current?.click()}>
+            <button type="button" disabled={sending} onClick={() => libraryRef.current?.click()}>
               <span className="ic">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
               </span>
@@ -270,7 +278,7 @@ export function Chat({ model }: { model: string }) {
         {photo && (
           <div className="pending-row">
             <div className="pending-chip">
-              <img src={photo.preview} alt="" />
+              <img src={photo.preview} alt="Attached photo" />
               <button type="button" className="rm" aria-label="Remove photo" onClick={() => setPhoto(null)}>✕</button>
             </div>
           </div>
@@ -281,6 +289,8 @@ export function Chat({ model }: { model: string }) {
             type="button"
             className={`plusbtn${attachOpen ? " active" : ""}`}
             aria-label="Attach photo"
+            aria-haspopup="menu"
+            aria-expanded={attachOpen}
             onClick={() => setAttachOpen((o) => !o)}
             disabled={sending}
           >
