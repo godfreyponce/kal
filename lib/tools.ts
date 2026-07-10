@@ -9,6 +9,9 @@ import { todayInAppTz } from "./time";
 import { createGrocery } from "./groceries";
 import { toGrams, weightToServings } from "./units";
 import { resolveItem } from "./resolve-item";
+import { fetchPage } from "./fetch-page";
+import { searchNutrition } from "./nutrition-lookup";
+import { setMealOverride, type OverrideItemInput } from "./overrides";
 
 // The assistant's server-side tool surface. Inputs use snake_case (LLM-friendly);
 // every tool defaults its `date` to today-in-app-tz. Write tools return a
@@ -56,6 +59,16 @@ export const TOOLS: Anthropic.Tool[] = [
         carbs_g: { type: "number", description: "Per-serving carb grams (new food only)." },
         fat_g: { type: "number", description: "Per-serving fat grams (new food only)." },
         serving_desc: { type: "string", description: "Serving description for a new food, e.g. '1 cup'." },
+        is_estimated: {
+          type: "boolean",
+          description:
+            "New food only: true when the macros are your estimate rather than a label or database hit.",
+        },
+        one_off: {
+          type: "boolean",
+          description:
+            "New food only: true for off-plan one-offs (restaurant/travel food) so they don't appear in the Groceries screen.",
+        },
       },
     },
   },
@@ -133,6 +146,58 @@ export const TOOLS: Anthropic.Tool[] = [
         content: { type: "string", description: "The fact to remember." },
       },
       required: ["content"],
+    },
+  },
+  {
+    name: "search_nutrition",
+    description:
+      "Search public nutrition databases (USDA + OpenFoodFacts) for a food's label macros by name. Use for OFF-PLAN foods not in the owner's library (restaurants, travel, packaged foods) BEFORE asking the owner for a source or estimating. Hits are per label serving with a source tag.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Food name, e.g. 'Chipotle chicken bowl' or 'Clif Bar chocolate chip'.",
+        },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "fetch_page",
+    description:
+      "Fetch a web page the owner pasted (menu or nutrition page) and return its readable text so you can extract macros. Best-effort: many retail sites block server fetches — if this errors, tell the owner plainly and fall back to a photo or a confirmed estimate. Never fabricate page content.",
+    input_schema: {
+      type: "object",
+      properties: {
+        url: { type: "string", description: "The http(s) URL the owner provided." },
+      },
+      required: ["url"],
+    },
+  },
+  {
+    name: "override_meal",
+    description:
+      "Adapt TODAY'S plan only: replace one meal's planned items for one date (a deviation — traveling, eating out). The template plan is NEVER changed. Pass the FULL replacement item list (include any kept items). Foods must already exist in the library — for off-plan foods use log_food's new-food path or add_grocery first. quantity is a multiplier of the food's serving basis (per-100 g foods: 1.7 means 170 g).",
+    input_schema: {
+      type: "object",
+      properties: {
+        meal_id: { type: "integer", description: "The meal to adapt." },
+        items: {
+          type: "array",
+          description: "Full replacement item list for the meal.",
+          items: {
+            type: "object",
+            properties: {
+              food_id: { type: "integer", description: "Existing library food id." },
+              quantity: { type: "number", description: "Multiplier of the food's serving basis." },
+            },
+            required: ["food_id", "quantity"],
+          },
+        },
+        date: { type: "string", description: "YYYY-MM-DD. Defaults to today." },
+      },
+      required: ["meal_id", "items"],
     },
   },
 ];
@@ -256,6 +321,8 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
             proteinG: per.proteinG.toFixed(2),
             carbsG: per.carbsG.toFixed(2),
             fatG: per.fatG.toFixed(2),
+            isEstimated: input.is_estimated === true,
+            oneOff: input.one_off === true,
           })
           .returning({ id: foods.id });
         foodId = created.id;
@@ -424,6 +491,54 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
           detail: `${g.kcal} kcal / ${servingGrams} g serving`,
         },
       });
+    }
+
+    case "search_nutrition": {
+      const query = str(input.query) ?? "";
+      const hits = await searchNutrition(query);
+      return ok({ hits }, `Nutrition search "${query.trim()}" (${hits.length} hits)`);
+    }
+
+    case "fetch_page": {
+      const url = str(input.url);
+      if (!url) return err("url is required.");
+      const page = await fetchPage(url);
+      if (!page.ok) return err(page.error);
+      return ok({ text: page.text }, `Fetched ${url} (${page.text.length} chars)`);
+    }
+
+    case "override_meal": {
+      const mealId = num(input.meal_id);
+      const rawItems = Array.isArray(input.items) ? input.items : null;
+      if (mealId === undefined || !rawItems || rawItems.length === 0) {
+        return err("meal_id and a non-empty items array are required.");
+      }
+      const items: OverrideItemInput[] = [];
+      for (const raw of rawItems) {
+        const o = raw as Record<string, unknown>;
+        const foodId = num(o.food_id);
+        const quantity = num(o.quantity);
+        if (foodId === undefined || quantity === undefined || quantity <= 0) {
+          return err("Each item needs a food_id and a positive quantity.");
+        }
+        items.push({ foodId, quantity });
+      }
+      const date = str(input.date) ?? today;
+      try {
+        const result = await setMealOverride(date, mealId, items);
+        const [meal] = await db.select({ name: meals.name }).from(meals).where(eq(meals.id, mealId));
+        const mealName = meal?.name ?? `Meal ${mealId}`;
+        return ok(
+          { adjusted: mealName, date, lines: result.lines, total: result.total },
+          `Adjusted ${mealName} for ${date} (${items.length} items)`,
+          {
+            writeBatchId: result.writeBatchId,
+            card: { label: "Meal adjusted", title: `${mealName} (today only)`, detail: result.total },
+          },
+        );
+      } catch (e) {
+        return err(e instanceof Error ? e.message : "override failed");
+      }
     }
 
     default:

@@ -1,0 +1,91 @@
+import "../db/env";
+import { describe, it, expect, afterAll } from "vitest";
+import { asc, eq } from "drizzle-orm";
+import { db } from "../db";
+import { foods, logEntries, mealOverrides, meals } from "../db/schema";
+import { runTool } from "./tools";
+import { revertWriteBatch } from "./undo";
+
+const DATE = "2099-06-06"; // own sentinel — parallel test files
+
+afterAll(async () => {
+  await db.delete(mealOverrides).where(eq(mealOverrides.date, DATE));
+  await db.delete(logEntries).where(eq(logEntries.date, DATE));
+});
+
+async function firstFood() {
+  const [f] = await db.select().from(foods).orderBy(asc(foods.id)).limit(1);
+  return f;
+}
+async function firstMeal() {
+  const [m] = await db.select().from(meals).orderBy(asc(meals.sortOrder)).limit(1);
+  return m;
+}
+
+describe("override_meal tool", () => {
+  it("writes an override and returns an undoable card", async () => {
+    const f = await firstFood();
+    const m = await firstMeal();
+    const run = await runTool("override_meal", {
+      meal_id: m.id,
+      items: [{ food_id: f.id, quantity: 2 }],
+      date: DATE,
+    });
+    expect(run.writeBatchId).toBeTruthy();
+    expect(run.card?.label).toBe("Meal adjusted");
+    expect(run.forModel).toContain(f.name);
+    const rows = await db.select().from(mealOverrides).where(eq(mealOverrides.date, DATE));
+    expect(rows).toHaveLength(1);
+    await revertWriteBatch(run.writeBatchId!);
+    const after = await db.select().from(mealOverrides).where(eq(mealOverrides.date, DATE));
+    expect(after).toHaveLength(0);
+  });
+
+  it("returns an error result for an unknown food id (nothing written)", async () => {
+    const m = await firstMeal();
+    const run = await runTool("override_meal", {
+      meal_id: m.id,
+      items: [{ food_id: 999999, quantity: 1 }],
+      date: DATE,
+    });
+    expect(run.forModel).toContain("error");
+    expect(run.writeBatchId).toBeNull();
+    const rows = await db.select().from(mealOverrides).where(eq(mealOverrides.date, DATE));
+    expect(rows).toHaveLength(0);
+  });
+});
+
+describe("knowledge-ladder tools", () => {
+  it("search_nutrition with an empty query returns no hits (no network call)", async () => {
+    const run = await runTool("search_nutrition", { query: "  " });
+    expect(JSON.parse(run.forModel)).toEqual({ hits: [] });
+  });
+
+  it("fetch_page rejects a non-http URL (no network call)", async () => {
+    const run = await runTool("fetch_page", { url: "ftp://example.com/menu" });
+    expect(run.forModel).toContain("error");
+  });
+});
+
+describe("log_food off-plan flags", () => {
+  it("new-food path honors is_estimated and one_off", async () => {
+    const run = await runTool("log_food", {
+      name: "ZZDEV test bowl",
+      kcal: 500,
+      protein_g: 30,
+      carbs_g: 50,
+      fat_g: 15,
+      serving_desc: "1 bowl",
+      is_estimated: true,
+      one_off: true,
+      date: DATE,
+    });
+    expect(JSON.parse(run.forModel).logged.name).toBe("ZZDEV test bowl");
+    const [f] = await db.select().from(foods).where(eq(foods.name, "ZZDEV test bowl"));
+    expect(f.isEstimated).toBe(true);
+    expect(f.oneOff).toBe(true);
+    // Cleanup: log rows first (foods FK is restrict), then the food itself.
+    await db.delete(logEntries).where(eq(logEntries.foodId, f.id));
+    await db.delete(foods).where(eq(foods.id, f.id));
+  });
+});
