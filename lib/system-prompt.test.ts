@@ -1,5 +1,5 @@
 import "../db/env";
-import { describe, it, expect, afterAll } from "vitest";
+import { it, expect, afterAll } from "vitest";
 import { asc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { foods, mealOverrides, meals } from "../db/schema";
