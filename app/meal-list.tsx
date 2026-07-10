@@ -80,7 +80,7 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
                 type="button"
                 className="rowbtn"
                 aria-haspopup="dialog"
-                aria-label={`${m.name} details`}
+                aria-label={`${m.name} details${m.adjusted ? ", adjusted today" : ""}`}
                 onClick={() => setOpenId(m.id)}
               >
                 <span className="ct">
@@ -88,7 +88,7 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
                   {!eaten && m.timeHint && <small>{m.timeHint}</small>}
                 </span>
                 <span className="ck">
-                  {m.adjusted && <span className="adjmark">⇄</span>}
+                  {m.adjusted && <span className="adjmark" aria-hidden="true">⇄</span>}
                   {n(m.plannedKcal)}
                 </span>
                 <span className="mchev">›</span>
