@@ -11,6 +11,9 @@ const DATE = "2099-06-06"; // own sentinel — parallel test files
 afterAll(async () => {
   await db.delete(mealOverrides).where(eq(mealOverrides.date, DATE));
   await db.delete(logEntries).where(eq(logEntries.date, DATE));
+  // Crash-safe net for the log_food test: its rows log on DATE (deleted above),
+  // so the food row can always be removed even if the test failed mid-way.
+  await db.delete(foods).where(eq(foods.name, "ZZDEV test bowl"));
 });
 
 async function firstFood() {
@@ -52,6 +55,13 @@ describe("override_meal tool", () => {
     expect(run.writeBatchId).toBeNull();
     const rows = await db.select().from(mealOverrides).where(eq(mealOverrides.date, DATE));
     expect(rows).toHaveLength(0);
+  });
+
+  it("returns an error result for malformed item entries (null), not a crash", async () => {
+    const m = await firstMeal();
+    const run = await runTool("override_meal", { meal_id: m.id, items: [null], date: DATE });
+    expect(run.forModel).toContain("error");
+    expect(run.writeBatchId).toBeNull();
   });
 });
 

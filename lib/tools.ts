@@ -515,6 +515,9 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
       }
       const items: OverrideItemInput[] = [];
       for (const raw of rawItems) {
+        if (typeof raw !== "object" || raw === null) {
+          return err("Each item needs a food_id and a positive quantity.");
+        }
         const o = raw as Record<string, unknown>;
         const foodId = num(o.food_id);
         const quantity = num(o.quantity);
