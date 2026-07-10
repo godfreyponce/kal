@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { fileToScaledJpeg } from "@/app/image-scale";
 
 type Remaining = { kcal: number; proteinG: number; carbsG: number; fatG: number };
 type Card = { label: string; title: string; detail: string };
+type Photo = { base64: string; mediaType: "image/jpeg"; preview: string };
 
 type Item =
-  | { id: string; kind: "user"; text: string }
+  | { id: string; kind: "user"; text: string; imageUrl?: string }
   | { id: string; kind: "ai"; text: string; error?: boolean }
   | { id: string; kind: "card"; card: Card; writeBatchId: string | null; undone?: boolean }
   | { id: string; kind: "rstrip"; remaining: Remaining };
@@ -30,7 +32,12 @@ export function Chat({ model }: { model: string }) {
   const [costUsd, setCostUsd] = useState(0);
   const [tokens, setTokens] = useState(0);
   const [costKnown, setCostKnown] = useState(true);
+  const [photo, setPhoto] = useState<Photo | null>(null);
+  const [attachOpen, setAttachOpen] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLDivElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const libraryRef = useRef<HTMLInputElement>(null);
   const counter = useRef(0);
   const nid = () => `${counter.current++}`;
 
@@ -39,9 +46,36 @@ export function Chat({ model }: { model: string }) {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
   }, [items]);
 
+  useEffect(() => {
+    if (!attachOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      if (!composerRef.current?.contains(e.target as Node)) setAttachOpen(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setAttachOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [attachOpen]);
+
+  async function onFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    setAttachOpen(false);
+    if (!f) return;
+    const scaled = await fileToScaledJpeg(f);
+    setPhoto({ ...scaled, preview: `data:image/jpeg;base64,${scaled.base64}` });
+  }
+
   function newSession() {
     setItems([]);
     setSessionId(crypto.randomUUID());
+    setPhoto(null);
+    setAttachOpen(false);
     setCostUsd(0);
     setTokens(0);
     setCostKnown(true);
@@ -58,9 +92,11 @@ export function Chat({ model }: { model: string }) {
 
   async function send() {
     const text = input.trim();
-    if (!text || sending || !sessionId) return;
+    if ((!text && !photo) || sending || !sessionId) return;
+    const sentPhoto = photo;
     setInput("");
-    setItems((p) => [...p, { id: nid(), kind: "user", text }]);
+    setPhoto(null);
+    setItems((p) => [...p, { id: nid(), kind: "user", text, imageUrl: sentPhoto?.preview }]);
     setSending(true);
 
     let aiId: string | null = null; // current streaming bubble; reset by any non-text event
@@ -78,7 +114,12 @@ export function Chat({ model }: { model: string }) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, message: text }),
+        body: JSON.stringify({
+          sessionId,
+          message: text,
+          imageBase64: sentPhoto?.base64,
+          mediaType: sentPhoto?.mediaType,
+        }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -149,7 +190,7 @@ export function Chat({ model }: { model: string }) {
         </span>
       </div>
 
-      <div className="chat-thread" ref={threadRef}>
+      <div className={`chat-thread${attachOpen ? " dim" : ""}`} ref={threadRef}>
         {items.length === 0 && (
           <div className="chat-empty">
             <div className="big">Ask Kal</div>
@@ -158,7 +199,15 @@ export function Chat({ model }: { model: string }) {
         )}
 
         {items.map((it) => {
-          if (it.kind === "user") return <div key={it.id} className="bub-user">{it.text}</div>;
+          if (it.kind === "user")
+            return it.imageUrl ? (
+              <div key={it.id} className="bub-user photo-bubble">
+                <img className="photo-img" src={it.imageUrl} alt="" />
+                {it.text && <div className="cap">{it.text}</div>}
+              </div>
+            ) : (
+              <div key={it.id} className="bub-user">{it.text}</div>
+            );
           if (it.kind === "ai")
             return (
               <div key={it.id} className={`bub-ai${it.error ? " err" : ""}`}>
@@ -197,23 +246,63 @@ export function Chat({ model }: { model: string }) {
         })}
       </div>
 
-      <div className="composer">
-        <div className="composer-box">
-          <input
-            placeholder="Message Kal…"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={onFilePicked} />
+      <input ref={libraryRef} type="file" accept="image/*" hidden onChange={onFilePicked} />
+
+      <div className={`composer${attachOpen ? " has-pop" : ""}`} ref={composerRef}>
+        {attachOpen && (
+          <div className="attach-pop">
+            <button type="button" onClick={() => cameraRef.current?.click()}>
+              <span className="ic">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+              </span>
+              Take photo
+            </button>
+            <button type="button" onClick={() => libraryRef.current?.click()}>
+              <span className="ic">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+              </span>
+              Photo library
+            </button>
+          </div>
+        )}
+
+        {photo && (
+          <div className="pending-row">
+            <div className="pending-chip">
+              <img src={photo.preview} alt="" />
+              <button type="button" className="rm" aria-label="Remove photo" onClick={() => setPhoto(null)}>✕</button>
+            </div>
+          </div>
+        )}
+
+        <div className="composer-row">
+          <button
+            type="button"
+            className={`plusbtn${attachOpen ? " active" : ""}`}
+            aria-label="Attach photo"
+            onClick={() => setAttachOpen((o) => !o)}
             disabled={sending}
-          />
-          <button className="send" onClick={send} disabled={sending || input.trim() === ""} aria-label="Send">
-            <SendIcon />
+          >
+            +
           </button>
+          <div className="composer-box">
+            <input
+              placeholder={photo ? "Add a caption…" : "Message Kal…"}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              disabled={sending}
+            />
+            <button className="send" onClick={send} disabled={sending || (input.trim() === "" && !photo)} aria-label="Send">
+              <SendIcon />
+            </button>
+          </div>
         </div>
       </div>
     </main>

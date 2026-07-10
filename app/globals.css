@@ -694,6 +694,23 @@ body {
   font-size: 14px;
   white-space: pre-wrap;
 }
+.bub-user.photo-bubble {
+  padding: 6px 6px 10px;
+}
+.bub-user.photo-bubble .photo-img {
+  display: block;
+  width: 208px;
+  max-width: 100%;
+  height: 142px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.bub-user.photo-bubble .cap {
+  padding: 0 6px;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
 .bub-ai {
   align-self: flex-start;
   max-width: 84%;
@@ -896,6 +913,130 @@ body {
   background: var(--surface-2);
   color: var(--faint);
   cursor: default;
+}
+
+.chat-thread.dim {
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+
+/* photo-attach: "+" outside the composer box + popover + pending chip */
+.composer.has-pop {
+  position: relative;
+}
+.composer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.composer-row .composer-box {
+  flex: 1;
+}
+.plusbtn {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 17px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+}
+.plusbtn.active {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.plusbtn:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.attach-pop {
+  position: absolute;
+  left: 16px;
+  bottom: calc(100% - 2px);
+  width: 172px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(31, 36, 33, 0.16);
+  overflow: hidden;
+  z-index: 5;
+}
+.attach-pop button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 11px 14px;
+  cursor: pointer;
+  font-family: var(--font-sans-stack);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+.attach-pop button + button {
+  border-top: 1px solid var(--border);
+}
+.attach-pop button:active {
+  background: var(--surface-2);
+}
+.attach-pop .ic {
+  width: 18px;
+  display: flex;
+  justify-content: center;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.attach-pop::after {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 100%;
+  border: 6px solid transparent;
+  border-top-color: var(--border);
+}
+
+.pending-row {
+  padding: 0 0 10px;
+}
+.pending-chip {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.pending-chip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pending-chip .rm {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: rgba(31, 36, 33, 0.55);
+  color: #fff;
+  border: none;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 /* login */

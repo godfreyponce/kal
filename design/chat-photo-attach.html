@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kal — Chat photo attach mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --canvas: #F7F6F3;
+    --surface: #FFFFFF;
+    --surface-2: #F0EFEB;
+    --ink: #1F2421;
+    --ink-soft: #2F3437;
+    --muted: #787774;
+    --faint: #9B9A96;
+    --border: #E6E4DF;
+    --green-bg: #E6EFE5; --green-tx: #346538;
+    --accent: #D97757;
+    --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+    --serif: 'Newsreader', 'Lyon Text', Georgia, serif;
+    --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--canvas); color: var(--ink); line-height: 1.6; -webkit-font-smoothing: antialiased; padding: 56px 24px 96px; }
+
+  .page-head { max-width: 900px; margin: 0 auto 48px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 14px; }
+  .page-head h1 { font-family: var(--serif); font-weight: 500; font-size: 42px; line-height: 1.08; letter-spacing: -0.03em; margin-bottom: 16px; }
+  .page-head p { color: var(--muted); max-width: 64ch; font-size: 15.5px; }
+  .page-head code { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+  .gallery { display: grid; grid-template-columns: repeat(2, minmax(330px, 390px)); gap: 44px 40px; justify-content: center; align-items: start; max-width: 1360px; margin: 0 auto; }
+  @media (max-width: 820px) { .gallery { grid-template-columns: minmax(330px,420px); } }
+
+  .variant { display: flex; flex-direction: column; gap: 16px; }
+  .variant-label .tag { display: inline-block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); border-radius: 9999px; padding: 4px 11px; background: var(--surface); margin-bottom: 10px; }
+  .variant-label h2 { font-family: var(--serif); font-weight: 500; font-size: 23px; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .variant-label p { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  .variant-label code { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  /* phone (mirrors phase4-chat-variants.html) */
+  .phone { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.04); display: flex; flex-direction: column; }
+  .statusbar { display: flex; justify-content: space-between; align-items: center; padding: 13px 22px 0; font-family: var(--mono); font-size: 11px; color: var(--faint); flex-shrink: 0; }
+  .statusbar .dots { display: flex; gap: 4px; }
+  .statusbar .dots i { width: 5px; height: 5px; border-radius: 9999px; background: #D8D7D3; }
+
+  .chead { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .chead .ct { display: flex; flex-direction: column; }
+  .chead h3 { font-family: var(--serif); font-weight: 500; font-size: 19px; letter-spacing: -0.02em; }
+  .chead .sub { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 2px; }
+  .chead .newbtn { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; background: var(--surface); cursor: pointer; }
+
+  .thread { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-height: 240px; }
+  .bub-user { align-self: flex-end; max-width: 80%; background: var(--ink); color: #fff; padding: 10px 14px; border-radius: 16px 16px 4px 16px; font-size: 14px; }
+  .bub-ai { align-self: flex-start; max-width: 84%; background: var(--surface-2); color: var(--ink-soft); padding: 10px 14px; border-radius: 16px 16px 16px 4px; font-size: 14px; }
+  .bub-ai b { color: var(--ink); font-weight: 600; }
+
+  /* ---- composer (exact classes from globals.css .composer / .composer-box / .send) ---- */
+  .composer { flex-shrink: 0; border-top: 1px solid var(--border); padding: 12px 16px 16px; }
+  .composer-box { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 8px 8px 8px 14px; }
+  .composer input { flex: 1; min-width: 0; border: none; outline: none; font-family: var(--sans); font-size: 14px; color: var(--ink); background: transparent; }
+  .composer input::placeholder { color: var(--faint); }
+  .send { width: 34px; height: 34px; flex-shrink: 0; border: none; border-radius: 9px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+  /* ---- Option C: thin "+" outside the composer box ---- */
+  .composer-row { display: flex; align-items: center; gap: 10px; }
+  .composer-row .composer-box { flex: 1; }
+  .plusbtn { width: 34px; height: 34px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 9999px; background: var(--surface); color: var(--muted); font-size: 17px; font-weight: 400; display: flex; align-items: center; justify-content: center; cursor: pointer; line-height: 1; }
+  .plusbtn.active { border-color: var(--ink); color: var(--ink); }
+
+  /* ---- attach popover, anchored above the + ---- */
+  .composer.has-pop { position: relative; }
+  .attach-pop {
+    position: absolute; left: 16px; bottom: calc(100% - 2px); width: 172px;
+    background: var(--canvas); border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 14px 40px rgba(31,36,33,0.16); overflow: hidden; z-index: 5;
+  }
+  .attach-pop button {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    background: none; border: none; padding: 11px 14px; cursor: pointer;
+    font-family: var(--sans); font-size: 13.5px; color: var(--ink-soft);
+  }
+  .attach-pop button + button { border-top: 1px solid var(--border); }
+  .attach-pop button:active { background: var(--surface-2); }
+  .attach-pop .ic { width: 18px; display: flex; justify-content: center; color: var(--muted); flex-shrink: 0; }
+  /* caret pointing down at the + */
+  .attach-pop::after {
+    content: ""; position: absolute; left: 13px; top: 100%;
+    border: 6px solid transparent; border-top-color: var(--border);
+  }
+
+  /* dim the thread while the popover is up (mock of a light scrim) */
+  .thread.dim { opacity: 0.45; }
+
+  /* ---- pending-photo chip above the composer ---- */
+  .pending-row { padding: 0 0 10px; }
+  .pending-chip { position: relative; width: 56px; height: 56px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+  .pending-chip .ph { width: 100%; height: 100%; background: linear-gradient(135deg, #ECD0A4 0%, #C9793F 55%, #8A4A26 100%); }
+  .pending-chip .rm { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 9999px; background: rgba(31,36,33,0.55); color: #fff; border: none; font-size: 9px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+  /* ---- sent photo inside a user bubble ---- */
+  .bub-user.photo-bubble { padding: 6px 6px 10px; }
+  .bub-user.photo-bubble .photo-img { width: 208px; height: 142px; border-radius: 12px; background: linear-gradient(135deg, #ECD0A4 0%, #C9793F 55%, #8A4A26 100%); margin-bottom: 8px; }
+  .bub-user.photo-bubble .cap { padding: 0 6px; font-size: 14px; }
+
+  .footer-note { max-width: 900px; margin: 56px auto 0; padding-top: 26px; border-top: 1px solid var(--border); color: var(--faint); font-size: 13px; line-height: 1.6; }
+  .footer-note code { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+  <header class="page-head">
+    <div class="eyebrow">Kal — Chat deviation copilot</div>
+    <h1>Photo attach, Option C in full</h1>
+    <p>Chosen direction: the thin “+” button sitting left of and outside the composer box. The
+       four states below walk the whole flow — resting, the two-action popover after tapping +,
+       a picked-but-unsent photo, and the sent photo in the thread. All on the real
+       <code>.composer</code> / <code>.composer-box</code> / <code>.send</code> /
+       <code>.bub-user</code> markup.</p>
+  </header>
+
+  <main class="gallery">
+
+    <!-- ============ STATE 1: RESTING ============ -->
+    <section class="variant">
+      <div class="variant-label">
+        <span class="tag">State 1</span>
+        <h2>Resting composer</h2>
+        <p>The + is a hairline circle matching the send button's 34px footprint, quiet until
+           needed. The composer box itself is untouched.</p>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="chead">
+          <div class="ct"><h3>Kal</h3><span class="sub">New session</span></div>
+          <button class="newbtn">+ New</button>
+        </div>
+        <div class="thread">
+          <div class="bub-user">What's for dinner tonight?</div>
+          <div class="bub-ai">Chicken breast, rice, and veg — 1,059 kcal. Snap a photo when it's plated if the portion looks off.</div>
+        </div>
+        <div class="composer">
+          <div class="composer-row">
+            <button class="plusbtn" aria-label="Attach photo">+</button>
+            <div class="composer-box">
+              <input placeholder="Message Kal…" />
+              <button class="send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STATE 2: POPOVER ============ -->
+    <section class="variant">
+      <div class="variant-label">
+        <span class="tag">State 2</span>
+        <h2>After tapping +</h2>
+        <p>A small popover anchors above the +, with exactly two actions: Take photo and Photo
+           library. Implementation: two hidden file inputs — one with
+           <code>capture="environment"</code>, one plain — so iOS opens the camera or the roll
+           directly, no OS action sheet.</p>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="chead">
+          <div class="ct"><h3>Kal</h3><span class="sub">New session</span></div>
+          <button class="newbtn">+ New</button>
+        </div>
+        <div class="thread dim">
+          <div class="bub-user">What's for dinner tonight?</div>
+          <div class="bub-ai">Chicken breast, rice, and veg — 1,059 kcal. Snap a photo when it's plated if the portion looks off.</div>
+        </div>
+        <div class="composer has-pop">
+          <div class="attach-pop">
+            <button>
+              <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+              Take photo
+            </button>
+            <button>
+              <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
+              Photo library
+            </button>
+          </div>
+          <div class="composer-row">
+            <button class="plusbtn active" aria-label="Attach photo">+</button>
+            <div class="composer-box">
+              <input placeholder="Message Kal…" />
+              <button class="send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STATE 3: PENDING ============ -->
+    <section class="variant">
+      <div class="variant-label">
+        <span class="tag">State 3</span>
+        <h2>Pending attachment</h2>
+        <p>A photo is picked but not sent — a 56px thumbnail chip appears above the composer row,
+           left-aligned with the + that spawned it, with a corner ✕ to remove it before send.</p>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="chead">
+          <div class="ct"><h3>Kal</h3><span class="sub">New session</span></div>
+          <button class="newbtn">+ New</button>
+        </div>
+        <div class="thread">
+          <div class="bub-user">What's for dinner tonight?</div>
+          <div class="bub-ai">Chicken breast, rice, and veg — 1,059 kcal. Snap a photo when it's plated if the portion looks off.</div>
+        </div>
+        <div class="composer">
+          <div class="pending-row">
+            <div class="pending-chip">
+              <div class="ph"></div>
+              <button class="rm" aria-label="Remove photo">✕</button>
+            </div>
+          </div>
+          <div class="composer-row">
+            <button class="plusbtn" aria-label="Attach photo">+</button>
+            <div class="composer-box">
+              <input placeholder="Add a caption…" />
+              <button class="send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STATE 4: SENT ============ -->
+    <section class="variant">
+      <div class="variant-label">
+        <span class="tag">State 4</span>
+        <h2>Sent, in the thread</h2>
+        <p>Once sent, the photo renders inside a user bubble at close to full width, caption
+           underneath in the same bubble — the same dark-ink treatment as a text message.</p>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="chead">
+          <div class="ct"><h3>Kal</h3><span class="sub">New session</span></div>
+          <button class="newbtn">+ New</button>
+        </div>
+        <div class="thread">
+          <div class="bub-ai">Chicken breast, rice, and veg — 1,059 kcal. Snap a photo when it's plated if the portion looks off.</div>
+          <div class="bub-user photo-bubble">
+            <div class="photo-img"></div>
+            <div class="cap">Just plated — looks like more rice than usual</div>
+          </div>
+          <div class="bub-ai"><b>Logged.</b> That reads closer to 480g rice — I'll adjust today's Dinner total.</div>
+        </div>
+        <div class="composer">
+          <div class="composer-row">
+            <button class="plusbtn" aria-label="Attach photo">+</button>
+            <div class="composer-box">
+              <input placeholder="Message Kal…" />
+              <button class="send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <p class="footer-note">
+    Photo placeholders are CSS gradients (no external assets) standing in for an actual plate
+    photo. The popover is a plain positioned card on app tokens — canvas background, hairline
+    border, 14px radius, soft shadow — with a caret at the +. Behind it the thread dims to mock a
+    light scrim; tapping anywhere outside dismisses. The two actions map to two hidden
+    <code>&lt;input type="file" accept="image/*"&gt;</code> elements, one with
+    <code>capture="environment"</code> (camera) and one without (library).
+  </p>
+
+</body>
+</html>

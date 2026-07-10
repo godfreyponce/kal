@@ -14,6 +14,9 @@ export const maxDuration = 60;
 const HISTORY_CAP = 30;
 const MAX_TOKENS = 2048;
 
+const IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+type ImageMediaType = (typeof IMAGE_MEDIA_TYPES)[number];
+
 type Msg = Anthropic.MessageParam;
 
 // A stored user/tool-result turn that has no preceding assistant tool_use in the
@@ -65,8 +68,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
   const message = typeof body.message === "string" ? body.message.trim() : "";
-  if (!sessionId || !message) {
-    return Response.json({ error: "sessionId and message are required" }, { status: 400 });
+  const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : null;
+  const mediaType = IMAGE_MEDIA_TYPES.includes(body.mediaType) ? (body.mediaType as ImageMediaType) : null;
+  if (!sessionId || (!message && !(imageBase64 && mediaType))) {
+    return Response.json({ error: "sessionId and a message or image are required" }, { status: 400 });
+  }
+  if (imageBase64 && imageBase64.length > 6_000_000) {
+    return Response.json({ error: "image too large" }, { status: 400 });
   }
 
   let client;
@@ -89,7 +97,14 @@ export async function POST(req: NextRequest) {
   );
 
   const history = await loadHistory(sessionId);
-  const userBlocks: Anthropic.ContentBlockParam[] = [{ type: "text", text: message }];
+  const userBlocks: Anthropic.ContentBlockParam[] = [];
+  if (imageBase64 && mediaType) {
+    userBlocks.push({
+      type: "image",
+      source: { type: "base64", media_type: mediaType, data: imageBase64 },
+    });
+  }
+  if (message) userBlocks.push({ type: "text", text: message });
   await persist(sessionId, "user", userBlocks);
   const messages: Msg[] = [...history, { role: "user", content: userBlocks }];
 
