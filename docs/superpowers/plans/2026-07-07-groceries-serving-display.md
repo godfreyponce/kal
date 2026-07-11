@@ -540,7 +540,7 @@ The bar + macnums JSX is unchanged in shape but reads the new `segs` (already wi
 rm -rf .next && PORT=3100 npm run dev   # backgrounded; CSS changed in Task 4 → cold start
 ```
 
-Log in at `http://localhost:3100/login` (password `devpass`), open `/groceries`. NB: the live rename/pre-fill lands in Task 7, so at this point every card shows its 1× basis (`3.5 oz (100 g) cooked` chicken with a working flip to `4.5 oz (133 g) uncooked`, `1 tbsp` PB static) — labels and flips must work; the 6-oz numbers appear after Task 7. Walmart/Costco logos must render; a food with no store shows no logo (chicken/eggs still have store="Walmart" so check against a quick browser devtools-edited card OR trust the ternary).
+Log in at `http://localhost:3100/login` (password `[REDACTED]`), open `/groceries`. NB: the live rename/pre-fill lands in Task 7, so at this point every card shows its 1× basis (`3.5 oz (100 g) cooked` chicken with a working flip to `4.5 oz (133 g) uncooked`, `1 tbsp` PB static) — labels and flips must work; the 6-oz numbers appear after Task 7. Walmart/Costco logos must render; a food with no store shows no logo (chicken/eggs still have store="Walmart" so check against a quick browser devtools-edited card OR trust the ternary).
 
 Run: `npx tsc --noEmit` → clean. `npm test` → green.
 
@@ -794,7 +794,7 @@ git commit -m "feat(groceries): seed + live data — Large Eggs rename, display_
 - [ ] **Step 1: API round-trip via curl** (dev server on :3100)
 
 ```bash
-curl -s -c /tmp/kal.jar -X POST localhost:3100/api/auth/login -H 'Content-Type: application/json' -d '{"password":"devpass"}'
+curl -s -c /tmp/kal.jar -X POST localhost:3100/api/auth/login -H 'Content-Type: application/json' -d '{"password":"[REDACTED]"}'
 curl -s -b /tmp/kal.jar localhost:3100/api/groceries | python3 -m json.tool | grep -A1 '"name": "Chicken'
 ```
 Expected: chicken row has `"displayQty": 1.7`, eggs row is named `"Large Eggs"`.

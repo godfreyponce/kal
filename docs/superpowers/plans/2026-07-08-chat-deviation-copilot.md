@@ -1309,9 +1309,9 @@ Expected: all PASS, clean.
 With the dev server up (`PORT=3100 npm run dev`, backgrounded; log in first):
 
 ```bash
-# login (local password is devpass) — capture the session cookie
+# login (local password is [REDACTED]) — capture the session cookie
 curl -si localhost:3100/api/auth/login -H 'Content-Type: application/json' \
-  -d '{"password":"devpass"}' | grep -i '^set-cookie' | sed 's/^[Ss]et-[Cc]ookie: //;s/;.*//' > /tmp/kal-cookie.txt
+  -d '{"password":"[REDACTED]"}' | grep -i '^set-cookie' | sed 's/^[Ss]et-[Cc]ookie: //;s/;.*//' > /tmp/kal-cookie.txt
 
 SID=$(uuidgen)
 # turn 1 — expect cacheWrite > 0 in the usage event
