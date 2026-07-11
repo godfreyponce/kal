@@ -71,6 +71,49 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Chat deviation copilot (2026-07-08..10) — MERGED to main, owner-accepted; deploy pending
+
+The chat's core mission delivered: when the owner is off-plan (traveling, nothing prepped,
+eating out), Kal finds real macros, adapts **today's plan only**, and logs reality — cheaply.
+Spec: `docs/superpowers/specs/2026-07-08-chat-deviation-copilot-design.md`; plan (12 tasks,
+executed via Sonnet worker subagents under a Fable orchestrator, per-task independent reviews):
+`docs/superpowers/plans/2026-07-08-chat-deviation-copilot.md`. Suite 56/56 → **89/89** (16 files).
+
+- **Schema (migration 0005, APPLIED):** `meal_overrides` (date, meal_id, food_id,
+  quantity, write_batch_id) — rows replace a meal's template items FOR THAT DATE ONLY; no rows
+  = template; tomorrow auto-reverts. `foods.one_off boolean` — off-plan foods live in `foods`
+  (macros resolve via resolveItem) but are hidden from the Groceries screen.
+- **Knowledge ladder (system-prompt rules + 3 new tools):** 1) `search_nutrition` (USDA+OFF,
+  wraps lib/nutrition-lookup) → 2) owner-provided source: `fetch_page` (lib/fetch-page.ts —
+  html→text, 20k cap, SSRF guard incl. post-redirect re-check; bot-walls return honest errors)
+  or a photo → 3) clearly-labeled estimate, explicit yes required BEFORE any write, saved with
+  `is_estimated=true` + `one_off=true`. Never-invent-serving-size stays absolute for plan foods.
+- **Day-scoped overlay:** `lib/overrides.ts` (setMealOverride last-write-wins, getOverridesForDate)
+  + `override_meal` tool; `getTodayView` renders override items + `adjusted` flag (⇄ accent
+  marker on the row + popup, aria-hidden with spoken label); mark-eaten fills gaps from the
+  override; `revertWriteBatch` also deletes override rows. Targets untouched on deviation days.
+- **Prompt caching:** system prompt split into a static block (persona/rules/template/memory,
+  cache_control) + dynamic block (today's numbers/statuses/adjusted meals); rolling cache mark
+  on the last message; tools prefix cached. Verified live: turn-2 cache_read 4,344 tokens, cost
+  $0.0057 → $0.0009; full 3-turn deviation conversation **~$0.03**. Static block byte-stability
+  under override writes is test-asserted.
+- **Photos in chat:** owner-picked "+" outside the composer → popover (Take photo /
+  Photo library via two hidden inputs, `capture="environment"` vs plain); ≤1024px client
+  downscale (`app/image-scale.ts`, extracted from Groceries); route accepts image block first
+  in the user turn (jpeg/png/webp, 6M-char cap, message-or-image); Haiku vision read a test
+  image live. Popover closes/disables during send; corrupt files get an error bubble.
+- **Two E2E-only bugs found live and fixed deterministically** (two full conversation rounds,
+  zero residue): (1) model guessed a food_id for override_meal because log_food's result
+  didn't return the created id — result now carries `foodId` + guessed-id ban in rules/tool
+  description; (2) replacement logged without meal_id got re-logged by gap-fill — override-
+  scoped dedupe now counts unattached same-day logs of override foods (locked invariant #1
+  holds). Final whole-branch review: READY TO MERGE, no Critical/Important.
+- **Process artifacts:** per-task briefs/reports/review diffs + progress ledger in
+  `.superpowers/sdd/` (git-ignored). Mockups: `design/deviation-adjusted-meal.html`,
+  `design/chat-photo-attach.html` (owner-picked C variants, one revision round each).
+- **Follow-ups filed:** #12 undo leaves one-off foods; #13 fetch_page hardening bundle;
+  #14 parked spend-tracking idea. #3 (prompt caching) + #11 (feature record) closed.
+
 ## Today meal-detail popup (2026-07-06) — COMMITTED, owner-accepted
 
 Tap a meal row on Today → centered card (owner picked variant B) showing what the meal IS;

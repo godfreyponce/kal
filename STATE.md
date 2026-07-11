@@ -12,14 +12,16 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 
 ## Now
 
-- **v1 SHIPPED + prod current** (verified 2026-07-07): https://kal-delta.vercel.app (Vercel
-  project `kal`). Latest deploy: Groceries "my serving" display (`kal-c9rjd7xxt`, zero runtime
-  errors over a 5-min log stream). Suite 56/56 (12 files), `tsc` clean. Owner phone-verification
-  of the new Groceries cards still pending.
-- **Mid-flight:** branch `deviation-copilot` has uncommitted work (`lib/tools.ts` +
-  `lib/tools-deviation.test.ts`) from another session — don't clobber it.
-- **Next up:** the backlog is GitHub Issues #1–#10 (filed 2026-07-10 from the old in-file
-  backlog). `ready-for-agent` label = owner green-lit; unlabeled = confirm with the owner first.
+- **Chat deviation copilot — DONE, owner-accepted 2026-07-10, MERGED to main; NOT yet
+  deployed** (deploy on owner's go — prod still runs the 2026-07-07 build). Off-plan knowledge
+  ladder (search_nutrition → fetch_page/photo → confirmed estimate), day-scoped `meal_overrides`
+  (⇄ marker on Today, template untouched, undoable), chat photo attach, prompt caching
+  (~$0.03 per 3-turn conversation). Suite 89/89 (16 files), `tsc` clean, migration 0005 applied.
+  Detail: docs/HISTORY.md. Closed #3 + #11; follow-ups #12 #13; parked idea #14.
+- **v1 SHIPPED, prod live** at https://kal-delta.vercel.app (Vercel project `kal`); owner
+  phone-verification of the 2026-07-07 Groceries "my serving" cards still pending.
+- **Next up:** the work queue is GitHub Issues. `ready-for-agent` label = owner green-lit;
+  unlabeled = confirm with the owner first.
 
 ## Run / verify (do this first)
 
