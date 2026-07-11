@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kal · Plan screen — 3 variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+    --canvas: #f7f6f3;
+    --surface: #ffffff;
+    --surface-2: #f0efeb;
+    --ink: #1f2421;
+    --ink-soft: #2f3437;
+    --muted: #787774;
+    --faint: #9b9a96;
+    --border: #e6e4df;
+    --accent: #d97757; /* Claude terracotta */
+
+    --protein: #9f2f2d;
+    --carbs: #8a6a1f;
+    --fat: #1f6c9f;
+    --green-bg: #e6efe5;
+    --green-tx: #346538;
+    --blue-bg: #dceffb;
+    --blue-tx: #1f6c9f;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #e9e8e3;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 20px 80px;
+  }
+
+  /* page scaffold */
+  .lede { max-width: 980px; margin: 0 auto 36px; }
+  .lede h1 { font-family: var(--font-serif); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lede p { color: var(--muted); font-size: 14.5px; margin: 0 0 8px; max-width: 72ch; }
+  .lede code { font-family: var(--font-mono); font-size: 12.5px; background: #dedcd6; padding: 1px 6px; border-radius: 5px; }
+
+  .rail {
+    display: flex;
+    gap: 28px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  .col { width: 440px; max-width: 100%; }
+  .col-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .col-name { font-family: var(--font-serif); font-size: 21px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .col-desc { font-size: 13px; color: var(--muted); margin-bottom: 16px; min-height: 57px; }
+
+  /* phone frame */
+  .phone {
+    background: var(--canvas);
+    border-radius: 26px;
+    border: 1px solid #dad8d2;
+    box-shadow: 0 18px 50px -22px rgba(40,38,34,0.45);
+    overflow: hidden;
+  }
+  .scr { padding: 24px 20px 36px; }
+  .screen-label {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--faint); margin: 22px 0 8px;
+  }
+
+  /* shared header inside each phone */
+  .ghead { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+  .ghead .home { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted); text-decoration: none; }
+  .gtitle { font-family: var(--font-serif); font-weight: 500; font-size: 27px; letter-spacing: -0.02em; line-height: 1.05; }
+  .gsub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 4px; }
+  .kicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+  .rule { height: 1px; background: var(--border); margin: 18px 0; }
+
+  .btn-dark {
+    width: 100%;
+    font-family: var(--font-sans); font-size: 13.5px; font-weight: 500;
+    background: var(--ink); color: #fff; border: none; border-radius: 10px;
+    padding: 12px; cursor: pointer;
+  }
+  .btn-ghost {
+    width: 100%;
+    font-family: var(--font-sans); font-size: 13.5px; font-weight: 500;
+    background: transparent; color: var(--ink-soft);
+    border: 1px dashed #cdcbc4; border-radius: 10px;
+    padding: 11px; cursor: pointer;
+  }
+
+  .macros-mono { font-family: var(--font-mono); }
+  .mac-p { color: var(--protein); }
+  .mac-c { color: var(--carbs); }
+  .mac-f { color: var(--fat); }
+
+  /* segmented toggle (mirrors app .gr-toggle) */
+  .toggle { display: flex; gap: 3px; background: var(--surface-2); border-radius: 10px; padding: 3px; margin: 14px 0 16px; }
+  .toggle button {
+    flex: 1; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase;
+    border: none; background: transparent; color: var(--muted); padding: 8px 6px; border-radius: 8px; cursor: pointer;
+  }
+  .toggle button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+  /* =====================================================================
+     VARIANT A — "Ledger" : one scroll, everything visible, edit-in-place
+     ===================================================================== */
+  .A .sec { margin-top: 18px; }
+  .A .sec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+
+  .A .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .A .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 9px 7px; }
+  .A .stat .lb { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+  .A .stat .vl { font-family: var(--font-mono); font-size: 13.5px; color: var(--ink); margin-top: 2px; }
+  .A .stat .vl span { font-size: 9px; color: var(--faint); }
+  .A .stat.editing { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .A .stat.editing .vl { color: var(--accent); border-bottom: 1.5px solid var(--accent); display: inline-block; }
+  .A .stat.editing .ok { float: right; font-family: var(--font-mono); font-size: 10px; color: var(--green-tx); background: var(--green-bg); border-radius: 5px; padding: 1px 5px; }
+
+  .A .targets { display: flex; justify-content: space-between; align-items: center; background: var(--surface-2); border-radius: 10px; padding: 9px 12px; margin-top: 10px; }
+  .A .targets .tv { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); }
+  .A .targets .tv b { font-weight: 500; }
+  .A .derived { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint); text-align: right; line-height: 1.5; }
+
+  .A .meal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 13px 10px; margin-bottom: 10px; }
+  .A .meal-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .A .meal-top .nm { font-family: var(--font-serif); font-size: 16.5px; font-weight: 500; }
+  .A .meal-top .hint { font-family: var(--font-mono); font-size: 9px; color: var(--faint); margin-left: 7px; }
+  .A .meal-top .kc { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .A .item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .A .item:last-of-type { border-bottom: none; }
+  .A .item .qty { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); width: 84px; flex-shrink: 0; }
+  .A .item .nm { font-size: 13px; color: var(--ink); flex: 1; }
+  .A .item .kc { font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+  .A .item.editing { border: 1px solid var(--accent); border-radius: 8px; padding: 5px 8px; margin: 2px -8px; background: #fdf6f3; }
+  .A .stepper { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); }
+  .A .stepper button { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--border); background: #fff; font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); cursor: pointer; line-height: 1; }
+  .A .add-inline { font-family: var(--font-mono); font-size: 10px; color: var(--muted); background: none; border: none; padding: 7px 0 2px; cursor: pointer; }
+  .A .meal.compact { padding: 10px 13px; }
+  .A .meal.compact .sum { font-family: var(--font-mono); font-size: 10px; color: var(--faint); margin-top: 2px; }
+  .A .meal.compact .chev { color: var(--faint); font-size: 11px; }
+  .A .fact { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .A .fact:last-of-type { border-bottom: none; }
+  .A .fact .tx { font-size: 13px; color: var(--ink); flex: 1; line-height: 1.45; }
+  .A .fact .meta { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px; }
+  .A .fact .x { font-family: var(--font-mono); font-size: 12px; color: var(--faint); background: none; border: 1px solid var(--border); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; flex-shrink: 0; }
+
+  /* =====================================================================
+     VARIANT B — "Sections" : segmented panes, Groceries-style form editing
+     ===================================================================== */
+  .B .mealrow { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 13px; margin-bottom: 9px; }
+  .B .mealrow .nm { font-family: var(--font-serif); font-size: 16.5px; font-weight: 500; }
+  .B .mealrow .hint { font-family: var(--font-mono); font-size: 9.5px; color: var(--faint); margin-top: 1px; }
+  .B .mealrow .end { display: flex; align-items: center; gap: 10px; }
+  .B .mealrow .kc { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .B .mealrow .edit { font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+
+  .B .form { background: var(--surface); border: 1px solid var(--accent); border-radius: 14px; padding: 13px; margin-bottom: 9px; }
+  .B .form .f-title { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .B .frow { display: flex; gap: 8px; margin-bottom: 8px; }
+  .B .frow .fld { flex: 1; }
+  .B .lbl { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); margin-bottom: 3px; }
+  .B .inp { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; width: 100%; }
+  .B .item-line { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .B .item-line .food { flex: 1; display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; }
+  .B .item-line .food .car { color: var(--faint); font-size: 10px; }
+  .B .item-line .q { width: 52px; text-align: right; }
+  .B .item-line .unit { font-family: var(--font-mono); font-size: 9px; color: var(--faint); width: 44px; flex-shrink: 0; }
+  .B .item-line .x { font-family: var(--font-mono); font-size: 12px; color: var(--faint); background: none; border: 1px solid var(--border); border-radius: 6px; width: 26px; height: 30px; cursor: pointer; flex-shrink: 0; }
+  .B .add-item { font-family: var(--font-mono); font-size: 10px; color: var(--muted); background: none; border: 1px dashed #cdcbc4; border-radius: 8px; width: 100%; padding: 8px; cursor: pointer; margin: 4px 0 12px; }
+  .B .actions { display: flex; gap: 8px; }
+  .B .actions .btn-dark { flex: 1.6; }
+  .B .actions .cancel { flex: 1; font-family: var(--font-sans); font-size: 13px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+  .B .saved { display: flex; gap: 7px; align-items: center; background: var(--green-bg); color: var(--green-tx); border-radius: 9px; padding: 8px 11px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.03em; margin-bottom: 12px; }
+
+  .B .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .B .tblock { background: var(--surface-2); border-radius: 12px; padding: 11px 13px; margin-bottom: 12px; }
+  .B .tblock .tk { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-bottom: 5px; }
+  .B .tblock .tv { font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); }
+  .B .tblock .note { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); margin-top: 5px; line-height: 1.5; }
+
+  /* =====================================================================
+     VARIANT C — "Hub" : glanceable summary cards, drill-in editors
+     ===================================================================== */
+  .C .hubcard { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 15px; margin-bottom: 12px; cursor: pointer; }
+  .C .hub-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .C .hub-top .nm { font-family: var(--font-serif); font-size: 18px; font-weight: 500; }
+  .C .hub-top .chev { font-family: var(--font-mono); font-size: 14px; color: var(--faint); }
+  .C .hub-sum { font-family: var(--font-mono); font-size: 11px; color: var(--muted); line-height: 1.7; }
+  .C .hub-sum b { color: var(--ink-soft); font-weight: 500; }
+  .C .mini { margin-top: 9px; border-top: 1px solid var(--border); padding-top: 8px; }
+  .C .mini .mrow { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); padding: 2.5px 0; }
+  .C .mini .mrow span:last-child { color: var(--faint); }
+  .C .tie { display: flex; gap: 6px; align-items: center; margin-top: 9px; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--blue-tx); background: var(--blue-bg); border-radius: 7px; padding: 5px 9px; }
+  .C .fact-prev { font-size: 12px; color: var(--ink); font-style: italic; font-family: var(--font-serif); margin-top: 4px; }
+
+  .C .d-item { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .C .d-item .nm { font-size: 13px; color: var(--ink); }
+  .C .d-item .sub { font-family: var(--font-mono); font-size: 9px; color: var(--faint); margin-top: 1px; }
+  .C .stepper { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); }
+  .C .stepper button { width: 24px; height: 24px; border-radius: 7px; border: 1px solid var(--border); background: #fff; font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); cursor: pointer; line-height: 1; }
+  .C .foot { background: var(--surface-2); border-radius: 12px; padding: 11px 13px; margin: 12px 0; }
+  .C .foot .frow { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); padding: 2px 0; }
+  .C .foot .frow.delta span:last-child { color: var(--green-tx); }
+  .C .foot .fnote { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); margin-top: 5px; }
+</style>
+</head>
+<body>
+
+  <div class="lede">
+    <h1>Plan — 3 editor directions</h1>
+    <p>
+      The first editing UI for the three things every screen reads but nothing can change:
+      the <strong>profile</strong>, the <strong>meal-plan template</strong>, and Kal's <strong>memory facts</strong>.
+      All data here is the public demo/seed plan. Two shared rules in every variant:
+      edits change the <em>everyday template</em> (day-scoped chat adjustments ⇄ are untouched), and
+      <span class="macros-mono">daily targets are derived from the plan</span> — each variant shows its own
+      treatment of that recalculation.
+    </p>
+    <p>Tell me which direction (or which pieces of each) and I'll refine it into <code>plan-combined.html</code>.</p>
+  </div>
+
+  <div class="rail">
+
+    <!-- ===================== VARIANT A ===================== -->
+    <div class="col A">
+      <div class="col-tag">Variant A</div>
+      <div class="col-name">Ledger</div>
+      <div class="col-desc">One scroll, everything visible, edit-in-place: tap any number and it becomes an input right there. No forms, no navigation. Targets sit between profile and plan as a “derived” strip that recalcs live.</div>
+      <div class="phone">
+        <div class="scr">
+          <div class="ghead">
+            <div>
+              <div class="gtitle">Plan</div>
+              <div class="gsub">profile · meals · memory</div>
+            </div>
+            <a class="home" href="#">‹ Today</a>
+          </div>
+
+          <div class="sec">
+            <div class="sec-head"><span class="kicker">Profile</span><span class="kicker" style="color:var(--accent)">tap a value to edit</span></div>
+            <div class="stats">
+              <div class="stat"><div class="lb">Height</div><div class="vl">175<span> cm</span></div></div>
+              <div class="stat editing"><div class="lb">Weight <span class="ok">✓</span></div><div class="vl">171.5</div></div>
+              <div class="stat"><div class="lb">Age</div><div class="vl">30</div></div>
+              <div class="stat"><div class="lb">Body fat</div><div class="vl">15<span> %</span></div></div>
+              <div class="stat"><div class="lb">Goal</div><div class="vl">160<span> lb</span></div></div>
+              <div class="stat"><div class="lb">By</div><div class="vl">Jan ’27</div></div>
+              <div class="stat"><div class="lb">Activity</div><div class="vl">active</div></div>
+              <div class="stat"><div class="lb">Sex</div><div class="vl">male</div></div>
+            </div>
+            <div class="targets">
+              <div class="tv"><b>3603</b> kcal · <span class="mac-p">216P</span> <span class="mac-c">421C</span> <span class="mac-f">125F</span></div>
+              <div class="derived">targets · derived<br/>from meal plan</div>
+            </div>
+          </div>
+
+          <div class="rule"></div>
+
+          <div class="sec">
+            <div class="sec-head"><span class="kicker">Meal plan</span><span class="kicker">5 meals · 3603 kcal</span></div>
+
+            <div class="meal">
+              <div class="meal-top"><span><span class="nm">Breakfast</span><span class="hint">morning</span></span><span class="kc">815 kcal</span></div>
+              <div class="item"><span class="qty">4 eggs</span><span class="nm">Large Eggs</span><span class="kc">280</span></div>
+              <div class="item editing">
+                <span class="stepper"><button>−</button>4 slices<button>+</button></span>
+                <span class="nm" style="margin-left:10px">Whole wheat bread</span><span class="kc">240</span>
+              </div>
+              <div class="item"><span class="qty">2 tbsp</span><span class="nm">Peanut butter</span><span class="kc">190</span></div>
+              <div class="item"><span class="qty">1 banana</span><span class="nm">Banana, medium</span><span class="kc">105</span></div>
+              <button class="add-inline">+ item</button>
+            </div>
+
+            <div class="meal">
+              <div class="meal-top"><span><span class="nm">Lunch</span><span class="hint">midday</span></span><span class="kc">1058 kcal</span></div>
+              <div class="item"><span class="qty">170 g</span><span class="nm">Chicken breast, cooked</span><span class="kc">281</span></div>
+              <div class="item"><span class="qty">400 g</span><span class="nm">White rice, cooked</span><span class="kc">520</span></div>
+              <div class="item"><span class="qty">1 tbsp</span><span class="nm">Canola oil</span><span class="kc">120</span></div>
+              <div class="item"><span class="qty">250 g</span><span class="nm">Mixed vegetables</span><span class="kc">138</span></div>
+              <button class="add-inline">+ item</button>
+            </div>
+
+            <div class="meal compact">
+              <div class="meal-top"><span><span class="nm">Snack</span><span class="hint">afternoon</span></span><span><span class="kc">415 kcal </span><span class="chev">▸</span></span></div>
+              <div class="sum">2 bread · 2 pb · 1 banana</div>
+            </div>
+            <div class="meal compact">
+              <div class="meal-top"><span><span class="nm">Dinner</span><span class="hint">post-soccer ~11pm</span></span><span><span class="kc">1058 kcal </span><span class="chev">▸</span></span></div>
+              <div class="sum">170g chicken · 400g rice · 1 tbsp oil · 250g veg</div>
+            </div>
+            <div class="meal compact">
+              <div class="meal-top"><span><span class="nm">Peanuts (graze)</span><span class="hint">throughout day</span></span><span><span class="kc">257 kcal </span><span class="chev">▸</span></span></div>
+              <div class="sum">40g dry-roasted peanuts</div>
+            </div>
+            <button class="btn-ghost">+ Add meal</button>
+          </div>
+
+          <div class="rule"></div>
+
+          <div class="sec">
+            <div class="sec-head"><span class="kicker">Memory</span><span class="kicker">4 facts</span></div>
+            <div class="fact">
+              <div><div class="tx">Plays soccer Tue/Thu nights — dinner lands around 11pm after games.</div><div class="meta">added by kal · jun 30</div></div>
+              <button class="x">×</button>
+            </div>
+            <div class="fact">
+              <div><div class="tx">Uses a food scale; prefers amounts in grams, cooked weight.</div><div class="meta">added by kal · jul 02</div></div>
+              <button class="x">×</button>
+            </div>
+            <div class="fact">
+              <div><div class="tx">Peanuts are grazed through the day, not a sit-down meal.</div><div class="meta">added by kal · jul 05</div></div>
+              <button class="x">×</button>
+            </div>
+            <div class="fact">
+              <div><div class="tx">Prefers whole wheat bread toasted.</div><div class="meta">added by you · jul 08</div></div>
+              <button class="x">×</button>
+            </div>
+            <button class="add-inline">+ add fact</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== VARIANT B ===================== -->
+    <div class="col B">
+      <div class="col-tag">Variant B</div>
+      <div class="col-name">Sections</div>
+      <div class="col-desc">A segmented toggle — Meals / Profile / Memory — one pane at a time, and editing swaps a card for a form, exactly like the Groceries editor. Most consistent with the app you already have. Saving a meal shows a “targets recalculated” banner.</div>
+      <div class="screen-label">Screen 1 — Meals pane, Breakfast in edit mode</div>
+      <div class="phone">
+        <div class="scr">
+          <div class="ghead">
+            <div>
+              <div class="gtitle">Plan</div>
+              <div class="gsub">the everyday template</div>
+            </div>
+            <a class="home" href="#">‹ Today</a>
+          </div>
+
+          <div class="toggle">
+            <button class="on">Meals</button>
+            <button>Profile</button>
+            <button>Memory</button>
+          </div>
+
+          <div class="saved">✓&nbsp; saved — targets recalculated: 3603 kcal · 216P · 421C · 125F</div>
+
+          <div class="form">
+            <div class="f-title">Editing · Breakfast</div>
+            <div class="frow">
+              <div class="fld" style="flex:1.4"><div class="lbl">Name</div><div class="inp">Breakfast</div></div>
+              <div class="fld"><div class="lbl">Time hint</div><div class="inp">morning</div></div>
+            </div>
+            <div class="lbl" style="margin:10px 0 5px">Items</div>
+            <div class="item-line">
+              <div class="food"><span>Large Eggs</span><span class="car">▾</span></div>
+              <div class="inp q">4</div><span class="unit">eggs</span>
+              <button class="x">×</button>
+            </div>
+            <div class="item-line">
+              <div class="food"><span>Whole wheat bread</span><span class="car">▾</span></div>
+              <div class="inp q">4</div><span class="unit">slices</span>
+              <button class="x">×</button>
+            </div>
+            <div class="item-line">
+              <div class="food"><span>Peanut butter</span><span class="car">▾</span></div>
+              <div class="inp q">2</div><span class="unit">tbsp</span>
+              <button class="x">×</button>
+            </div>
+            <div class="item-line">
+              <div class="food"><span>Banana, medium</span><span class="car">▾</span></div>
+              <div class="inp q">1</div><span class="unit">banana</span>
+              <button class="x">×</button>
+            </div>
+            <button class="add-item">+ add item from groceries</button>
+            <div class="actions">
+              <button class="btn-dark">Save meal · 815 kcal</button>
+              <button class="cancel">Cancel</button>
+            </div>
+          </div>
+
+          <div class="mealrow">
+            <div><div class="nm">Lunch</div><div class="hint">midday · 4 items</div></div>
+            <div class="end"><span class="kc">1058 kcal</span><button class="edit">Edit</button></div>
+          </div>
+          <div class="mealrow">
+            <div><div class="nm">Snack</div><div class="hint">afternoon · 3 items</div></div>
+            <div class="end"><span class="kc">415 kcal</span><button class="edit">Edit</button></div>
+          </div>
+          <div class="mealrow">
+            <div><div class="nm">Dinner</div><div class="hint">post-soccer ~11pm · 4 items</div></div>
+            <div class="end"><span class="kc">1058 kcal</span><button class="edit">Edit</button></div>
+          </div>
+          <div class="mealrow">
+            <div><div class="nm">Peanuts (graze)</div><div class="hint">throughout day · 1 item</div></div>
+            <div class="end"><span class="kc">257 kcal</span><button class="edit">Edit</button></div>
+          </div>
+          <button class="btn-ghost">+ Add meal</button>
+        </div>
+      </div>
+
+      <div class="screen-label">Screen 2 — Profile pane (Memory pane: same list-and-form pattern)</div>
+      <div class="phone">
+        <div class="scr">
+          <div class="ghead">
+            <div>
+              <div class="gtitle">Plan</div>
+              <div class="gsub">the everyday template</div>
+            </div>
+            <a class="home" href="#">‹ Today</a>
+          </div>
+
+          <div class="toggle">
+            <button>Meals</button>
+            <button class="on">Profile</button>
+            <button>Memory</button>
+          </div>
+
+          <div class="p-grid">
+            <div><div class="lbl">Height (cm)</div><div class="inp">175</div></div>
+            <div><div class="lbl">Weight (lb)</div><div class="inp">170</div></div>
+            <div><div class="lbl">Age</div><div class="inp">30</div></div>
+            <div><div class="lbl">Sex</div><div class="inp">male &nbsp;▾</div></div>
+            <div><div class="lbl">Body fat (%)</div><div class="inp">15.0</div></div>
+            <div><div class="lbl">Activity</div><div class="inp">active &nbsp;▾</div></div>
+            <div><div class="lbl">Goal weight (lb)</div><div class="inp">160</div></div>
+            <div><div class="lbl">Goal date</div><div class="inp">2027-01-01</div></div>
+          </div>
+
+          <div class="tblock">
+            <div class="tk">Daily targets — derived from meal plan</div>
+            <div class="tv">3603 kcal · <span class="mac-p">216P</span> · <span class="mac-c">421C</span> · <span class="mac-f">125F</span></div>
+            <div class="note">recalculated automatically whenever the plan changes — not editable here</div>
+          </div>
+
+          <button class="btn-dark">Save profile</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== VARIANT C ===================== -->
+    <div class="col C">
+      <div class="col-tag">Variant C</div>
+      <div class="col-name">Hub</div>
+      <div class="col-desc">A glanceable hub — three summary cards you can read without editing anything — and each card drills into its own focused editor screen. The plan card makes the derived-targets rule visible: day total <em>is</em> the target.</div>
+      <div class="screen-label">Screen 1 — the hub</div>
+      <div class="phone">
+        <div class="scr">
+          <div class="ghead">
+            <div>
+              <div class="gtitle">Plan</div>
+              <div class="gsub">tap a card to edit</div>
+            </div>
+            <a class="home" href="#">‹ Today</a>
+          </div>
+          <div style="height:12px"></div>
+
+          <div class="hubcard">
+            <div class="hub-top"><span class="nm">Profile</span><span class="chev">›</span></div>
+            <div class="hub-sum"><b>170 lb</b> · 15% bf · goal <b>160 lb</b> by Jan ’27<br/>175 cm · 30 · male · active</div>
+          </div>
+
+          <div class="hubcard">
+            <div class="hub-top"><span class="nm">Meal plan</span><span class="chev">›</span></div>
+            <div class="hub-sum">5 meals · day total <b>3603 kcal</b> · <span class="mac-p">216P</span> <span class="mac-c">421C</span> <span class="mac-f">125F</span></div>
+            <div class="mini">
+              <div class="mrow"><span>Breakfast</span><span>815</span></div>
+              <div class="mrow"><span>Lunch</span><span>1058</span></div>
+              <div class="mrow"><span>Snack</span><span>415</span></div>
+              <div class="mrow"><span>Dinner</span><span>1058</span></div>
+              <div class="mrow"><span>Peanuts (graze)</span><span>257</span></div>
+            </div>
+            <div class="tie">ⓘ&nbsp; day total = your daily targets</div>
+          </div>
+
+          <div class="hubcard">
+            <div class="hub-top"><span class="nm">Memory</span><span class="chev">›</span></div>
+            <div class="hub-sum">4 facts kal remembers · newest:</div>
+            <div class="fact-prev">“Prefers whole wheat bread toasted.”</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen-label">Screen 2 — drilled in: edit Breakfast</div>
+      <div class="phone">
+        <div class="scr">
+          <div class="ghead">
+            <div>
+              <div class="gtitle">Breakfast</div>
+              <div class="gsub">morning · 4 items</div>
+            </div>
+            <a class="home" href="#">‹ Plan</a>
+          </div>
+          <div style="height:12px"></div>
+
+          <div class="d-item">
+            <div><div class="nm">Large Eggs</div><div class="sub">70 kcal each · 280 total</div></div>
+            <span class="stepper"><button>−</button>4<button>+</button></span>
+          </div>
+          <div class="d-item">
+            <div><div class="nm">Whole wheat bread</div><div class="sub">60 kcal / slice · 300 total</div></div>
+            <span class="stepper"><button>−</button>5<button>+</button></span>
+          </div>
+          <div class="d-item">
+            <div><div class="nm">Peanut butter</div><div class="sub">95 kcal / tbsp · 190 total</div></div>
+            <span class="stepper"><button>−</button>2<button>+</button></span>
+          </div>
+          <div class="d-item">
+            <div><div class="nm">Banana, medium</div><div class="sub">105 kcal · 105 total</div></div>
+            <span class="stepper"><button>−</button>1<button>+</button></span>
+          </div>
+          <button class="btn-ghost" style="margin:4px 0 0">+ Add item from groceries</button>
+
+          <div class="foot">
+            <div class="frow"><span>Meal total</span><span>875 kcal (was 815)</span></div>
+            <div class="frow delta"><span>Day total → new targets</span><span>3663 kcal · 220P</span></div>
+            <div class="fnote">targets re-derive from the plan when you save</div>
+          </div>
+
+          <button class="btn-dark">Save Breakfast</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

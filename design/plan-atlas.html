@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Kal · Plan — Theory 1: Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+    --canvas: #f7f6f3;
+    --surface: #ffffff;
+    --surface-2: #f0efeb;
+    --ink: #1f2421;
+    --ink-soft: #2f3437;
+    --muted: #787774;
+    --faint: #9b9a96;
+    --border: #e6e4df;
+    --hairline: #e8e5de;
+    --accent: #d97757;
+
+    --protein: #9f2f2d;
+    --carbs: #8a6a1f;
+    --fat: #1f6c9f;
+    --green-bg: #e6efe5;
+    --green-tx: #346538;
+    --blue-bg: #dceffb;
+    --blue-tx: #1f6c9f;
+
+    --c-protein-bg: #f4e3dd;
+    --c-carb-bg:    #f3ead4;
+    --c-fat-bg:     #dfecf4;
+    --c-dairy-bg:   #dfeeec;
+    --c-fruit-bg:   #efe1ec;
+    --c-veg-bg:     #e4eedd;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #e9e8e3;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 20px 80px;
+  }
+
+  .lede { max-width: 760px; margin: 0 auto 32px; }
+  .lede .theory-tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .lede h1 { font-family: var(--font-serif); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lede p { color: var(--muted); font-size: 14.5px; margin: 0 0 8px; max-width: 70ch; }
+  .lede code { font-family: var(--font-mono); font-size: 12.5px; background: #dedcd6; padding: 1px 6px; border-radius: 5px; }
+  .lede a { color: var(--accent); }
+
+  .stage { display: flex; justify-content: center; }
+  .phone {
+    position: relative;
+    width: 440px; max-width: 100%;
+    background: var(--canvas);
+    border-radius: 26px;
+    border: 1px solid #dad8d2;
+    box-shadow: 0 18px 50px -22px rgba(40,38,34,0.45);
+    overflow: hidden;
+  }
+  .scr { padding: 24px 20px 40px; }
+
+  .ghead { display: flex; justify-content: space-between; align-items: flex-start; }
+  .ghead .home { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted); text-decoration: none; }
+  .gtitle { font-family: var(--font-serif); font-weight: 500; font-size: 27px; letter-spacing: -0.02em; line-height: 1.05; }
+  .gsub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 4px; }
+  .kicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; margin: 26px 0 4px; }
+
+  button { font-family: inherit; }
+  .press { transition: transform 120ms ease-out, background 150ms ease-out; }
+  .press:active { transform: scale(0.97); }
+
+  /* ============================= PROFILE / ATLAS ============================= */
+  .mode { display: inline-flex; gap: 3px; background: #eceae3; border-radius: 9px; padding: 3px; }
+  .mode button {
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.07em; text-transform: uppercase;
+    border: none; background: transparent; color: var(--muted); padding: 4px 10px; border-radius: 7px; cursor: pointer;
+  }
+  .mode button.on { background: #fdfcfa; color: var(--ink); box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 1px 2px rgba(60,50,40,0.10); }
+
+  .atlas { position: relative; margin: 8px 0 0; }
+  .atlas svg { display: block; width: 100%; height: auto; }
+  .photo-ph {
+    display: none; aspect-ratio: 240 / 470;
+    border: 1.5px dashed #cdcbc4; border-radius: 16px;
+    flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    text-align: center; padding: 24px;
+  }
+  .photo-ph .cam { font-size: 30px; opacity: 0.5; }
+  .photo-ph .t1 { font-family: var(--font-serif); font-size: 16.5px; color: var(--ink-soft); max-width: 24ch; line-height: 1.4; }
+  .photo-ph .t2 { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); line-height: 1.9; max-width: 30ch; }
+  .atlas.photo-mode svg { display: none; }
+  .atlas.photo-mode .photo-ph { display: flex; }
+
+  .figure-shape { fill: #e9e5db; stroke: #6b6f68; stroke-width: 1.3; }
+  .limb-under { stroke: #6b6f68; stroke-linecap: round; fill: none; }
+  .limb-over { stroke: #e9e5db; stroke-linecap: round; fill: none; }
+
+  .hit { fill: transparent; cursor: pointer; transition: fill 180ms ease-out; }
+  .hit:hover { fill: rgba(217,119,87,0.08); }
+  .hit.active { fill: rgba(217,119,87,0.14); }
+
+  .pin-core { fill: #fdfcfa; stroke: var(--accent); stroke-width: 1.6; transition: fill 150ms; }
+  .pin.active .pin-core { fill: var(--accent); }
+  .pin-ring { fill: none; stroke: var(--accent); stroke-width: 1; opacity: 0; }
+  .pin.active .pin-ring { animation: pulse 2.4s ease-out infinite; }
+  @keyframes pulse {
+    0%   { opacity: 0.55; transform: scale(1); }
+    70%  { opacity: 0;    transform: scale(2.1); }
+    100% { opacity: 0;    transform: scale(2.1); }
+  }
+  .pin-ring { transform-origin: center; transform-box: fill-box; }
+
+  .leader { stroke: #c9c5bb; stroke-width: 1; stroke-dasharray: 1 3; fill: none; }
+  .dim { stroke: #b7b3a8; stroke-width: 1; }
+  .dim-label { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.12em; fill: var(--faint); }
+
+  .co { cursor: pointer; }
+  .co .co-k { font-family: var(--font-mono); font-size: 7.5px; letter-spacing: 0.1em; fill: var(--faint); }
+  .co .co-v { font-family: var(--font-mono); font-size: 12.5px; fill: var(--ink-soft); }
+  .co.active .co-k { fill: var(--accent); }
+  .co.active .co-v { fill: var(--accent); }
+
+  /* editor card under the figure */
+  .ed {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 13px 14px; margin-top: 4px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 1px 2px rgba(60,50,40,0.06);
+  }
+  .ed .ed-k { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); margin-bottom: 9px; }
+  .ed .frow { display: flex; gap: 8px; }
+  .ed .fld { flex: 1; }
+  .ed .lbl { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); margin-bottom: 3px; }
+  .ed .inp {
+    font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums;
+    color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 7px;
+    padding: 7px 9px; width: 100%;
+  }
+  .ed .inp:focus { outline: 2px solid rgba(217,119,87,0.4); outline-offset: 1px; border-color: var(--accent); }
+  .ed .hint { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); margin-top: 8px; line-height: 1.6; }
+  .ed .save {
+    font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+    background: var(--ink); color: #fff; border: none; border-radius: 9px;
+    padding: 9px 16px; cursor: pointer; margin-top: 10px;
+  }
+  .ed[hidden] { display: none; }
+
+  /* ============================= MEALS ============================= */
+  .rule { height: 1px; background: var(--hairline); border: none; margin: 26px 0 0; }
+
+  .totals {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.03em; color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px solid var(--hairline); border-radius: 9px;
+    padding: 7px 11px; margin: 12px 0 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .totals .t-macros span { margin-left: 7px; }
+  .totals .strong { font-weight: 500; color: var(--ink); }
+  .recalc .strong { font-weight: 600; }
+  .mac-p { color: var(--protein); } .mac-c { color: var(--carbs); } .mac-f { color: var(--fat); }
+
+  .recalc {
+    display: none; align-items: flex-start; gap: 9px;
+    border-left: 2px solid var(--accent);
+    background: var(--surface); border-radius: 0 10px 10px 0;
+    padding: 9px 12px; margin: 10px 0 2px;
+    animation: slideDown 200ms ease-out;
+  }
+  .recalc.show { display: flex; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .recalc .rc-k { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+  .recalc .rc-v { font-family: var(--font-serif); font-size: 14.5px; color: var(--ink); line-height: 1.35; font-variant-numeric: tabular-nums; }
+  .recalc .rc-why { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); margin-top: 1px; }
+
+  .meal { margin-top: 18px; }
+  .meal-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #dcd8ce; padding-bottom: 6px; }
+  .meal-head .m-nm { font-family: var(--font-serif); font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }
+  .meal-head .m-hint { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint); margin-left: 8px; }
+  .meal-head .m-end { display: flex; align-items: baseline; gap: 10px; }
+  .meal-head .m-kc { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .meal-head .m-edit {
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; cursor: pointer;
+  }
+  .meal.editing .meal-head .m-edit { color: var(--accent); border-color: var(--accent); }
+
+  .food { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+  .food + .food { border-top: 1px solid var(--hairline); }
+  .thumb {
+    width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+  }
+  .food .f-mid { flex: 1; min-width: 0; }
+  .food .f-nm { font-size: 14.5px; color: var(--ink); line-height: 1.3; }
+  .food .f-meta { font-family: var(--font-mono); font-size: 10px; color: var(--faint); margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .food .f-amt { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+  .stepper { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .stepper button {
+    width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+    background: #fff; font-family: var(--font-mono); font-size: 14px; color: var(--ink-soft);
+    cursor: pointer; line-height: 1; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .stepper button:active { background: #ebe8e0; box-shadow: inset 0 1px 2px rgba(60,50,40,0.12); }
+  .stepper .q { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); min-width: 58px; text-align: center; font-variant-numeric: tabular-nums; }
+  .food .f-x {
+    font-family: var(--font-mono); font-size: 12px; color: var(--faint);
+    background: none; border: 1px solid var(--border); border-radius: 7px;
+    width: 26px; height: 26px; cursor: pointer; flex-shrink: 0; margin-left: 2px;
+  }
+
+  .add-row {
+    width: 100%; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--muted); background: none; border: 1px dashed #cdcbc4; border-radius: 9px;
+    padding: 9px; cursor: pointer; margin-top: 10px;
+  }
+  .add-row:hover { color: var(--accent); border-color: var(--accent); }
+
+  .m-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .m-actions .save {
+    flex: 1.6; font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+    background: var(--ink); color: #fff; border: none; border-radius: 9px; padding: 10px; cursor: pointer;
+  }
+  .m-actions .cancel {
+    flex: 1; font-family: var(--font-sans); font-size: 13px; background: transparent;
+    color: var(--muted); border: 1px solid var(--border); border-radius: 9px; cursor: pointer;
+  }
+
+  /* ============================= MEMORY ============================= */
+  .fact { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--hairline); }
+  .fact .f-dot { width: 6px; height: 6px; border-radius: 9999px; margin-top: 8px; flex-shrink: 0; }
+  .fact .f-body { flex: 1; }
+  .fact .f-tx { font-family: var(--font-serif); font-size: 15px; color: var(--ink); line-height: 1.45; }
+  .fact .f-meta { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 3px; }
+  .fact .f-x {
+    font-family: var(--font-mono); font-size: 13px; color: var(--faint);
+    background: none; border: none; cursor: pointer; padding: 2px 6px; margin-top: 2px;
+  }
+  .fact .f-x:hover { color: var(--protein); }
+  .fact.gone { display: none; }
+
+  .fact-add {
+    width: 100%; text-align: left;
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); background: none; border: 1px dashed #cdcbc4; border-radius: 9px;
+    padding: 10px 12px; cursor: pointer; margin: 12px 0 2px;
+  }
+  .fact-add:hover { color: var(--accent); border-color: var(--accent); }
+  .clear-all { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); background: none; border: none; cursor: pointer; margin-top: 14px; }
+
+  .snack {
+    position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%) translateY(240%);
+    background: var(--ink); color: #f2f0eb; border-radius: 10px;
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em;
+    padding: 10px 14px; display: flex; align-items: center; gap: 14px;
+    transition: transform 220ms cubic-bezier(0.3, 0.7, 0.3, 1);
+    overflow: hidden;
+  }
+  .snack.show { transform: translateX(-50%) translateY(0); }
+  .snack button { background: none; border: none; color: var(--accent); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; cursor: pointer; }
+  .snack .timer { position: absolute; left: 0; bottom: 0; height: 1.5px; width: 100%; background: var(--accent); transform-origin: left; }
+  .snack.show .timer { animation: deplete 5s linear forwards; }
+  @keyframes deplete { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+  /* implementation notes */
+  .impl { max-width: 440px; margin: 26px auto 0; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); line-height: 1.9; }
+  .impl .k { color: var(--faint); letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="lede">
+    <div class="theory-tag">Theory 1 of 2 · compare with <a href="plan-figure.html">Figure →</a></div>
+    <h1>Plan — “Atlas”</h1>
+    <p>
+      The profile as an <strong>editorial anatomy plate</strong>: a drawn figure with pinned stats —
+      tap a body region (or its callout) and the editor below switches to it. In production the
+      <code>photo</code> mode swaps the drawn figure for <strong>your own progress photo</strong>, with the same
+      pins anchored by a one-time drag placement. Zero dependencies — the figure is a 3&nbsp;KB inline SVG.
+    </p>
+    <p>Meals follow your Variant-B pick (form-swap editing, now with food photos); Memory follows Variant A.
+      This page is interactive: tap body regions, tick the steppers in Breakfast, delete a memory fact.</p>
+  </div>
+
+  <div class="stage">
+  <div class="phone">
+    <div class="scr">
+
+      <div class="ghead">
+        <div>
+          <div class="gtitle">Plan</div>
+          <div class="gsub">profile · meals · memory</div>
+        </div>
+        <a class="home" href="#">‹ Today</a>
+      </div>
+
+      <!-- ============ PROFILE ============ -->
+      <div class="sec-head">
+        <span class="kicker">Profile</span>
+        <span class="mode" id="mode"><button class="on">Figure</button><button>Photo</button></span>
+      </div>
+
+      <div class="atlas">
+        <svg viewBox="0 0 240 470" role="group" aria-label="Body profile — tap a region to edit">
+          <!-- height dimension line -->
+          <line class="dim" x1="216" y1="21" x2="216" y2="404" />
+          <line class="dim" x1="211" y1="21" x2="221" y2="21" />
+          <line class="dim" x1="211" y1="404" x2="221" y2="404" />
+          <text class="dim-label" transform="rotate(-90 226 232)" x="226" y="232" text-anchor="middle">HEIGHT · 175 CM</text>
+
+          <!-- ============ figure (drawn clay mannequin) ============ -->
+          <g id="fig">
+            <!-- arms: under-stroke (ink) then over-stroke (clay) -->
+            <g class="limb-under" stroke-width="18">
+              <path d="M91,94 L73,150 L64,206" />
+              <path d="M149,94 L167,150 L176,206" />
+            </g>
+            <g class="limb-over" stroke-width="15.4">
+              <path d="M91,94 L73,150 L64,206" />
+              <path d="M149,94 L167,150 L176,206" />
+            </g>
+            <circle class="figure-shape" cx="63" cy="215" r="7.5" />
+            <circle class="figure-shape" cx="177" cy="215" r="7.5" />
+
+            <!-- legs -->
+            <g class="limb-under" stroke-width="20">
+              <path d="M104,214 L101,300 L99,386" />
+              <path d="M136,214 L139,300 L141,386" />
+            </g>
+            <g class="limb-over" stroke-width="17.4">
+              <path d="M104,214 L101,300 L99,386" />
+              <path d="M136,214 L139,300 L141,386" />
+            </g>
+            <!-- feet -->
+            <ellipse class="figure-shape" cx="95" cy="396" rx="11" ry="5.5" />
+            <ellipse class="figure-shape" cx="145" cy="396" rx="11" ry="5.5" />
+
+            <!-- neck + head -->
+            <rect class="figure-shape" x="112" y="62" width="16" height="15" rx="7" />
+            <circle class="figure-shape" cx="120" cy="44" r="23" />
+
+            <!-- torso -->
+            <path class="figure-shape" d="M96,83
+              C110,79 130,79 144,83
+              C151,85 154,91 153,99
+              L147,158 C146,168 146,175 148,183
+              L150,194 C151,205 144,211 135,211
+              L105,211 C96,211 89,205 90,194
+              L92,183 C94,175 94,168 93,158
+              L87,99 C86,91 89,85 96,83 Z" />
+          </g>
+
+          <!-- ============ leaders + callouts ============ -->
+          <path class="leader" d="M97,42 L58,42" />
+          <path class="leader" d="M118,112 L72,112" />
+          <path class="leader" d="M120,176 L58,176" />
+          <path class="leader" d="M97,300 L58,300" />
+
+          <g class="co" data-region="head" role="button" tabindex="0" aria-label="Edit age and sex">
+            <text class="co-k" x="8" y="34">AGE · SEX</text>
+            <text class="co-v" x="8" y="48">30 · M</text>
+          </g>
+          <g class="co" data-region="chest" role="button" tabindex="0" aria-label="Edit weight and goal">
+            <text class="co-k" x="8" y="104">WEIGHT</text>
+            <text class="co-v" x="8" y="118">171.5 lb</text>
+          </g>
+          <g class="co" data-region="waist" role="button" tabindex="0" aria-label="Edit body fat and height">
+            <text class="co-k" x="8" y="168">BODY FAT</text>
+            <text class="co-v" x="8" y="182">15 %</text>
+          </g>
+          <g class="co" data-region="legs" role="button" tabindex="0" aria-label="Edit activity level">
+            <text class="co-k" x="8" y="292">ACTIVITY</text>
+            <text class="co-v" x="8" y="306">active</text>
+          </g>
+
+          <!-- pins -->
+          <g class="pin" data-region="head"><circle class="pin-ring" cx="97" cy="42" r="5" /><circle class="pin-core" cx="97" cy="42" r="4" /></g>
+          <g class="pin" data-region="chest"><circle class="pin-ring" cx="118" cy="112" r="5" /><circle class="pin-core" cx="118" cy="112" r="4" /></g>
+          <g class="pin" data-region="waist"><circle class="pin-ring" cx="120" cy="176" r="5" /><circle class="pin-core" cx="120" cy="176" r="4" /></g>
+          <g class="pin" data-region="legs"><circle class="pin-ring" cx="101" cy="300" r="5" /><circle class="pin-core" cx="101" cy="300" r="4" /></g>
+
+          <!-- ============ hit regions (broad, invisible) ============ -->
+          <circle class="hit" data-region="head" cx="120" cy="44" r="30" role="button" tabindex="0" aria-label="Age 30, male" />
+          <ellipse class="hit" data-region="chest" cx="120" cy="115" rx="48" ry="36" role="button" tabindex="0" aria-label="Weight 171.5 pounds" />
+          <ellipse class="hit" data-region="waist" cx="120" cy="180" rx="42" ry="28" role="button" tabindex="0" aria-label="Body fat 15 percent" />
+          <rect class="hit" data-region="legs" x="86" y="212" width="68" height="192" rx="24" role="button" tabindex="0" aria-label="Activity level: active" />
+        </svg>
+        <div class="photo-ph">
+          <div class="cam">📷</div>
+          <div class="t1">Your progress photo goes here — same pins, anchored to your body.</div>
+          <div class="t2">one-time setup: drag each pin into place on your photo · retake monthly to see change · production feature</div>
+        </div>
+      </div>
+
+      <!-- editor cards (one per region; JS toggles) -->
+      <div class="ed" data-ed="chest">
+        <div class="ed-k">Editing · Weight &amp; goal</div>
+        <div class="frow">
+          <div class="fld"><div class="lbl">Weight (lb)</div><input class="inp" value="171.5" inputmode="decimal" /></div>
+          <div class="fld"><div class="lbl">Goal (lb)</div><input class="inp" value="160" inputmode="decimal" /></div>
+          <div class="fld"><div class="lbl">By</div><input class="inp" value="2027-01-01" /></div>
+        </div>
+        <div class="hint">weigh-ins keep tracking separately — this is the profile’s current number</div>
+        <button class="save press">Save profile</button>
+      </div>
+      <div class="ed" data-ed="head" hidden>
+        <div class="ed-k">Editing · Age &amp; sex</div>
+        <div class="frow">
+          <div class="fld"><div class="lbl">Age</div><input class="inp" value="30" inputmode="numeric" /></div>
+          <div class="fld"><div class="lbl">Sex</div><input class="inp" value="male ▾" /></div>
+        </div>
+        <button class="save press">Save profile</button>
+      </div>
+      <div class="ed" data-ed="waist" hidden>
+        <div class="ed-k">Editing · Body fat &amp; height</div>
+        <div class="frow">
+          <div class="fld"><div class="lbl">Body fat (%)</div><input class="inp" value="15.0" inputmode="decimal" /></div>
+          <div class="fld"><div class="lbl">Height (cm)</div><input class="inp" value="175" inputmode="numeric" /></div>
+        </div>
+        <button class="save press">Save profile</button>
+      </div>
+      <div class="ed" data-ed="legs" hidden>
+        <div class="ed-k">Editing · Activity</div>
+        <div class="frow">
+          <div class="fld"><div class="lbl">Activity level</div><input class="inp" value="active ▾" /></div>
+        </div>
+        <div class="hint">soccer tue/thu — kal reads this for coaching tone, not math</div>
+        <button class="save press">Save profile</button>
+      </div>
+
+      <!-- ============ MEALS ============ -->
+      <hr class="rule" />
+      <div class="sec-head">
+        <span class="kicker">Meal plan</span>
+        <span class="kicker">5 meals</span>
+      </div>
+
+      <div class="totals">
+        <span>PLAN <span class="strong" id="plan-total">3603</span> KCAL</span>
+        <span class="t-macros"><span class="mac-p">P 216</span><span class="mac-c">C 421</span><span class="mac-f">F 125</span></span>
+      </div>
+
+      <div class="recalc" id="recalc">
+        <div>
+          <div class="rc-k">Targets will recalculate on save</div>
+          <div class="rc-v">3603 → <span class="strong" id="rc-new">3663</span> kcal</div>
+          <div class="rc-why">targets always derive from the plan — never hand-picked</div>
+        </div>
+      </div>
+
+      <!-- Breakfast — EDITING -->
+      <div class="meal editing">
+        <div class="meal-head">
+          <span><span class="m-nm">Breakfast</span><span class="m-hint">morning</span></span>
+          <span class="m-end"><span class="m-kc" id="bk-total">815 kcal</span><button class="m-edit">Editing</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-protein-bg)">🥚</div>
+          <div class="f-mid"><div class="f-nm">Large Eggs</div><div class="f-meta">70 kcal each · <span class="f-line">280</span> kcal</div></div>
+          <span class="stepper" data-unit="egg" data-kcal="70" data-qty="4"><button class="press">−</button><span class="q">4 eggs</span><button class="press">+</button></span>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-carb-bg)">🍞</div>
+          <div class="f-mid"><div class="f-nm">Whole wheat bread</div><div class="f-meta">60 kcal / slice · <span class="f-line">240</span> kcal</div></div>
+          <span class="stepper" data-unit="slice" data-kcal="60" data-qty="4"><button class="press">−</button><span class="q">4 slices</span><button class="press">+</button></span>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🥜</div>
+          <div class="f-mid"><div class="f-nm">Peanut butter <span style="font-family:var(--font-mono);font-size:8px;color:var(--faint)">SKIPPY</span></div><div class="f-meta">95 kcal / tbsp · <span class="f-line">190</span> kcal</div></div>
+          <span class="stepper" data-unit="tbsp" data-kcal="95" data-qty="2"><button class="press">−</button><span class="q">2 tbsp</span><button class="press">+</button></span>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fruit-bg)">🍌</div>
+          <div class="f-mid"><div class="f-nm">Banana, medium</div><div class="f-meta">105 kcal · <span class="f-line">105</span> kcal</div></div>
+          <span class="stepper" data-unit="banana" data-kcal="105" data-qty="1"><button class="press">−</button><span class="q">1 banana</span><button class="press">+</button></span>
+          <button class="f-x press">×</button>
+        </div>
+        <button class="add-row press">+ add item from groceries</button>
+        <div class="m-actions">
+          <button class="save press">Save meal</button>
+          <button class="cancel press">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Lunch — read -->
+      <div class="meal">
+        <div class="meal-head">
+          <span><span class="m-nm">Lunch</span><span class="m-hint">midday</span></span>
+          <span class="m-end"><span class="m-kc">1058 kcal</span><button class="m-edit press">Edit</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-protein-bg)">🍗</div>
+          <div class="f-mid"><div class="f-nm">Chicken breast, cooked</div><div class="f-meta">165 kcal / 100 g</div></div>
+          <span class="f-amt">170 g · 281</span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-carb-bg)">🍚</div>
+          <div class="f-mid"><div class="f-nm">White rice, cooked</div><div class="f-meta">130 kcal / 100 g</div></div>
+          <span class="f-amt">400 g · 520</span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🫙</div>
+          <div class="f-mid"><div class="f-nm">Canola oil</div><div class="f-meta">120 kcal / tbsp</div></div>
+          <span class="f-amt">1 tbsp · 120</span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-veg-bg)">🥦</div>
+          <div class="f-mid"><div class="f-nm">Frozen mixed vegetables</div><div class="f-meta">55 kcal / 100 g</div></div>
+          <span class="f-amt">250 g · 137</span>
+        </div>
+      </div>
+
+      <!-- Snack — read -->
+      <div class="meal">
+        <div class="meal-head">
+          <span><span class="m-nm">Snack</span><span class="m-hint">afternoon</span></span>
+          <span class="m-end"><span class="m-kc">415 kcal</span><button class="m-edit press">Edit</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-carb-bg)">🍞</div>
+          <div class="f-mid"><div class="f-nm">Whole wheat bread</div><div class="f-meta">60 kcal / slice</div></div>
+          <span class="f-amt">2 slices · 120</span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🥜</div>
+          <div class="f-mid"><div class="f-nm">Peanut butter</div><div class="f-meta">95 kcal / tbsp</div></div>
+          <span class="f-amt">2 tbsp · 190</span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fruit-bg)">🍌</div>
+          <div class="f-mid"><div class="f-nm">Banana, medium</div><div class="f-meta">105 kcal</div></div>
+          <span class="f-amt">1 · 105</span>
+        </div>
+      </div>
+
+      <!-- Dinner — read -->
+      <div class="meal">
+        <div class="meal-head">
+          <span><span class="m-nm">Dinner</span><span class="m-hint">post-soccer ~11pm</span></span>
+          <span class="m-end"><span class="m-kc">1058 kcal</span><button class="m-edit press">Edit</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-protein-bg)">🍗</div>
+          <div class="f-mid"><div class="f-nm">Chicken breast, cooked</div><div class="f-meta">165 kcal / 100 g</div></div>
+          <span class="f-amt">170 g · 281</span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-carb-bg)">🍚</div>
+          <div class="f-mid"><div class="f-nm">White rice, cooked</div><div class="f-meta">130 kcal / 100 g</div></div>
+          <span class="f-amt">400 g · 520</span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🫙</div>
+          <div class="f-mid"><div class="f-nm">Canola oil</div><div class="f-meta">120 kcal / tbsp</div></div>
+          <span class="f-amt">1 tbsp · 120</span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-veg-bg)">🥦</div>
+          <div class="f-mid"><div class="f-nm">Frozen mixed vegetables</div><div class="f-meta">55 kcal / 100 g</div></div>
+          <span class="f-amt">250 g · 137</span>
+        </div>
+      </div>
+
+      <!-- Peanuts — read -->
+      <div class="meal">
+        <div class="meal-head">
+          <span><span class="m-nm">Peanuts (graze)</span><span class="m-hint">throughout day</span></span>
+          <span class="m-end"><span class="m-kc">257 kcal</span><button class="m-edit press">Edit</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🥜</div>
+          <div class="f-mid"><div class="f-nm">Dry-roasted peanuts <span style="font-family:var(--font-mono);font-size:8px;color:var(--faint)">GREAT VALUE</span></div><div class="f-meta">643 kcal / 100 g</div></div>
+          <span class="f-amt">40 g · 257</span>
+        </div>
+      </div>
+
+      <button class="add-row press" style="margin-top:16px">+ add meal</button>
+
+      <!-- ============ MEMORY ============ -->
+      <hr class="rule" />
+      <div class="sec-head">
+        <span class="kicker">Memory · <span id="fact-count">4</span> facts</span>
+      </div>
+
+      <button class="fact-add press">+ tell kal something</button>
+
+      <div id="facts">
+        <div class="fact">
+          <span class="f-dot" style="background:#5a7d3c"></span>
+          <div class="f-body">
+            <div class="f-tx">Plays soccer Tue/Thu nights — dinner lands around 11pm after games.</div>
+            <div class="f-meta">from chat · jun 30</div>
+          </div>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="fact">
+          <span class="f-dot" style="background:#8a6a1f"></span>
+          <div class="f-body">
+            <div class="f-tx">Uses a food scale; prefers amounts in grams, cooked weight.</div>
+            <div class="f-meta">from chat · jul 02</div>
+          </div>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="fact">
+          <span class="f-dot" style="background:#8a6a1f"></span>
+          <div class="f-body">
+            <div class="f-tx">Peanuts are grazed through the day, not a sit-down meal.</div>
+            <div class="f-meta">from chat · jul 05</div>
+          </div>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="fact">
+          <span class="f-dot" style="background:#9f2f2d"></span>
+          <div class="f-body">
+            <div class="f-tx">Prefers whole wheat bread toasted.</div>
+            <div class="f-meta">you added · jul 08</div>
+          </div>
+          <button class="f-x press">×</button>
+        </div>
+      </div>
+
+      <button class="clear-all">clear all memory</button>
+
+    </div>
+
+    <div class="snack" id="snack">
+      <span id="snack-msg">memory fact deleted</span>
+      <button id="undo">UNDO</button>
+      <span class="timer"></span>
+    </div>
+  </div>
+  </div>
+
+  <div class="impl">
+    <span class="k">Implementation theory</span><br/>
+    figure: inline SVG (~3 KB), 4 hit regions + pins, zero deps · photo mode: user photo + normalized-% pin coords, one-time drag calibration ·
+    editors: PATCH /api/profile · meals: form-swap editing → PATCH meal_items, server re-derives targets (computeTargets over live plan) ·
+    memory: GET/POST/DELETE /api/memory-facts, delete = immediate + undo snackbar
+  </div>
+
+<script>
+  // ---- atlas region selection ----
+  function selectRegion(r) {
+    document.querySelectorAll(".hit").forEach(h => h.classList.toggle("active", h.dataset.region === r));
+    document.querySelectorAll(".pin").forEach(p => p.classList.toggle("active", p.dataset.region === r));
+    document.querySelectorAll(".co").forEach(c => c.classList.toggle("active", c.dataset.region === r));
+    document.querySelectorAll(".ed").forEach(e => e.hidden = e.dataset.ed !== r);
+  }
+  document.querySelectorAll(".hit, .co").forEach(el => {
+    el.addEventListener("click", () => selectRegion(el.dataset.region));
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectRegion(el.dataset.region); } });
+  });
+  selectRegion("chest");
+
+  // figure / photo mode toggle
+  const modeBtns = document.querySelectorAll("#mode button");
+  modeBtns.forEach((b, i) => b.addEventListener("click", () => {
+    modeBtns.forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    document.querySelector(".atlas").classList.toggle("photo-mode", i === 1);
+  }));
+
+  // ---- steppers + live totals + recalc banner ----
+  const BASE_PLAN = 3603, BASE_P = 216;
+  function pluralize(n, unit) {
+    const irregular = { banana: "bananas", tbsp: "tbsp" };
+    if (n === 1) return `1 ${unit}`;
+    return `${n} ${irregular[unit] || unit + "s"}`;
+  }
+  function refreshTotals() {
+    let bk = 0;
+    document.querySelectorAll(".stepper").forEach(s => { bk += (+s.dataset.qty) * (+s.dataset.kcal); });
+    const plan = BASE_PLAN - 815 + bk;
+    document.getElementById("bk-total").textContent = bk + " kcal";
+    document.getElementById("plan-total").textContent = plan;
+    document.querySelector(".t-macros").style.opacity = plan !== BASE_PLAN ? 0.35 : 1;
+    const banner = document.getElementById("recalc");
+    if (plan !== BASE_PLAN) {
+      document.getElementById("rc-new").textContent = plan;
+      banner.classList.add("show");
+    } else {
+      banner.classList.remove("show");
+    }
+  }
+  document.querySelectorAll(".stepper").forEach(s => {
+    const [minus, plus] = s.querySelectorAll("button");
+    const q = s.querySelector(".q");
+    function set(n) {
+      if (n < 0) n = 0;
+      s.dataset.qty = n;
+      q.textContent = pluralize(n, s.dataset.unit);
+      s.closest(".food").querySelector(".f-line").textContent = n * (+s.dataset.kcal);
+      refreshTotals();
+    }
+    minus.addEventListener("click", () => set(+s.dataset.qty - 1));
+    plus.addEventListener("click", () => set(+s.dataset.qty + 1));
+  });
+
+  // ---- remove item from the editing meal ----
+  document.querySelectorAll(".meal.editing .food .f-x").forEach(x => {
+    x.addEventListener("click", () => { x.closest(".food").remove(); refreshTotals(); });
+  });
+
+  // ---- memory delete + undo snackbar ----
+  const snack = document.getElementById("snack");
+  let lastGone = null, snackTimer = null;
+  document.querySelectorAll(".fact .f-x").forEach(x => {
+    x.addEventListener("click", () => {
+      lastGone = x.closest(".fact");
+      lastGone.classList.add("gone");
+      updateCount();
+      snack.classList.remove("show");
+      void snack.offsetWidth;
+      snack.classList.add("show");
+      clearTimeout(snackTimer);
+      snackTimer = setTimeout(() => snack.classList.remove("show"), 5000);
+    });
+  });
+  document.getElementById("undo").addEventListener("click", () => {
+    if (lastGone) { lastGone.classList.remove("gone"); updateCount(); }
+    snack.classList.remove("show");
+    clearTimeout(snackTimer);
+  });
+  function updateCount() {
+    document.getElementById("fact-count").textContent = document.querySelectorAll(".fact:not(.gone)").length;
+  }
+</script>
+</body>
+</html>

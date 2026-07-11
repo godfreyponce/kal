@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Kal · Plan — Theory 2: Figure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+} }
+</script>
+<style>
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+    --canvas: #f7f6f3;
+    --surface: #ffffff;
+    --surface-2: #f0efeb;
+    --ink: #1f2421;
+    --ink-soft: #2f3437;
+    --muted: #787774;
+    --faint: #9b9a96;
+    --border: #e6e4df;
+    --hairline: #e8e5de;
+    --accent: #d97757;
+
+    --protein: #9f2f2d;
+    --carbs: #8a6a1f;
+    --fat: #1f6c9f;
+    --green-bg: #e6efe5;
+    --green-tx: #346538;
+
+    --c-protein-bg: #f4e3dd;
+    --c-carb-bg:    #f3ead4;
+    --c-fat-bg:     #dfecf4;
+    --c-dairy-bg:   #dfeeec;
+    --c-fruit-bg:   #efe1ec;
+    --c-veg-bg:     #e4eedd;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #e9e8e3;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 20px 80px;
+  }
+
+  .lede { max-width: 760px; margin: 0 auto 32px; }
+  .lede .theory-tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .lede h1 { font-family: var(--font-serif); font-weight: 500; font-size: 30px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lede p { color: var(--muted); font-size: 14.5px; margin: 0 0 8px; max-width: 70ch; }
+  .lede code { font-family: var(--font-mono); font-size: 12.5px; background: #dedcd6; padding: 1px 6px; border-radius: 5px; }
+  .lede a { color: var(--accent); }
+
+  .stage { display: flex; justify-content: center; }
+  .phone {
+    position: relative;
+    width: 440px; max-width: 100%;
+    background: var(--canvas);
+    border-radius: 26px;
+    border: 1px solid #dad8d2;
+    box-shadow: 0 18px 50px -22px rgba(40,38,34,0.45);
+    overflow: hidden;
+  }
+  .scr { padding: 24px 20px 40px; }
+
+  .ghead { display: flex; justify-content: space-between; align-items: flex-start; }
+  .ghead .home { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted); text-decoration: none; }
+  .gtitle { font-family: var(--font-serif); font-weight: 500; font-size: 27px; letter-spacing: -0.02em; line-height: 1.05; }
+  .gsub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 4px; }
+  .kicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+  .sec-head { display: flex; justify-content: space-between; align-items: baseline; margin: 26px 0 4px; }
+
+  button { font-family: inherit; }
+  .press { transition: transform 120ms ease-out, background 150ms ease-out; }
+  .press:active { transform: scale(0.97); }
+
+  /* ============================= PROFILE / 3D FIGURE ============================= */
+  .fig3d {
+    position: relative;
+    height: 400px;
+    margin-top: 4px;
+    touch-action: pan-y; /* vertical swipe scrolls the page; horizontal drag rotates */
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .fig3d canvas { display: block; }
+
+  /* height dimension rule (page furniture on the canvas edge) */
+  .dim {
+    position: absolute; right: 12px; top: 26px; bottom: 40px; width: 1px;
+    background: #b7b3a8; pointer-events: none;
+  }
+  .dim::before, .dim::after {
+    content: ""; position: absolute; left: -5px; width: 11px; height: 1px; background: #b7b3a8;
+  }
+  .dim::before { top: 0; } .dim::after { bottom: 0; }
+  .dim-label {
+    position: absolute; right: -4px; top: 50%;
+    transform: rotate(-90deg) translateX(50%); transform-origin: right center;
+    font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.12em; color: var(--faint);
+    white-space: nowrap; pointer-events: none;
+  }
+
+  /* fixed callout chips (left rail) + projected leader lines to the body pins */
+  .chip {
+    position: absolute; left: 10px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0;
+    background: rgba(253,252,250,0.92);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 4px 9px 3px; cursor: pointer;
+    transition: opacity 250ms, border-color 150ms;
+    box-shadow: 0 1px 2px rgba(60,50,40,0.08);
+  }
+  .chip .c-k { font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+  .chip .c-v { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .chip.active { border-color: var(--accent); }
+  .chip.active .c-k, .chip.active .c-v { color: var(--accent); }
+  .chip.away { opacity: 0.35; }
+  .leaders { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity 300ms; }
+  .leaders.live { opacity: 1; }
+  .leaders line { stroke: #c9c5bb; stroke-width: 1; stroke-dasharray: 1 3; transition: opacity 250ms; }
+  .leaders circle { fill: #fdfcfa; stroke: #b7b3a8; stroke-width: 1.4; transition: opacity 250ms; }
+  .leaders circle.on { stroke: var(--accent); }
+
+  .fallback {
+    display: none; height: 100%; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+  }
+
+  /* editor card under the figure */
+  .ed {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 13px 14px; margin-top: 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 1px 2px rgba(60,50,40,0.06);
+  }
+  .ed .ed-k { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); margin-bottom: 9px; }
+  .ed .frow { display: flex; gap: 8px; }
+  .ed .fld { flex: 1; }
+  .ed .lbl { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); margin-bottom: 3px; }
+  .ed .inp {
+    font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums;
+    color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 7px;
+    padding: 7px 9px; width: 100%;
+  }
+  .ed .inp:focus { outline: 2px solid rgba(217,119,87,0.4); outline-offset: 1px; border-color: var(--accent); }
+  .ed .hint { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); margin-top: 8px; line-height: 1.6; }
+  .ed .save {
+    font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+    background: var(--ink); color: #fff; border: none; border-radius: 9px;
+    padding: 9px 16px; cursor: pointer; margin-top: 10px;
+  }
+  .ed[hidden] { display: none; }
+
+  /* your-model affordance */
+  .mkme {
+    position: absolute; right: 10px; bottom: 10px;
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--muted); background: rgba(253,252,250,0.92);
+    border: 1px solid var(--border); border-radius: 9999px; padding: 5px 10px; cursor: pointer;
+  }
+  .mkme:hover { color: var(--accent); border-color: var(--accent); }
+  .mkme-note { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); line-height: 1.7; padding: 8px 2px 0; }
+  .mkme-note[hidden] { display: none; }
+
+  /* weight trend chart */
+  .trend { margin-top: 12px; }
+  .tr-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .tr-k { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); }
+  .tr-readout { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .trend svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+  .tr-grid { stroke: var(--hairline); stroke-width: 1; }
+  .tr-goal { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.7; }
+  .tr-goal-lab { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; fill: var(--accent); }
+  .tr-lab { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; fill: var(--faint); }
+  .tr-line { fill: none; stroke: #2f3437; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .tr-x { stroke: #b7b3a8; stroke-width: 1; stroke-dasharray: 2 3; }
+  .tr-log { margin-top: 8px; border-top: 1px solid var(--hairline); }
+  .tr-log > div { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); padding: 4px 0; border-bottom: 1px solid var(--hairline); font-variant-numeric: tabular-nums; }
+  .tr-log em { font-style: normal; color: var(--faint); margin-left: 6px; }
+
+  /* meal-save scope (just today vs every day) */
+  .ask-chat {
+    width: 100%; text-align: center; background: none; border: none;
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--faint); padding: 7px 0 0; cursor: pointer;
+  }
+  .ask-chat:hover { color: var(--accent); }
+  .scope { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .scope-lbl { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); }
+  .scope-seg { flex: 1; display: flex; gap: 3px; background: #eceae3; border-radius: 9px; padding: 3px; }
+  .scope-seg button {
+    flex: 1; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+    border: none; background: transparent; color: var(--muted); padding: 6px; border-radius: 7px; cursor: pointer;
+  }
+  .scope-seg button.on { background: #fdfcfa; color: var(--ink); box-shadow: 0 1px 2px rgba(60,50,40,0.10); }
+  .scope-hint { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); margin-top: 7px; line-height: 1.6; }
+
+  /* ============================= MEALS ============================= */
+  .rule { height: 1px; background: var(--hairline); border: none; margin: 26px 0 0; }
+
+  .totals {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.03em; color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px solid var(--hairline); border-radius: 9px;
+    padding: 7px 11px; margin: 12px 0 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .totals .t-macros span { margin-left: 7px; }
+  .totals .strong { font-weight: 500; color: var(--ink); }
+  .recalc .strong { font-weight: 600; }
+  .mac-p { color: var(--protein); } .mac-c { color: var(--carbs); } .mac-f { color: var(--fat); }
+
+  .recalc {
+    display: none; align-items: flex-start; gap: 9px;
+    border-left: 2px solid var(--accent);
+    background: var(--surface); border-radius: 0 10px 10px 0;
+    padding: 9px 12px; margin: 10px 0 2px;
+    animation: slideDown 200ms ease-out;
+  }
+  .recalc.show { display: flex; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .recalc .rc-k { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+  .recalc .rc-v { font-family: var(--font-serif); font-size: 14.5px; color: var(--ink); line-height: 1.35; font-variant-numeric: tabular-nums; }
+  .recalc .rc-why { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); margin-top: 1px; }
+
+  .meal { margin-top: 18px; }
+  .meal-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #dcd8ce; padding-bottom: 6px; }
+  .meal-head .m-nm { font-family: var(--font-serif); font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }
+  .meal-head .m-hint { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint); margin-left: 8px; }
+  .meal-head .m-end { display: flex; align-items: baseline; gap: 10px; }
+  .meal-head .m-kc { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .meal-head .m-edit {
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; cursor: pointer;
+  }
+  .meal.editing .meal-head .m-edit { color: var(--accent); border-color: var(--accent); }
+
+  .food { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+  .food + .food { border-top: 1px solid var(--hairline); }
+  .thumb {
+    width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+  }
+  .food .f-mid { flex: 1; min-width: 0; }
+  .food .f-nm { font-size: 14.5px; color: var(--ink); line-height: 1.3; }
+  .food .f-meta { font-family: var(--font-mono); font-size: 10px; color: var(--faint); margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .food .f-amt { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); flex-shrink: 0; font-variant-numeric: tabular-nums; text-align: right; }
+  .food .f-amt .kc { display: block; color: var(--faint); font-size: 9.5px; margin-top: 1px; }
+
+  .stepper { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .stepper button {
+    width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+    background: #fff; font-family: var(--font-mono); font-size: 14px; color: var(--ink-soft);
+    cursor: pointer; line-height: 1; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .stepper button:active { background: #ebe8e0; box-shadow: inset 0 1px 2px rgba(60,50,40,0.12); }
+  .stepper .q { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); min-width: 58px; text-align: center; font-variant-numeric: tabular-nums; }
+  .food .f-x {
+    font-family: var(--font-mono); font-size: 12px; color: var(--faint);
+    background: none; border: 1px solid var(--border); border-radius: 7px;
+    width: 26px; height: 26px; cursor: pointer; flex-shrink: 0; margin-left: 2px;
+  }
+
+  .add-row {
+    width: 100%; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--muted); background: none; border: 1px dashed #cdcbc4; border-radius: 9px;
+    padding: 9px; cursor: pointer; margin-top: 10px;
+  }
+  .add-row:hover { color: var(--accent); border-color: var(--accent); }
+
+  .m-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .m-actions .save {
+    flex: 1.6; font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+    background: var(--ink); color: #fff; border: none; border-radius: 9px; padding: 10px; cursor: pointer;
+  }
+  .m-actions .cancel {
+    flex: 1; font-family: var(--font-sans); font-size: 13px; background: transparent;
+    color: var(--muted); border: 1px solid var(--border); border-radius: 9px; cursor: pointer;
+  }
+
+  /* ============================= MEMORY ============================= */
+  .fact { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--hairline); }
+  .fact .f-dot { width: 6px; height: 6px; border-radius: 9999px; margin-top: 8px; flex-shrink: 0; }
+  .fact .f-body { flex: 1; }
+  .fact .f-tx { font-family: var(--font-serif); font-size: 15px; color: var(--ink); line-height: 1.45; }
+  .fact .f-meta { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 3px; }
+  .fact .f-x {
+    font-family: var(--font-mono); font-size: 13px; color: var(--faint);
+    background: none; border: none; cursor: pointer; padding: 2px 6px; margin-top: 2px;
+  }
+  .fact .f-x:hover { color: var(--protein); }
+  .fact.gone { display: none; }
+
+  .fact-add {
+    width: 100%; text-align: left;
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); background: none; border: 1px dashed #cdcbc4; border-radius: 9px;
+    padding: 10px 12px; cursor: pointer; margin: 12px 0 2px;
+  }
+  .fact-add:hover { color: var(--accent); border-color: var(--accent); }
+  .clear-all { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); background: none; border: none; cursor: pointer; margin-top: 14px; }
+
+  .snack {
+    position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%) translateY(240%);
+    background: var(--ink); color: #f2f0eb; border-radius: 10px;
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em;
+    padding: 10px 14px; display: flex; align-items: center; gap: 14px;
+    transition: transform 220ms cubic-bezier(0.3, 0.7, 0.3, 1);
+    overflow: hidden;
+  }
+  .snack.show { transform: translateX(-50%) translateY(0); }
+  .snack button { background: none; border: none; color: var(--accent); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; cursor: pointer; }
+  .snack .timer { position: absolute; left: 0; bottom: 0; height: 1.5px; width: 100%; background: var(--accent); transform-origin: left; }
+  .snack.show .timer { animation: deplete 5s linear forwards; }
+  @keyframes deplete { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+  .impl { max-width: 440px; margin: 26px auto 0; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); line-height: 1.9; }
+  .impl .k { color: var(--faint); letter-spacing: 0.08em; text-transform: uppercase; font-size: 9px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="lede">
+    <div class="theory-tag">Theory 2 of 2 · compare with <a href="plan-atlas.html">Atlas →</a></div>
+    <h1>Plan — “Figure”</h1>
+    <p>
+      The profile as a <strong>living 3D clay figure</strong> — this one is real: drag to rotate it,
+      tap a floating stat chip (or the body itself) and the editor below switches to that region.
+      Built from geometric primitives in code (no model file), matte clay under soft studio light,
+      slow idle turn. three.js from CDN, ~92&nbsp;KB gzip, loaded only on this screen.
+    </p>
+    <p>Meals follow your Variant-B pick (form-swap editing, now with food photos); Memory follows Variant A.
+      Steppers and memory deletion are live here too.</p>
+    <p><strong>New this round:</strong> separator dots gone; the weight editor shows a live
+      <strong>trend chart</strong> (hover it) with the goal as a line, no deadline; meal saves choose
+      <strong>just today</strong> (the ⇄ override chat already uses) or <strong>every day</strong>;
+      a “not in groceries? ask kal” hand-off; and <strong>“use my photos”</strong> marks where your
+      generated 3D model plugs in — tap it for the how.</p>
+  </div>
+
+  <div class="stage">
+  <div class="phone">
+    <div class="scr">
+
+      <div class="ghead">
+        <div>
+          <div class="gtitle">Plan</div>
+          <div class="gsub">profile&ensp;meals&ensp;memory</div>
+        </div>
+        <a class="home" href="#">‹ Today</a>
+      </div>
+
+      <!-- ============ PROFILE ============ -->
+      <div class="sec-head">
+        <span class="kicker">Profile</span>
+        <span class="kicker">drag to rotate, tap to edit</span>
+      </div>
+
+      <div class="fig3d" id="fig3d">
+        <div class="fallback" id="fallback">3d unavailable — needs webgl</div>
+        <svg class="leaders" id="leaders">
+          <line data-region="head" /><line data-region="chest" /><line data-region="waist" /><line data-region="legs" />
+          <circle data-region="head" r="3.5" /><circle data-region="chest" r="3.5" /><circle data-region="waist" r="3.5" /><circle data-region="legs" r="3.5" />
+        </svg>
+        <div class="dim"><span class="dim-label">HEIGHT 175 CM</span></div>
+        <div class="chip" data-region="head" style="top:34px"><span class="c-k">AGE, SEX</span><span class="c-v">30 M</span></div>
+        <div class="chip" data-region="chest" style="top:116px"><span class="c-k">WEIGHT</span><span class="c-v">171.5 lb</span></div>
+        <div class="chip" data-region="waist" style="top:198px"><span class="c-k">BODY FAT</span><span class="c-v">15 %</span></div>
+        <div class="chip" data-region="legs" style="top:280px"><span class="c-k">ACTIVITY</span><span class="c-v">active</span></div>
+        <button class="mkme" id="mkme">use my photos →</button>
+      </div>
+      <div class="mkme-note" id="mkme-note" hidden>send a few photos (front-facing, arms slightly out) — an image-to-3d pass turns them into your model. stored privately on blob storage, never in the public repo. the mannequin stands in until then.</div>
+
+      <!-- editor cards (one per region; JS toggles) -->
+      <div class="ed" data-ed="chest">
+        <div class="ed-k">Editing: weight &amp; goal</div>
+        <div class="frow">
+          <div class="fld"><div class="lbl">Weight (lb)</div><input class="inp" value="171.5" inputmode="decimal" /></div>
+          <div class="fld"><div class="lbl">Goal (lb)</div><input class="inp" value="160" inputmode="decimal" /></div>
+        </div>
+        <div class="trend">
+          <div class="tr-head"><span class="tr-k">Trend</span><span class="tr-readout" id="tr-readout">JUL 11&ensp;171.5 LB</span></div>
+          <svg id="tr-svg" viewBox="0 0 340 132" role="img" aria-label="Weight over the last seven weeks, 174.0 down to 171.5 pounds, goal 160">
+            <line class="tr-grid" x1="10" y1="45.3" x2="330" y2="45.3" /><text class="tr-lab" x="330" y="42" text-anchor="end">170</text>
+            <line class="tr-grid" x1="10" y1="75.6" x2="330" y2="75.6" /><text class="tr-lab" x="330" y="72.6" text-anchor="end">165</text>
+            <line class="tr-goal" x1="10" y1="105.9" x2="278" y2="105.9" /><text class="tr-goal-lab" x="330" y="108.9" text-anchor="end">GOAL 160</text>
+            <line class="tr-x" id="tr-cross" x1="330" y1="12" x2="330" y2="112" opacity="0" />
+            <path class="tr-line" d="M10,21.1 L63.3,25.9 L116.7,28.4 L170,32.6 L223.3,33.8 L276.7,38.1 L330,36.2" />
+            <g fill="#2f3437">
+              <circle cx="10" cy="21.1" r="2.3"/><circle cx="63.3" cy="25.9" r="2.3"/><circle cx="116.7" cy="28.4" r="2.3"/><circle cx="170" cy="32.6" r="2.3"/><circle cx="223.3" cy="33.8" r="2.3"/><circle cx="276.7" cy="38.1" r="2.3"/>
+            </g>
+            <circle cx="330" cy="36.2" r="5.5" fill="#fff"/><circle cx="330" cy="36.2" r="4" fill="#d97757"/>
+            <text class="tr-lab" x="10" y="126">MAY 30</text>
+            <text class="tr-lab" x="330" y="126" text-anchor="end">JUL 11</text>
+          </svg>
+          <div class="tr-log">
+            <div><span>JUL 11</span><span>171.5 <em>+0.3</em></span></div>
+            <div><span>JUL 4</span><span>171.2 <em>−0.7</em></span></div>
+            <div><span>JUN 27</span><span>171.9 <em>−0.2</em></span></div>
+          </div>
+        </div>
+        <div class="hint">every weigh-in you log lands here — no deadline on the goal, the line just keeps heading there</div>
+        <button class="save press">Save profile</button>
+      </div>
+      <div class="ed" data-ed="head" hidden>
+        <div class="ed-k">Editing: age &amp; sex</div>
+        <div class="frow">
+          <div class="fld"><div class="lbl">Age</div><input class="inp" value="30" inputmode="numeric" /></div>
+          <div class="fld"><div class="lbl">Sex</div><input class="inp" value="male ▾" /></div>
+        </div>
+        <button class="save press">Save profile</button>
+      </div>
+      <div class="ed" data-ed="waist" hidden>
+        <div class="ed-k">Editing: body fat &amp; height</div>
+        <div class="frow">
+          <div class="fld"><div class="lbl">Body fat (%)</div><input class="inp" value="15.0" inputmode="decimal" /></div>
+          <div class="fld"><div class="lbl">Height (cm)</div><input class="inp" value="175" inputmode="numeric" /></div>
+        </div>
+        <button class="save press">Save profile</button>
+      </div>
+      <div class="ed" data-ed="legs" hidden>
+        <div class="ed-k">Editing: activity</div>
+        <div class="frow">
+          <div class="fld"><div class="lbl">Activity level</div><input class="inp" value="active ▾" /></div>
+        </div>
+        <div class="hint">soccer tue/thu — kal reads this for coaching tone, not math</div>
+        <button class="save press">Save profile</button>
+      </div>
+
+      <!-- ============ MEALS ============ -->
+      <hr class="rule" />
+      <div class="sec-head">
+        <span class="kicker">Meal plan</span>
+        <span class="kicker">5 meals</span>
+      </div>
+
+      <div class="totals">
+        <span>PLAN <span class="strong" id="plan-total">3603</span> KCAL</span>
+        <span class="t-macros"><span class="mac-p">P 216</span><span class="mac-c">C 421</span><span class="mac-f">F 125</span></span>
+      </div>
+
+      <div class="recalc" id="recalc">
+        <div>
+          <div class="rc-k">Targets will recalculate on save</div>
+          <div class="rc-v">3603 → <span class="strong" id="rc-new">3663</span> kcal</div>
+          <div class="rc-why">targets always derive from the plan — never hand-picked</div>
+        </div>
+      </div>
+
+      <!-- Breakfast — EDITING -->
+      <div class="meal editing">
+        <div class="meal-head">
+          <span><span class="m-nm">Breakfast</span><span class="m-hint">morning</span></span>
+          <span class="m-end"><span class="m-kc" id="bk-total">815 kcal</span><button class="m-edit">Editing</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-protein-bg)">🥚</div>
+          <div class="f-mid"><div class="f-nm">Large Eggs</div><div class="f-meta">70 each&ensp;<span class="f-line">280</span> total</div></div>
+          <span class="stepper" data-unit="egg" data-kcal="70" data-qty="4"><button class="press">−</button><span class="q">4 eggs</span><button class="press">+</button></span>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-carb-bg)">🍞</div>
+          <div class="f-mid"><div class="f-nm">Whole wheat bread</div><div class="f-meta">60 / slice&ensp;<span class="f-line">240</span> total</div></div>
+          <span class="stepper" data-unit="slice" data-kcal="60" data-qty="4"><button class="press">−</button><span class="q">4 slices</span><button class="press">+</button></span>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🥜</div>
+          <div class="f-mid"><div class="f-nm">Peanut butter <span style="font-family:var(--font-mono);font-size:8px;color:var(--faint)">SKIPPY</span></div><div class="f-meta">95 / tbsp&ensp;<span class="f-line">190</span> total</div></div>
+          <span class="stepper" data-unit="tbsp" data-kcal="95" data-qty="2"><button class="press">−</button><span class="q">2 tbsp</span><button class="press">+</button></span>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fruit-bg)">🍌</div>
+          <div class="f-mid"><div class="f-nm">Banana, medium</div><div class="f-meta">105 each&ensp;<span class="f-line">105</span> total</div></div>
+          <span class="stepper" data-unit="banana" data-kcal="105" data-qty="1"><button class="press">−</button><span class="q">1 banana</span><button class="press">+</button></span>
+          <button class="f-x press">×</button>
+        </div>
+        <button class="add-row press">+ add item from groceries</button>
+        <button class="ask-chat">not in groceries? ask kal in chat →</button>
+        <div class="scope">
+          <span class="scope-lbl">Apply</span>
+          <div class="scope-seg" id="scope">
+            <button class="on">Just today</button>
+            <button>Every day</button>
+          </div>
+        </div>
+        <div class="scope-hint" id="scope-hint">just today = a ⇄ override — template untouched, back to normal tomorrow</div>
+        <div class="m-actions">
+          <button class="save press" id="save-meal">Save for today</button>
+          <button class="cancel press">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Lunch — read -->
+      <div class="meal">
+        <div class="meal-head">
+          <span><span class="m-nm">Lunch</span><span class="m-hint">midday</span></span>
+          <span class="m-end"><span class="m-kc">1058 kcal</span><button class="m-edit press">Edit</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-protein-bg)">🍗</div>
+          <div class="f-mid"><div class="f-nm">Chicken breast, cooked</div><div class="f-meta">165 kcal / 100 g</div></div>
+          <span class="f-amt">170 g<span class="kc">281 kcal</span></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-carb-bg)">🍚</div>
+          <div class="f-mid"><div class="f-nm">White rice, cooked</div><div class="f-meta">130 kcal / 100 g</div></div>
+          <span class="f-amt">400 g<span class="kc">520 kcal</span></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🫙</div>
+          <div class="f-mid"><div class="f-nm">Canola oil</div><div class="f-meta">120 kcal / tbsp</div></div>
+          <span class="f-amt">1 tbsp<span class="kc">120 kcal</span></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-veg-bg)">🥦</div>
+          <div class="f-mid"><div class="f-nm">Frozen mixed vegetables</div><div class="f-meta">55 kcal / 100 g</div></div>
+          <span class="f-amt">250 g<span class="kc">137 kcal</span></span>
+        </div>
+      </div>
+
+      <!-- Snack — read -->
+      <div class="meal">
+        <div class="meal-head">
+          <span><span class="m-nm">Snack</span><span class="m-hint">afternoon</span></span>
+          <span class="m-end"><span class="m-kc">415 kcal</span><button class="m-edit press">Edit</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-carb-bg)">🍞</div>
+          <div class="f-mid"><div class="f-nm">Whole wheat bread</div><div class="f-meta">60 kcal / slice</div></div>
+          <span class="f-amt">2 slices<span class="kc">120 kcal</span></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🥜</div>
+          <div class="f-mid"><div class="f-nm">Peanut butter</div><div class="f-meta">95 kcal / tbsp</div></div>
+          <span class="f-amt">2 tbsp<span class="kc">190 kcal</span></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fruit-bg)">🍌</div>
+          <div class="f-mid"><div class="f-nm">Banana, medium</div><div class="f-meta">105 kcal</div></div>
+          <span class="f-amt">1 banana<span class="kc">105 kcal</span></span>
+        </div>
+      </div>
+
+      <!-- Dinner — read -->
+      <div class="meal">
+        <div class="meal-head">
+          <span><span class="m-nm">Dinner</span><span class="m-hint">post-soccer ~11pm</span></span>
+          <span class="m-end"><span class="m-kc">1058 kcal</span><button class="m-edit press">Edit</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-protein-bg)">🍗</div>
+          <div class="f-mid"><div class="f-nm">Chicken breast, cooked</div><div class="f-meta">165 kcal / 100 g</div></div>
+          <span class="f-amt">170 g<span class="kc">281 kcal</span></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-carb-bg)">🍚</div>
+          <div class="f-mid"><div class="f-nm">White rice, cooked</div><div class="f-meta">130 kcal / 100 g</div></div>
+          <span class="f-amt">400 g<span class="kc">520 kcal</span></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🫙</div>
+          <div class="f-mid"><div class="f-nm">Canola oil</div><div class="f-meta">120 kcal / tbsp</div></div>
+          <span class="f-amt">1 tbsp<span class="kc">120 kcal</span></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-veg-bg)">🥦</div>
+          <div class="f-mid"><div class="f-nm">Frozen mixed vegetables</div><div class="f-meta">55 kcal / 100 g</div></div>
+          <span class="f-amt">250 g<span class="kc">137 kcal</span></span>
+        </div>
+      </div>
+
+      <!-- Peanuts — read -->
+      <div class="meal">
+        <div class="meal-head">
+          <span><span class="m-nm">Peanuts (graze)</span><span class="m-hint">throughout day</span></span>
+          <span class="m-end"><span class="m-kc">257 kcal</span><button class="m-edit press">Edit</button></span>
+        </div>
+        <div class="food">
+          <div class="thumb" style="background:var(--c-fat-bg)">🥜</div>
+          <div class="f-mid"><div class="f-nm">Dry-roasted peanuts <span style="font-family:var(--font-mono);font-size:8px;color:var(--faint)">GREAT VALUE</span></div><div class="f-meta">643 kcal / 100 g</div></div>
+          <span class="f-amt">40 g<span class="kc">257 kcal</span></span>
+        </div>
+      </div>
+
+      <button class="add-row press" style="margin-top:16px">+ add meal</button>
+
+      <!-- ============ MEMORY ============ -->
+      <hr class="rule" />
+      <div class="sec-head">
+        <span class="kicker">Memory</span>
+        <span class="kicker"><span id="fact-count">4</span> facts</span>
+      </div>
+
+      <button class="fact-add press">+ tell kal something</button>
+
+      <div id="facts">
+        <div class="fact">
+          <span class="f-dot" style="background:#5a7d3c"></span>
+          <div class="f-body">
+            <div class="f-tx">Plays soccer Tue/Thu nights — dinner lands around 11pm after games.</div>
+            <div class="f-meta">from chat&ensp;jun 30</div>
+          </div>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="fact">
+          <span class="f-dot" style="background:#8a6a1f"></span>
+          <div class="f-body">
+            <div class="f-tx">Uses a food scale; prefers amounts in grams, cooked weight.</div>
+            <div class="f-meta">from chat&ensp;jul 02</div>
+          </div>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="fact">
+          <span class="f-dot" style="background:#8a6a1f"></span>
+          <div class="f-body">
+            <div class="f-tx">Peanuts are grazed through the day, not a sit-down meal.</div>
+            <div class="f-meta">from chat&ensp;jul 05</div>
+          </div>
+          <button class="f-x press">×</button>
+        </div>
+        <div class="fact">
+          <span class="f-dot" style="background:#9f2f2d"></span>
+          <div class="f-body">
+            <div class="f-tx">Prefers whole wheat bread toasted.</div>
+            <div class="f-meta">you added&ensp;jul 08</div>
+          </div>
+          <button class="f-x press">×</button>
+        </div>
+      </div>
+
+      <button class="clear-all">clear all memory</button>
+
+    </div>
+
+    <div class="snack" id="snack">
+      <span id="snack-msg">memory fact deleted</span>
+      <button id="undo">UNDO</button>
+      <span class="timer"></span>
+    </div>
+  </div>
+  </div>
+
+  <div class="impl">
+    <span class="k">Implementation theory</span><br/>
+    figure: three.js core + OrbitControls (~92 KB gzip, CDN/import-map here; next/dynamic ssr:false island in prod) ·
+    body = named capsule/sphere primitives (no model asset) · raycast click → region · chips = world→screen projection ·
+    your-model: photos → image-to-3D GLB, hosted on Vercel Blob (private, never committed), GLTFLoader swap-in, hotspots re-anchored ·
+    editors: PATCH /api/profile (goal_date column dropped/ignored) · weight trend: reads existing weigh_ins ·
+    meals: save scope "every day" → PATCH meal_items + target re-derive; "just today" → meal_overrides (same engine as chat ⇄) ·
+    add-item hand-off → chat add_grocery · memory: GET/POST/DELETE /api/memory-facts, delete = immediate + undo snackbar
+  </div>
+
+<script>
+  // ---- editor card switching (shared with 3D + chips) ----
+  function selectRegion(r) {
+    document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.region === r));
+    document.querySelectorAll(".leaders circle").forEach(d => d.classList.toggle("on", d.dataset.region === r));
+    document.querySelectorAll(".ed").forEach(e => e.hidden = e.dataset.ed !== r);
+    if (window.__tintRegion) window.__tintRegion(r);
+  }
+  document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => selectRegion(c.dataset.region)));
+  window.__selectRegion = selectRegion;
+  selectRegion("chest");
+
+  // ---- steppers + live totals + recalc banner ----
+  const BASE_PLAN = 3603;
+  function pluralize(n, unit) {
+    const irregular = { banana: "bananas", tbsp: "tbsp" };
+    if (n === 1) return `1 ${unit}`;
+    return `${n} ${irregular[unit] || unit + "s"}`;
+  }
+  function refreshTotals() {
+    let bk = 0;
+    document.querySelectorAll(".stepper").forEach(s => { bk += (+s.dataset.qty) * (+s.dataset.kcal); });
+    const plan = BASE_PLAN - 815 + bk;
+    document.getElementById("bk-total").textContent = bk + " kcal";
+    document.getElementById("plan-total").textContent = plan;
+    document.querySelector(".t-macros").style.opacity = plan !== BASE_PLAN ? 0.35 : 1;
+    const banner = document.getElementById("recalc");
+    if (plan !== BASE_PLAN) {
+      document.getElementById("rc-new").textContent = plan;
+      banner.classList.add("show");
+    } else {
+      banner.classList.remove("show");
+    }
+  }
+  document.querySelectorAll(".stepper").forEach(s => {
+    const [minus, plus] = s.querySelectorAll("button");
+    const q = s.querySelector(".q");
+    function set(n) {
+      if (n < 0) n = 0;
+      s.dataset.qty = n;
+      q.textContent = pluralize(n, s.dataset.unit);
+      s.closest(".food").querySelector(".f-line").textContent = n * (+s.dataset.kcal);
+      refreshTotals();
+    }
+    minus.addEventListener("click", () => set(+s.dataset.qty - 1));
+    plus.addEventListener("click", () => set(+s.dataset.qty + 1));
+  });
+
+  // ---- weight trend: crosshair + readout snap to nearest point ----
+  const TREND = [
+    ["MAY 30", 174.0, 10], ["JUN 6", 173.2, 63.3], ["JUN 13", 172.8, 116.7],
+    ["JUN 20", 172.1, 170], ["JUN 27", 171.9, 223.3], ["JUL 4", 171.2, 276.7], ["JUL 11", 171.5, 330],
+  ];
+  const trSvg = document.getElementById("tr-svg"), trOut = document.getElementById("tr-readout"), trCross = document.getElementById("tr-cross");
+  trSvg.addEventListener("pointermove", e => {
+    const r = trSvg.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 340;
+    let best = TREND[0];
+    for (const p of TREND) if (Math.abs(p[2] - x) < Math.abs(best[2] - x)) best = p;
+    trOut.textContent = `${best[0]} ${best[1].toFixed(1)} LB`;
+    trCross.setAttribute("x1", best[2]);
+    trCross.setAttribute("x2", best[2]);
+    trCross.setAttribute("opacity", 0.7);
+  });
+  trSvg.addEventListener("pointerleave", () => {
+    trOut.textContent = "JUL 11 171.5 LB";
+    trCross.setAttribute("opacity", 0);
+  });
+
+  // ---- meal-save scope toggle ----
+  const scopeBtns = document.querySelectorAll("#scope button");
+  scopeBtns.forEach((b, i) => b.addEventListener("click", () => {
+    scopeBtns.forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    document.getElementById("save-meal").textContent = i === 0 ? "Save for today" : "Save meal";
+    document.getElementById("scope-hint").textContent = i === 0
+      ? "just today = a ⇄ override — template untouched, back to normal tomorrow"
+      : "every day changes the template — targets re-derive from the new plan";
+  }));
+
+  // ---- your-model note toggle ----
+  document.getElementById("mkme").addEventListener("click", () => {
+    const n = document.getElementById("mkme-note");
+    n.hidden = !n.hidden;
+  });
+
+  // ---- remove item from the editing meal ----
+  document.querySelectorAll(".meal.editing .food .f-x").forEach(x => {
+    x.addEventListener("click", () => { x.closest(".food").remove(); refreshTotals(); });
+  });
+
+  // ---- memory delete + undo snackbar ----
+  const snack = document.getElementById("snack");
+  let lastGone = [], snackTimer = null;
+  function removeFacts(rows, msg) {
+    if (!rows.length) return;
+    lastGone = rows;
+    rows.forEach(r => r.classList.add("gone"));
+    updateCount();
+    document.getElementById("snack-msg").textContent = msg;
+    snack.classList.remove("show");
+    void snack.offsetWidth;
+    snack.classList.add("show");
+    clearTimeout(snackTimer);
+    snackTimer = setTimeout(() => snack.classList.remove("show"), 5000);
+  }
+  document.querySelectorAll(".fact .f-x").forEach(x => {
+    x.addEventListener("click", () => removeFacts([x.closest(".fact")], "memory fact deleted"));
+  });
+  document.querySelector(".clear-all").addEventListener("click", () => {
+    removeFacts([...document.querySelectorAll(".fact:not(.gone)")], "memory cleared");
+  });
+  document.getElementById("undo").addEventListener("click", () => {
+    lastGone.forEach(r => r.classList.remove("gone"));
+    updateCount();
+    snack.classList.remove("show");
+    clearTimeout(snackTimer);
+  });
+  function updateCount() {
+    document.getElementById("fact-count").textContent = document.querySelectorAll(".fact:not(.gone)").length;
+  }
+</script>
+
+<script type="module">
+  const wrap = document.getElementById("fig3d");
+  const fallback = document.getElementById("fallback");
+
+  // dynamic-import bootstrap: importmap unsupported / CDN offline → visible fallback, not a blank box
+  let THREE, OrbitControls;
+  try {
+    THREE = await import("three");
+    ({ OrbitControls } = await import("three/addons/controls/OrbitControls.js"));
+  } catch (e) {
+    fallback.style.display = "flex";
+  }
+  if (THREE) main();
+
+  function main() {
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  } catch (e) {
+    fallback.style.display = "flex";
+    return;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+  renderer.domElement.style.touchAction = "pan-y";
+  wrap.prepend(renderer.domElement);
+
+  const RAIL_SHIFT = -34; // render the scene shifted right, leaving room for the callout rail
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(33, wrap.clientWidth / wrap.clientHeight, 0.1, 20);
+  camera.position.set(0, 1.0, 3.25);
+  camera.setViewOffset(wrap.clientWidth, wrap.clientHeight, RAIL_SHIFT, 0, wrap.clientWidth, wrap.clientHeight);
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d2c4, 1.05));
+  const key = new THREE.DirectionalLight(0xfff4ea, 1.25);
+  key.position.set(2, 3, 2);
+  scene.add(key);
+
+  // ---- drawing-mannequin figure: capsule segments + visible ball joints ----
+  const CLAY = 0xd6cdbd, JOINT = 0xc6bcab, TINT = 0xd97757;
+  const group = new THREE.Group();
+  scene.add(group);
+  const meshesByRegion = { head: [], chest: [], waist: [], legs: [] };
+
+  function part(parent, geo, region, x, y, z, color = CLAY, sx = 1, sy = 1, sz = 1) {
+    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.88, metalness: 0 });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.scale.set(sx, sy, sz);
+    m.userData.region = region;
+    meshesByRegion[region].push(m);
+    parent.add(m);
+    return m;
+  }
+
+  // head + neck
+  part(group, new THREE.SphereGeometry(0.115, 24, 20), "head", 0, 1.575, 0, CLAY, 1, 1.08, 1);
+  part(group, new THREE.CylinderGeometry(0.042, 0.05, 0.1, 16), "head", 0, 1.45, 0);
+  // torso (shoulders wider, flattened front-back)
+  part(group, new THREE.CapsuleGeometry(0.15, 0.3, 6, 20), "chest", 0, 1.17, 0, CLAY, 1.18, 1, 0.74);
+  // waist ball + pelvis block
+  part(group, new THREE.SphereGeometry(0.1, 18, 14), "waist", 0, 0.92, 0, JOINT, 1.05, 0.85, 0.9);
+  part(group, new THREE.CapsuleGeometry(0.13, 0.1, 6, 18), "waist", 0, 0.8, 0, CLAY, 1.2, 0.8, 0.85);
+  // arms: pivot group at the shoulder so every segment stays connected
+  for (const s of [-1, 1]) {
+    part(group, new THREE.SphereGeometry(0.055, 16, 12), "chest", s * 0.21, 1.395, 0, JOINT);
+    const arm = new THREE.Group();
+    arm.position.set(s * 0.24, 1.39, 0);
+    arm.rotation.z = s * 0.17;
+    group.add(arm);
+    part(arm, new THREE.CapsuleGeometry(0.045, 0.24, 4, 14), "chest", 0, -0.17, 0);
+    part(arm, new THREE.SphereGeometry(0.047, 14, 10), "chest", 0, -0.335, 0, JOINT);
+    part(arm, new THREE.CapsuleGeometry(0.04, 0.22, 4, 14), "chest", 0, -0.49, 0);
+    part(arm, new THREE.SphereGeometry(0.05, 14, 12), "chest", 0, -0.645, 0);
+  }
+  // legs: pivot group at the hip
+  for (const s of [-1, 1]) {
+    part(group, new THREE.SphereGeometry(0.062, 16, 12), "legs", s * 0.1, 0.73, 0, JOINT);
+    const leg = new THREE.Group();
+    leg.position.set(s * 0.1, 0.72, 0);
+    leg.rotation.z = s * 0.03;
+    group.add(leg);
+    part(leg, new THREE.CapsuleGeometry(0.062, 0.26, 4, 14), "legs", 0, -0.185, 0);
+    part(leg, new THREE.SphereGeometry(0.055, 14, 10), "legs", 0, -0.375, 0, JOINT);
+    part(leg, new THREE.CapsuleGeometry(0.048, 0.24, 4, 14), "legs", 0, -0.545, 0);
+    part(leg, new THREE.BoxGeometry(0.09, 0.05, 0.18), "legs", 0, -0.695, 0.04);
+  }
+
+  // soft blob shadow
+  const shTex = (() => {
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const g = c.getContext("2d");
+    const rg = g.createRadialGradient(64, 64, 4, 64, 64, 62);
+    rg.addColorStop(0, "rgba(45,42,36,0.22)");
+    rg.addColorStop(1, "rgba(45,42,36,0)");
+    g.fillStyle = rg; g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  })();
+  const shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(0.52, 32),
+    new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false })
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.002;
+  scene.add(shadow);
+
+  // hotspot anchors (local coords on the group)
+  const anchors = {
+    head:  new THREE.Vector3(0, 1.575, 0.125),
+    chest: new THREE.Vector3(0, 1.19, 0.15),
+    waist: new THREE.Vector3(0, 0.87, 0.15),
+    legs:  new THREE.Vector3(0.105, 0.5, 0.11),
+  };
+  const markers = {};
+  for (const [r, v] of Object.entries(anchors)) {
+    const anchor = new THREE.Object3D();
+    anchor.position.copy(v);
+    group.add(anchor);
+    markers[r] = anchor;
+  }
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableZoom = false;
+  controls.enablePan = false;
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.target.set(0, 0.88, 0);
+  controls.minPolarAngle = Math.PI * 0.36;
+  controls.maxPolarAngle = Math.PI * 0.56;
+
+  // region tinting
+  let tinted = [];
+  window.__tintRegion = (r) => {
+    tinted.forEach(m => m.material.emissive.setHex(0x000000));
+    tinted = meshesByRegion[r] || [];
+    tinted.forEach(m => { m.material.emissive.setHex(TINT); m.material.emissiveIntensity = 0.16; });
+  };
+
+  // raycast tap-to-select (distinguish click from drag)
+  const ray = new THREE.Raycaster();
+  const ptr = new THREE.Vector2();
+  let downAt = null;
+  renderer.domElement.addEventListener("pointerdown", e => { downAt = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener("pointerup", e => {
+    if (!downAt) return;
+    const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
+    downAt = null;
+    if (moved > 6) return;
+    const b = renderer.domElement.getBoundingClientRect();
+    ptr.set(((e.clientX - b.left) / b.width) * 2 - 1, -((e.clientY - b.top) / b.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    const hit = ray.intersectObjects(group.children, true)[0];
+    if (hit && hit.object.userData.region) window.__selectRegion(hit.object.userData.region);
+  });
+
+  // leader lines: fixed callout chips on the left rail → projected pins on the body
+  const leadersEl = document.getElementById("leaders");
+  const chips = {}, lines = {}, dots = {};
+  document.querySelectorAll(".chip").forEach(c => { chips[c.dataset.region] = c; });
+  document.querySelectorAll(".leaders line").forEach(l => { lines[l.dataset.region] = l; });
+  document.querySelectorAll(".leaders circle").forEach(d => { dots[d.dataset.region] = d; });
+  const wv = new THREE.Vector3(), camDir = new THREE.Vector3(), outward = new THREE.Vector3(), axis = new THREE.Vector3();
+
+  // chip geometry is static — measure once (and again on resize), not every frame
+  let chipMeta = null, W = wrap.clientWidth, H = wrap.clientHeight;
+  function measureChips() {
+    chipMeta = Object.keys(chips).map(r => {
+      const c = chips[r];
+      const meta = { c, line: lines[r], dot: dots[r], marker: markers[r] };
+      meta.line.setAttribute("x1", c.offsetLeft + c.offsetWidth + 3);
+      meta.line.setAttribute("y1", c.offsetTop + c.offsetHeight / 2);
+      return meta;
+    });
+  }
+
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let interacting = false, onScreen = true;
+  controls.addEventListener("start", () => { interacting = true; });
+  controls.addEventListener("end", () => { interacting = false; });
+  new IntersectionObserver(es => { onScreen = es[0].isIntersecting; }).observe(wrap);
+
+  function tick() {
+    requestAnimationFrame(tick);
+    if (!onScreen) return;
+    if (!interacting && !reduced) group.rotation.y += 0.0035;
+    controls.update();
+    renderer.render(scene, camera);
+
+    if (!chipMeta) { measureChips(); leadersEl.classList.add("live"); }
+    for (const m of chipMeta) {
+      m.marker.getWorldPosition(wv);
+      axis.set(0, wv.y, 0);
+      outward.copy(wv).sub(axis).normalize();
+      camDir.copy(camera.position).sub(axis).normalize();
+      const facing = outward.dot(camDir);
+      wv.project(camera);
+      const px = ((wv.x + 1) / 2) * W;
+      const py = ((-wv.y + 1) / 2) * H;
+      const away = facing < -0.15;
+      m.line.setAttribute("x2", px);
+      m.line.setAttribute("y2", py);
+      m.dot.setAttribute("cx", px);
+      m.dot.setAttribute("cy", py);
+      m.line.style.opacity = away ? 0.15 : 0.8;
+      m.dot.style.opacity = away ? 0.15 : 1;
+      m.c.classList.toggle("away", away);
+    }
+  }
+  tick();
+  window.__selectRegion("chest");
+
+  new ResizeObserver(() => {
+    W = wrap.clientWidth; H = wrap.clientHeight;
+    renderer.setSize(W, H);
+    camera.aspect = W / H;
+    camera.setViewOffset(W, H, RAIL_SHIFT, 0, W, H);
+    camera.updateProjectionMatrix();
+    chipMeta = null;
+  }).observe(wrap);
+  } // main()
+</script>
+</body>
+</html>

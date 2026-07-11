@@ -12,12 +12,16 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 
 ## Now
 
+- **Plan screen (#5) — design exploration in flight (2026-07-11).** Owner leaning **Figure**
+  (live three.js mannequin, `design/plan-figure.html`) over Atlas (`design/plan-atlas.html`).
+  Figure revised per owner feedback: no interpunct separators, weight editor = trend chart +
+  goal (deadline dropped), meal saves scope just-today (⇄ override engine) vs every-day,
+  add-item→chat hand-off, "use my photos" slot for an owner 3D model (photos → GLB on private
+  Blob — owner will send pictures). Design files uncommitted until final pick. No app code yet.
 - **Chat deviation copilot — DONE, owner-accepted, DEPLOYED to prod 2026-07-11**
-  (`kal-pihqj89rm` READY, aliased kal-delta.vercel.app; smoke: 307→login/200/401; 75s error
-  stream clean; owner phone pass pending). Off-plan knowledge ladder (search_nutrition →
-  fetch_page/photo → confirmed estimate), day-scoped `meal_overrides` (⇄ marker on Today,
-  template untouched, undoable), chat photo attach, prompt caching (~$0.03 per 3-turn
-  conversation). Suite 89/89 (16 files), migration 0005 applied. Detail: docs/HISTORY.md.
+  (`kal-pihqj89rm` READY, aliased kal-delta.vercel.app; owner phone pass ✓ 2026-07-11).
+  Off-plan knowledge ladder, day-scoped `meal_overrides` (⇄ marker), chat photo attach,
+  prompt caching. Suite 89/89, migration 0005 applied. Detail: docs/HISTORY.md.
   Closed #3 + #11; follow-ups #12 #13; parked idea #14.
 - **v1 SHIPPED, prod live** at https://kal-delta.vercel.app (Vercel project `kal`); owner
   phone-verification of the 2026-07-07 Groceries "my serving" cards still pending.
