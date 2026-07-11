@@ -8,16 +8,17 @@ talks only to `POST /api/chat` + REST routes (swappable brain).
 per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list`). Protocol:
 `AGENTS.md`. Original spec: `~/.claude/plans/okay-so-i-have-zesty-nova.md`.*
 
-**Last updated: 2026-07-10**
+**Last updated: 2026-07-11**
 
 ## Now
 
-- **Chat deviation copilot — DONE, owner-accepted 2026-07-10, MERGED to main; NOT yet
-  deployed** (deploy on owner's go — prod still runs the 2026-07-07 build). Off-plan knowledge
-  ladder (search_nutrition → fetch_page/photo → confirmed estimate), day-scoped `meal_overrides`
-  (⇄ marker on Today, template untouched, undoable), chat photo attach, prompt caching
-  (~$0.03 per 3-turn conversation). Suite 89/89 (16 files), `tsc` clean, migration 0005 applied.
-  Detail: docs/HISTORY.md. Closed #3 + #11; follow-ups #12 #13; parked idea #14.
+- **Chat deviation copilot — DONE, owner-accepted, DEPLOYED to prod 2026-07-11**
+  (`kal-pihqj89rm` READY, aliased kal-delta.vercel.app; smoke: 307→login/200/401; 75s error
+  stream clean; owner phone pass pending). Off-plan knowledge ladder (search_nutrition →
+  fetch_page/photo → confirmed estimate), day-scoped `meal_overrides` (⇄ marker on Today,
+  template untouched, undoable), chat photo attach, prompt caching (~$0.03 per 3-turn
+  conversation). Suite 89/89 (16 files), migration 0005 applied. Detail: docs/HISTORY.md.
+  Closed #3 + #11; follow-ups #12 #13; parked idea #14.
 - **v1 SHIPPED, prod live** at https://kal-delta.vercel.app (Vercel project `kal`); owner
   phone-verification of the 2026-07-07 Groceries "my serving" cards still pending.
 - **Next up:** the work queue is GitHub Issues. `ready-for-agent` label = owner green-lit;
