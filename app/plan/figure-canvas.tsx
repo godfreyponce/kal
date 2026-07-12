@@ -420,24 +420,23 @@ export default function FigureCanvas({
         -(scaledBox.max.z + scaledBox.min.z) / 2
       );
 
-      // Detach the mannequin (its geometry/material are already in `geometries`/
-      // `materials` for cleanup disposal below — not disposed now), attach the model,
-      // and make it the rotating/raycast target from here on.
-      scene.remove(group);
-      model.rotation.y = group.rotation.y; // carry the idle spin over — no visual snap
-      scene.add(model);
-      activeBody = model;
-      modelActive = true;
-
+      // D3: recompute the box and the four marker anchors while model.rotation.y is
+      // still 0 (untouched since construction) — the anchors are derived from the
+      // model's own local geometry (its true front is always local +z), so they must
+      // NOT depend on whatever angle the mannequin's idle spin happened to reach by
+      // the time this (possibly slow, e.g. phone networks) load resolves. Rotating
+      // first and measuring after would glue the pins to whichever face was pointed
+      // world-front at that instant, wrong by up to the accumulated spin angle.
       model.updateMatrixWorld(true);
       const finalBox = new THREE.Box3().setFromObject(model);
 
       // D3: reposition the four existing marker anchors onto the model's band centers —
       // world y = each band's center (see MODEL_BAND_FRACTIONS), x=0 except legs (offset
       // like the mannequin's thigh), z = the model's front surface + a small standoff.
-      // worldToLocal re-expresses each in the model's local space so the anchors keep
-      // tracking it through idle rotation, mirroring how the mannequin's anchors are
-      // local children of `group`.
+      // worldToLocal re-expresses each in the model's local space (computed here with
+      // rotation.y still 0, so "local space" and "true front" agree) so the anchors keep
+      // tracking the model through idle rotation, mirroring how the mannequin's anchors
+      // are local children of `group`.
       const range = MODEL_TOP_Y - MODEL_BOTTOM_Y;
       const ANCHOR_Z_OFFSET = 0.02; // small standoff past the front surface
       const bandCenterY = (band: [number, number]) => MODEL_TOP_Y - ((band[0] + band[1]) / 2) * range;
@@ -451,6 +450,17 @@ export default function FigureCanvas({
         model.add(markers[r]); // reparents from `group`
         markers[r].position.copy(model.worldToLocal(anchorWorld[r]));
       }
+
+      // Only now bring the model on-stage: detach the mannequin (its geometry/material
+      // are already in `geometries`/`materials` for cleanup disposal below — not
+      // disposed now), carry the idle spin over onto the now-anchored model, attach it,
+      // and make it the rotating/raycast target from here on. The box/anchors above were
+      // computed while rotation.y was still 0, so this rotation cannot desync them.
+      scene.remove(group);
+      model.rotation.y = group.rotation.y; // carry the idle spin over — no visual snap
+      scene.add(model);
+      activeBody = model;
+      modelActive = true;
     }
     void loadOwnerModel();
 

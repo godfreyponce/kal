@@ -82,6 +82,8 @@ never committed, never named in committed files; repo is public).
 - Dev on PORT=3100; BLOB_READ_WRITE_TOKEN exists in `.env.local` (local uploads);
   prod uploads use OIDC (see HISTORY Groceries §photos) — the upload script runs LOCALLY
   against the prod store with the local token.
+  [DEVIATION 2026-07-12: the store split introduced a dedicated MODEL_BLOB_READ_WRITE_TOKEN;
+  the default BLOB_READ_WRITE_TOKEN no longer exists — see STATE.md gotchas]
 
 ---
 
@@ -91,6 +93,8 @@ never committed, never named in committed files; repo is public).
 
 - Script: argv path → `put("model/figure.glb", stream, { access: "private", allowOverwrite: true, contentType: "model/gltf-binary" })`,
   prints the blob pathname; refuses to run without `BLOB_READ_WRITE_TOKEN`.
+  [DEVIATION 2026-07-12: the store split introduced a dedicated MODEL_BLOB_READ_WRITE_TOKEN;
+  the default BLOB_READ_WRITE_TOKEN no longer exists — see STATE.md gotchas]
 - Route: `get("model/figure.glb", { access: "private" })` → stream body + headers per D4;
   blob-missing → 404 `{ error: "no model uploaded" }` (typed-error pattern n/a — no user
   input to validate).
