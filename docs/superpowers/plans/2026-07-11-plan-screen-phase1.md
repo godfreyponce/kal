@@ -20,6 +20,11 @@
 - After editing `globals.css`, Turbopack serves STALE CSS — `rm -rf .next`, restart dev, hard-refresh.
 - `profile.goal_date` column stays in the schema but Phase 1 never reads or writes it (owner dropped deadlines). Do NOT touch `lib/system-prompt.ts`.
 - No interpunct (·) separators in any new UI copy — spaces/stacking instead.
+- Error typing (owner decision 2026-07-11, supersedes the message-regex mapping originally
+  written here): lib validation failures throw `ValidationError`, missing-entity failures
+  throw `NotFoundError` (both tiny classes in `lib/errors.ts`); routes map
+  `instanceof ValidationError` → 400 and `instanceof NotFoundError` → 404. Never classify
+  errors by message text. (Retrofit of Tasks 1–3 code done as a fix commit after Task 3.)
 - Commit after every green task; never commit with a red suite.
 
 ---
@@ -747,6 +752,7 @@ export async function POST(req: NextRequest) {
 ```ts
 // app/api/meals/[id]/route.ts
 import type { NextRequest } from "next/server";
+import { NotFoundError, ValidationError } from "@/lib/errors";
 import { deleteMeal, updateMeal } from "@/lib/plan";
 
 // PATCH /api/meals/:id — rename / re-hint a template meal.
@@ -763,7 +769,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if (!updated) return Response.json({ error: "not found" }, { status: 404 });
     return Response.json(updated);
   } catch (err) {
-    if (err instanceof Error && /required|empty/.test(err.message)) {
+    if (err instanceof ValidationError) {
       return Response.json({ error: err.message }, { status: 400 });
     }
     throw err;
@@ -779,7 +785,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     const targets = await deleteMeal(mealId);
     return Response.json({ targets });
   } catch (err) {
-    if (err instanceof Error && /No meal/.test(err.message)) {
+    if (err instanceof NotFoundError) {
       return Response.json({ error: "not found" }, { status: 404 });
     }
     throw err;
@@ -790,6 +796,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
 ```ts
 // app/api/meals/[id]/items/route.ts
 import type { NextRequest } from "next/server";
+import { NotFoundError, ValidationError } from "@/lib/errors";
 import { setMealOverride } from "@/lib/overrides";
 import { replaceMealItems, type PlanItemInput } from "@/lib/plan";
 import { todayInAppTz } from "@/lib/time";
@@ -828,7 +835,10 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
     const targets = await replaceMealItems(mealId, items);
     return Response.json({ scope: "template", targets });
   } catch (err) {
-    if (err instanceof Error && /No food|No meal|positive|non-empty/.test(err.message)) {
+    if (err instanceof NotFoundError) {
+      return Response.json({ error: err.message }, { status: 404 });
+    }
+    if (err instanceof ValidationError) {
       return Response.json({ error: err.message }, { status: 400 });
     }
     throw err;
@@ -932,6 +942,7 @@ Expected: FAIL — `Cannot find module './memory'`
 import { asc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { memoryFacts } from "../db/schema";
+import { ValidationError } from "./errors";
 
 export type MemoryFactView = { id: number; content: string; createdAt: string };
 
@@ -949,14 +960,14 @@ export async function listMemoryFacts(): Promise<MemoryFactView[]> {
 
 export async function addMemoryFact(content: string): Promise<MemoryFactView> {
   const trimmed = content?.trim();
-  if (!trimmed) throw new Error("content required");
+  if (!trimmed) throw new ValidationError("content required");
   const [row] = await db.insert(memoryFacts).values({ content: trimmed }).returning();
   return toView(row);
 }
 
 export async function updateMemoryFact(id: number, content: string): Promise<MemoryFactView | null> {
   const trimmed = content?.trim();
-  if (!trimmed) throw new Error("content required");
+  if (!trimmed) throw new ValidationError("content required");
   const rows = await db
     .update(memoryFacts)
     .set({ content: trimmed, updatedAt: new Date() })
