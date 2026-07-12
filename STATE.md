@@ -12,12 +12,13 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 
 ## Now
 
-- **Plan screen (#5) — design exploration in flight (2026-07-11).** Owner leaning **Figure**
-  (live three.js mannequin, `design/plan-figure.html`) over Atlas (`design/plan-atlas.html`).
-  Figure revised per owner feedback: no interpunct separators, weight editor = trend chart +
-  goal (deadline dropped), meal saves scope just-today (⇄ override engine) vs every-day,
-  add-item→chat hand-off, "use my photos" slot for an owner 3D model (photos → GLB on private
-  Blob — owner will send pictures). Design files uncommitted until final pick. No app code yet.
+- **Plan screen (#5) Phase 1 — BUILT on branch feat/plan-screen-phase1, pending owner review
+  (2026-07-11).** /plan is live locally: profile editor (PATCH /api/profile; goal-date dropped),
+  meal-plan editor with scoped saves (just-today = ⇄ meal_overrides engine; every-day rewrites
+  meal_items and re-derives profile targets), memory-facts manager (delete + undo). New libs:
+  profile/plan/memory/errors (typed ValidationError/NotFoundError). Suite 102/102 (19 files,
+  now sequential — vitest.config.ts), tsc clean, build route ƒ /plan. NOT merged/deployed.
+  Phase 2 next: 3D mannequin profile + weight-trend chart (design/plan-figure.html approved).
 - **Chat deviation copilot — DONE, owner-accepted, DEPLOYED to prod 2026-07-11**
   (`kal-pihqj89rm` READY, aliased kal-delta.vercel.app; owner phone pass ✓ 2026-07-11).
   Off-plan knowledge ladder, day-scoped `meal_overrides` (⇄ marker), chat photo attach,
