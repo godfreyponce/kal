@@ -21,6 +21,7 @@ export function MealPlanEditor({
   const [, startTransition] = useTransition();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [items, setItems] = useState<EditItem[]>([]);
+  const [baselineMealKcal, setBaselineMealKcal] = useState(0);
   const [scope, setScope] = useState<"today" | "template">("today");
   const [error, setError] = useState<string | null>(null);
   const [banner, setBanner] = useState<RetargetResult | null>(null);
@@ -29,6 +30,9 @@ export function MealPlanEditor({
   const [addingMeal, setAddingMeal] = useState(false);
   const [newMeal, setNewMeal] = useState({ name: "", timeHint: "" });
   const adjusted = new Set(adjustedMealIds);
+  const pendingMealKcal = items.reduce((sum, it) => sum + it.quantity * it.unitKcal, 0);
+  const totalsDirty = editingId !== null && pendingMealKcal !== baselineMealKcal;
+  const stripKcal = editingId !== null ? Math.round(plan.totals.kcal - baselineMealKcal + pendingMealKcal) : plan.totals.kcal;
 
   function beginEdit(mealId: number) {
     const meal = plan.meals.find((m) => m.id === mealId)!;
@@ -42,6 +46,7 @@ export function MealPlanEditor({
         unitKcal: i.unitKcal,
       })),
     );
+    setBaselineMealKcal(meal.items.reduce((sum, i) => sum + i.quantity * i.unitKcal, 0));
     setScope("today");
     setError(null);
     setBanner(null);
@@ -138,8 +143,8 @@ export function MealPlanEditor({
     <div>
       {error && <div className="gr-error">{error}</div>}
       <div className="plan-totals">
-        <span>PLAN <b>{plan.totals.kcal}</b> KCAL</span>
-        <span>
+        <span>PLAN <b>{stripKcal}</b> KCAL</span>
+        <span className={totalsDirty ? "plan-macros plan-totals-dim" : "plan-macros"}>
           <b className="mac-p">P {plan.totals.proteinG}</b>&ensp;
           <b className="mac-c">C {plan.totals.carbsG}</b>&ensp;
           <b className="mac-f">F {plan.totals.fatG}</b>
@@ -165,7 +170,7 @@ export function MealPlanEditor({
                 {adjusted.has(meal.id) && <span className="plan-adjusted" aria-label="adjusted today">⇄</span>}
               </span>
               <span className="plan-meal-end">
-                <span className="plan-meal-kc">{meal.kcal} kcal</span>
+                <span className="plan-meal-kc">{editing ? Math.round(pendingMealKcal) : meal.kcal} kcal</span>
                 {!editing && (
                   <button className="plan-edit-btn" onClick={() => beginEdit(meal.id)}>Edit</button>
                 )}

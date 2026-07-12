@@ -1412,6 +1412,8 @@ body {
   padding: 7px 11px; margin-bottom: 6px; font-variant-numeric: tabular-nums;
 }
 .plan-totals b { font-weight: 500; }
+.plan-macros { transition: opacity 150ms ease; }
+.plan-totals-dim { opacity: 0.35; }
 .plan-recalc {
   border-left: 2px solid var(--accent); background: #fff; /* literal like .plan-card — var(--surface) undefined app-wide */
   border-radius: 0 10px 10px 0; padding: 9px 12px; margin: 10px 0;
