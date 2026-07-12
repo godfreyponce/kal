@@ -39,7 +39,14 @@ npx tsc --noEmit         # must stay clean
 
 - `npm run db:seed` is a FULL WIPE — for live data use `npx tsx db/apply-seed-v2.ts` (idempotent).
 - NEVER `vercel env pull` into `.env.local` — encrypted vars come back as `""` and break local
-  login. Pull to a temp file and copy individual keys.
+  login. Pull to a temp file and copy individual keys. ⚠️ `vercel blob create-store` (and other
+  store-connect flows) run this pull IMPLICITLY and rewrote `.env.local` (bit 2026-07-12: wiped
+  4 local secrets + rebound BLOB_READ_WRITE_TOKEN to the new store). Never run store-connect
+  commands from the linked dir without backing up `.env.local` first.
+- Blob stores: `kal-photos` (public; grocery images; prod uses OIDC + BLOB_STORE_ID) and
+  `kal-private` (owner model; token env `MODEL_BLOB_READ_WRITE_TOKEN`, prod+dev — preview
+  binding skipped, unused). `BLOB_READ_WRITE_TOKEN` no longer exists anywhere; the old local
+  kal-photos token was lost (regenerate via dashboard if local grocery uploads are ever needed).
 - Any page reading live DB or the current day MUST `export const dynamic = "force-dynamic"`
   (Next 16 prerenders static by default; invisible in dev; build route table: `/` must be `ƒ`).
 - After editing `globals.css`, Turbopack dev serves STALE CSS — `rm -rf .next`, restart, hard-refresh.
