@@ -71,6 +71,45 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Plan screen Phase 3 (2026-07-12) — MERGED to main, owner-accepted; deploy pending
+
+The "use my photos →" promise landed: /plan's figure loads the owner's personal 3D model,
+mannequin as permanent fallback. Plan: `docs/superpowers/plans/2026-07-12-plan-screen-phase3.md`.
+Built subagent-driven (Sonnet workers + per-task reviews + Fable final review), 5 code/doc
+commits (e42577d..316078e + STATE).
+
+- **Asset pipeline (owner-driven, nothing personal in the repo):** Rodin's API turned out
+  business-tier-only → owner bought the $6 Creator month and drove the Rodin web UI
+  themselves (agent guided settings; single front A-pose photo, UI-cropped + mirror-flipped
+  locally first). Export was geometry-only (no textures) and ends at MID-THIGH (source
+  photos were counter-cropped; owner accepted both — clay material by choice, matches the
+  design language). 41MB/1M-tri GLB → weld → simplify (error-bound, 65k tris) → prune
+  (position+normal only) → quantize → meshopt = **630 KB**, byte-identical render verified
+  headlessly before build.
+- **Hosting** — second Blob store `kal-private` (access: private; the original kal-photos
+  store is public-only). `scripts/upload-model.ts` (argv path, dedicated
+  `MODEL_BLOB_READ_WRITE_TOKEN`) + `GET /api/model` streaming route (proxy-gated,
+  `cache-control: private, max-age=3600` — re-uploads take ≤1h to appear, hard-refresh to
+  force; content-length set only when the SDK reports a real size — the store serves this
+  blob chunked with size 0, an unconditional header truncated the body to 0 bytes, caught
+  by the Task-1 worker). ⚠️ `vercel blob create-store` implicitly env-pulls into
+  `.env.local` — wiped 4 local secrets + rebound the default token env; see STATE gotchas.
+- **Swap-in (figure-canvas)** — lazy GLTFLoader + MeshoptDecoder (dynamic imports, /plan
+  chunk only) AFTER the mannequin builds; ANY failure (404/network/parse/decoder) →
+  mannequin stays, silently. Clay material override; scaled so head-top matches the
+  mannequin's (1.6992) and the cut sits at 0.55 — model hovers over the ground shadow,
+  deliberate. Single mesh ⇒ regions by y-bands (20/30/20/30, tuned from the plan's ~15%
+  head), NO per-region tint on the model (chips/pin accent carry selection); the four
+  marker anchors reparent onto the model — computed at rotation 0 THEN spun (final review
+  caught the reorder: anchors measured after the carried idle-spin rotation glued pins to
+  swap-time world-front on slow loads; verified fixed via 4s-delayed-load simulation).
+  StrictMode-safe in-flight disposal; mannequin detached not disposed.
+- **Verification** — 118/118, tsc clean, /plan ƒ, loaders /plan-chunk-only; headless:
+  model renders, all four region taps correct, leaders track + away-fade, forced-404 →
+  mannequin, delayed-load → pins on true front; owner phone pass accepted 2026-07-12.
+  Tickets: #21 (texture-dispose hardening if a textured GLB ever uploads). Owner hygiene
+  at acceptance: delete Rodin uploads, cancel Creator plan.
+
 ## Plan screen Phase 2 (2026-07-12) — MERGED to main, owner-accepted; deploy pending
 
 The 3D figure + weight-trend build over Phase 1's core. Spec: build-order item 2 of

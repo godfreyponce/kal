@@ -12,16 +12,12 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 
 ## Now
 
-- **Plan screen (#5) Phase 2 — ACCEPTED, MERGED to main 2026-07-12; NOT deployed** (deploy
-  on owner go; Phase 1 also still undeployed — one deploy covers both). 3D mannequin island
-  + region editor cards + weight-trend chart + macros-dim. Detail: docs/HISTORY.md.
-  Chart-polish follow-ups: #20. **Phase 3 CODE COMPLETE on branch `plan-screen-phase3`,
-  awaiting OWNER phone pass; NOT merged, NOT deployed.** Owner model (Rodin-generated,
-  mid-thigh, clay, 630KB meshopt GLB) lives on the PRIVATE kal-private Blob store, streamed
-  via GET /api/model; figure swaps it in with mannequin fallback on any failure (verified
-  incl. forced-404 + delayed-load simulation). Suite 118/118. After acceptance: merge,
-  HISTORY, close #5, remind owner to delete Rodin uploads + cancel the $6 plan. Texture
-  hardening: #21.
+- **Plan screen (#5) — ALL THREE PHASES ACCEPTED + MERGED to main 2026-07-12; NOT
+  deployed** (deploy on owner go — one deploy ships the whole /plan: editors, 3D figure +
+  weight chart + macros-dim, owner model). Owner model: private kal-private Blob store →
+  GET /api/model → figure swap-in, mannequin fallback (re-uploads take ≤1h, cache).
+  Detail: docs/HISTORY.md. Follow-ups: #20 chart polish, #21 texture-dispose hardening.
+  Owner hygiene pending: delete Rodin uploads, cancel the $6 Creator plan.
 - **Chat deviation copilot — DONE, deployed to prod, owner phone pass ✓** (kal-delta.vercel.app).
 - **v1 SHIPPED, prod live**; owner phone-verification of the 2026-07-07 Groceries "my serving"
   cards still pending.
