@@ -1499,3 +1499,30 @@ body {
   padding: 9px; cursor: pointer; margin-top: 16px;
 }
 .plan-new-meal { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+/* Plan — memory */
+.plan-fact { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; }
+.plan-fact + .plan-fact { border-top: 1px solid var(--border); }
+.plan-fact-body { flex: 1; }
+.plan-fact-tx { font-family: var(--font-serif); font-size: 15px; color: var(--ink); line-height: 1.45; }
+.plan-fact-meta { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 3px; }
+.plan-fact-x { font-family: var(--font-mono); font-size: 13px; color: var(--faint); background: none; border: none; cursor: pointer; padding: 2px 6px; }
+.plan-fact-x:hover { color: var(--protein); }
+.plan-fact-add, .plan-fact-form { margin-bottom: 4px; }
+.plan-fact-add {
+  width: 100%; text-align: left; font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  background: none; border: 1px dashed #cdcbc4; border-radius: 9px; padding: 10px 12px; cursor: pointer;
+}
+.plan-fact-input {
+  width: 100%; font-family: var(--font-serif); font-size: 15px; color: var(--ink);
+  border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; resize: none; background: #fff;
+}
+.plan-fact-empty { font-family: var(--font-mono); font-size: 10px; color: var(--faint); padding: 10px 0; }
+.plan-snack {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  background: var(--ink); color: #f2f0eb; border-radius: 10px;
+  font-family: var(--font-mono); font-size: 10.5px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 14px; z-index: 50;
+}
+.plan-snack button { background: none; border: none; color: var(--accent); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; cursor: pointer; }

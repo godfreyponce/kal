@@ -8,6 +8,7 @@ import { getOverridesForDate } from "@/lib/overrides";
 import { todayInAppTz } from "@/lib/time";
 import { ProfileForm } from "./profile-form";
 import { MealPlanEditor } from "./meal-plan-editor";
+import { MemoryList } from "./memory-list";
 
 // Reads live DB — must render per request (see the force-dynamic gotcha).
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export default async function PlanPage() {
           <span className="plan-kicker">Memory</span>
           <span className="plan-kicker">{facts.length} facts</span>
         </div>
-        {/* Task 9 mounts <MemoryList facts={facts} /> here */}
+        <MemoryList facts={facts} />
       </section>
     </main>
   );
