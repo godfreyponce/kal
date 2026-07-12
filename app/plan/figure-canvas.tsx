@@ -66,7 +66,6 @@ export default function FigureCanvas({
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(wrap.clientWidth, wrap.clientHeight);
-    renderer.domElement.style.touchAction = "pan-y";
     wrap.prepend(renderer.domElement);
 
     const RAIL_SHIFT = -34; // render the scene shifted right, leaving room for the callout rail
@@ -180,6 +179,8 @@ export default function FigureCanvas({
     }
 
     const controls = new OrbitControls(camera, renderer.domElement);
+    // OrbitControls.connect() sets touch-action: none — override AFTER construction so vertical swipes scroll the page
+    renderer.domElement.style.touchAction = "pan-y";
     controls.enableZoom = false;
     controls.enablePan = false;
     controls.enableDamping = true;

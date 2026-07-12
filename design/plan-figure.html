@@ -819,6 +819,7 @@
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(wrap.clientWidth, wrap.clientHeight);
   renderer.domElement.style.touchAction = "pan-y";
+  // LATENT BUG (found in Phase 2 review): OrbitControls' constructor later resets touch-action to 'none'; in production this assignment is made AFTER controls construction.
   wrap.prepend(renderer.domElement);
 
   const RAIL_SHIFT = -34; // render the scene shifted right, leaving room for the callout rail

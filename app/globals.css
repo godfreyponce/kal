@@ -1554,6 +1554,7 @@ body {
 /* Plan — profile figure placeholder + region editor cards (Phase 2, design/plan-figure.html) */
 .plan-fig3d {
   position: relative; height: 400px; margin-top: 4px;
+  touch-action: pan-y;
   border-radius: 16px; overflow: hidden;
 }
 .plan-fig3d canvas { display: block; }

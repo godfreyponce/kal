@@ -113,9 +113,10 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
   const cardPending = (r: Region) => pending && savingRegion === r;
   const saveLabel = (r: Region) => (saved ? "Saved ✓" : cardPending(r) ? "Saving…" : "Save profile");
 
-  // Chip values live here (they're derived from `profile` + `form`'s live-saved state);
-  // the chips themselves — and the leader lines that track them onto the body — render
-  // inside FigureCanvas (Task 6), which has no other reason to know about profile fields.
+  // Chip values live here (they're derived from `profile`, refreshed via router.refresh()
+  // after each save); the chips themselves — and the leader lines that track them onto the
+  // body — render inside FigureCanvas (Task 6), which has no other reason to know about
+  // profile fields.
   const chips: { region: Region; kicker: string; value: string; top: number }[] = [
     {
       region: "head",
