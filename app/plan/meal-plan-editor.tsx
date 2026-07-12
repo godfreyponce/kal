@@ -67,9 +67,10 @@ export function MealPlanEditor({
 
   async function save() {
     if (editingId === null) return;
+    const mealId = editingId;
     setSaving(true);
     setError(null);
-    const res = await fetch(`/api/meals/${editingId}/items`, {
+    const res = await fetch(`/api/meals/${mealId}/items`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ scope, items: items.filter((i) => i.quantity > 0).map((i) => ({ foodId: i.foodId, quantity: i.quantity })) }),
@@ -81,7 +82,7 @@ export function MealPlanEditor({
       return;
     }
     if (body.scope === "template") setBanner(body.targets);
-    setEditingId(null);
+    setEditingId((cur) => (cur === mealId ? null : cur));
     startTransition(() => router.refresh());
   }
 
@@ -91,14 +92,15 @@ export function MealPlanEditor({
       setArmedDelete(true);
       return;
     }
-    const res = await fetch(`/api/meals/${editingId}`, { method: "DELETE" });
+    const mealId = editingId;
+    const res = await fetch(`/api/meals/${mealId}`, { method: "DELETE" });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
       setError(body.error ?? "delete failed");
       return;
     }
     setBanner(body.targets);
-    setEditingId(null);
+    setEditingId((cur) => (cur === mealId ? null : cur));
     startTransition(() => router.refresh());
   }
 
