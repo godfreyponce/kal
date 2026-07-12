@@ -3,6 +3,8 @@ import { buildTrendGeometry, nearestPoint, recentLog } from "./trend-geometry";
 
 describe("buildTrendGeometry", () => {
   it("0 entries: empty points, null path/labels/gridlines/goal", () => {
+    // goalY is null here even though a goal is set: at 0 points the renderer shows a
+    // text empty state instead of the SVG (plan D2), so there is nothing to draw on.
     const g = buildTrendGeometry([], 160);
     expect(g).toEqual({ points: [], pathD: null, gridlines: [], goalY: null, xLabels: null });
   });

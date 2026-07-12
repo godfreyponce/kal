@@ -7,7 +7,9 @@ export type TrendGeometry = {
   points: TrendPoint[]; // time-scaled x across [PAD_L, W-PAD_R]; single point → centered
   pathD: string | null; // null when < 2 points
   gridlines: { y: number; label: string }[]; // 5-lb steps inside the padded domain
-  goalY: number | null; // null only when goalWeightLb is null — domain always stretches to fit a set goal
+  goalY: number | null; // null when goalWeightLb is null OR entries is empty (the renderer
+  // shows a text empty state instead of the SVG at 0 points — plan D2); with ≥1 entry and a
+  // set goal, the domain always stretches to fit it, so goalY is always drawable
   xLabels: { first: string; last: string } | null; // "MAY 30" / "JUL 11" style, null when 0 points
 };
 
