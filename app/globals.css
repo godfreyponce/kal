@@ -1403,3 +1403,99 @@ body {
 .mac-c { color: var(--carbs); }
 .mac-f { color: var(--fat); }
 .plan-save { margin-top: 12px; }
+
+/* Plan — meal editor */
+.plan-totals {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft);
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px;
+  padding: 7px 11px; margin-bottom: 6px; font-variant-numeric: tabular-nums;
+}
+.plan-totals b { font-weight: 500; }
+.plan-recalc {
+  border-left: 2px solid var(--accent); background: var(--surface);
+  border-radius: 0 10px 10px 0; padding: 9px 12px; margin: 10px 0;
+}
+.plan-recalc-k { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+.plan-recalc-v { font-family: var(--font-serif); font-size: 15px; font-variant-numeric: tabular-nums; }
+.plan-recalc-v b { font-weight: 600; }
+.plan-recalc-why { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); }
+.plan-meal { margin-top: 16px; }
+.plan-meal-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid #dcd8ce; padding-bottom: 6px;
+}
+.plan-meal-nm { font-family: var(--font-serif); font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }
+.plan-meal-hint { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--faint); margin-left: 8px; }
+.plan-adjusted { color: var(--accent); margin-left: 7px; font-size: 13px; }
+.plan-meal-end { display: flex; align-items: baseline; gap: 10px; }
+.plan-meal-kc { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.plan-edit-btn {
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 6px;
+  padding: 2px 8px; cursor: pointer;
+}
+.plan-food { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+.plan-food + .plan-food { border-top: 1px solid var(--border); }
+.plan-thumb {
+  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  font-family: var(--font-serif); font-size: 17px; color: var(--muted);
+}
+.plan-thumb img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+.plan-food-mid { flex: 1; min-width: 0; }
+.plan-food-nm { display: block; font-size: 14.5px; color: var(--ink); line-height: 1.3; }
+.plan-food-meta { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.plan-food-amt { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.plan-food-kc { display: block; color: var(--faint); font-size: 9.5px; margin-top: 1px; }
+.plan-edit { padding-top: 4px; }
+.plan-edit-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+.plan-edit-row + .plan-edit-row { border-top: 1px solid var(--border); }
+.plan-stepper { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.plan-stepper button {
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+  background: #fff; font-family: var(--font-mono); font-size: 14px; color: var(--ink-soft);
+  cursor: pointer; line-height: 1; padding: 0;
+}
+.plan-stepper input {
+  width: 58px; text-align: center; font-family: var(--font-mono); font-size: 16px;
+  border: 1px solid var(--border); border-radius: 7px; padding: 4px 2px;
+  font-variant-numeric: tabular-nums;
+}
+.plan-x {
+  font-family: var(--font-mono); font-size: 12px; color: var(--faint);
+  background: none; border: 1px solid var(--border); border-radius: 7px;
+  width: 26px; height: 26px; cursor: pointer; flex-shrink: 0;
+}
+.plan-add-select {
+  width: 100%; font-family: var(--font-mono); font-size: 16px; color: var(--muted);
+  background: #fff; border: 1px dashed #cdcbc4; border-radius: 9px; padding: 9px; margin-top: 10px;
+}
+.plan-ask-chat {
+  width: 100%; text-align: center; background: none; border: none;
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--faint); padding: 7px 0 0; cursor: pointer;
+}
+.plan-scope { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.plan-scope-seg { flex: 1; display: flex; gap: 3px; background: #eceae3; border-radius: 9px; padding: 3px; }
+.plan-scope-seg button {
+  flex: 1; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+  border: none; background: transparent; color: var(--muted); padding: 6px; border-radius: 7px; cursor: pointer;
+}
+.plan-scope-seg button.on { background: #fdfcfa; color: var(--ink); box-shadow: 0 1px 2px rgba(60, 50, 40, 0.1); }
+.plan-scope-hint { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); margin-top: 7px; line-height: 1.6; }
+.plan-actions { display: flex; gap: 8px; margin-top: 12px; }
+.plan-actions .btn-dark { flex: 1.6; }
+.plan-cancel { flex: 1; font-size: 13px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 9px; cursor: pointer; }
+.plan-remove {
+  width: 100%; margin-top: 10px; background: none; border: none; cursor: pointer;
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+}
+.plan-remove:hover { color: var(--protein); }
+.plan-add-meal {
+  width: 100%; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--muted); background: none; border: 1px dashed #cdcbc4; border-radius: 9px;
+  padding: 9px; cursor: pointer; margin-top: 16px;
+}
+.plan-new-meal { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }

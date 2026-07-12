@@ -7,6 +7,7 @@ import { listGroceries } from "@/lib/groceries";
 import { getOverridesForDate } from "@/lib/overrides";
 import { todayInAppTz } from "@/lib/time";
 import { ProfileForm } from "./profile-form";
+import { MealPlanEditor } from "./meal-plan-editor";
 
 // Reads live DB — must render per request (see the force-dynamic gotcha).
 export const dynamic = "force-dynamic";
@@ -21,7 +22,6 @@ export default async function PlanPage() {
     getOverridesForDate(today),
   ]);
   const adjustedMealIds = Array.from(overrides.keys());
-  void groceries; void adjustedMealIds;
 
   return (
     <main className="app plan">
@@ -46,7 +46,7 @@ export default async function PlanPage() {
           <span className="plan-kicker">Meal plan</span>
           <span className="plan-kicker">{plan.meals.length} meals</span>
         </div>
-        {/* Task 8 mounts <MealPlanEditor plan={plan} groceries={groceries} adjustedMealIds={adjustedMealIds} /> here */}
+        <MealPlanEditor plan={plan} groceries={groceries} adjustedMealIds={adjustedMealIds} />
       </section>
 
       <section>
