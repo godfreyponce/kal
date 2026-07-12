@@ -1552,12 +1552,12 @@ body {
 /* Plan — profile figure placeholder + region editor cards (Phase 2, design/plan-figure.html) */
 .plan-fig3d {
   position: relative; height: 400px; margin-top: 4px;
-  border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
-  background: #fff;
+  border-radius: 16px; overflow: hidden;
 }
-.plan-fig-placeholder {
+.plan-fig-canvas, .plan-fig-loading { position: absolute; inset: 0; }
+.plan-fig-fallback {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--faint);
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
 }
 
 /* height dimension rule (design lines 100-113) */

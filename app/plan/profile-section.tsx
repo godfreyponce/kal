@@ -1,15 +1,21 @@
 // app/plan/profile-section.tsx
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { ProfileView } from "@/lib/profile";
 import type { WeighInView } from "@/lib/weigh-ins";
 import { WeightTrend } from "./weight-trend";
 
-// Phase 2: the flat form (profile-form.tsx, deleted) becomes a figure placeholder +
-// chip rail + one swapping region editor card. The 3D canvas itself is Task 5/6 —
-// .plan-fig3d here is a plain placeholder div; chips are DOM and already work.
+// Phase 2: the flat form (profile-form.tsx, deleted) becomes a 3D figure + chip rail +
+// one swapping region editor card. The mannequin scene (Task 5) mounts into .plan-fig3d;
+// chips are DOM siblings and already work — Task 6 moves them onto the figure itself.
+const FigureCanvas = dynamic(() => import("./figure-canvas"), {
+  ssr: false,
+  loading: () => <div className="plan-fig-loading" />,
+});
+
 type Region = "head" | "chest" | "waist" | "legs";
 
 export function ProfileSection({ profile, weighIns }: { profile: ProfileView; weighIns: WeighInView[] }) {
@@ -110,7 +116,7 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
   return (
     <div>
       <div className="plan-fig3d">
-        <div className="plan-fig-placeholder">figure loads in a later task</div>
+        <FigureCanvas selectedRegion={region} onSelectRegion={selectRegion} />
         <div className="plan-fig-dim">
           <span className="plan-fig-dim-label">HEIGHT {profile.heightCm} CM</span>
         </div>

@@ -43,6 +43,7 @@ export default async function PlanPage() {
       <section>
         <div className="plan-sec-head">
           <span className="plan-kicker">Profile</span>
+          <span className="plan-kicker">drag to rotate, tap to edit</span>
         </div>
         <ProfileSection profile={profile} weighIns={weighIns} />
       </section>
