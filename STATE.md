@@ -16,11 +16,11 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
   on owner go; Phase 1 also still undeployed — one deploy covers both). 3D mannequin island
   + region editor cards + weight-trend chart + macros-dim. Detail: docs/HISTORY.md.
   Chart-polish follow-ups: #20. **Phase 3 IN PROGRESS (owner green-lit 2026-07-12):**
-  Hyper3D Rodin API selected (privacy verified: 7-day retention, no training, API results
-  stay out of the public gallery); input photo owner-approved and prepped locally.
-  **Blocked on owner:** create the Rodin account + API key (agent does not create accounts).
-  Then: free preview → owner reviews → paid GLB download → decimate → PRIVATE Vercel Blob
-  (never the repo) → GLTFLoader swap-in.
+  Hyper3D Rodin selected; API turned out business-tier-only, so the owner bought the $6
+  Creator plan (private assets, multi-image, smart low-poly; owner cancels when done) and
+  drives the Rodin web UI THEMSELVES — agent guides settings, owner exports the GLB and
+  hands the file over locally. Then: agent inspects/decimates → PRIVATE Vercel Blob (never
+  the repo) → GLTFLoader swap-in. Input photo owner-approved and prepped locally.
 - **Chat deviation copilot — DONE, deployed to prod, owner phone pass ✓** (kal-delta.vercel.app).
 - **v1 SHIPPED, prod live**; owner phone-verification of the 2026-07-07 Groceries "my serving"
   cards still pending.
