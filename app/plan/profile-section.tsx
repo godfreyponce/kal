@@ -16,6 +16,11 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [region, setRegion] = useState<Region>("chest");
+  // Scopes in-flight state to the card that sent the PATCH: `pending` alone is
+  // shared, so switching cards during the post-save RSC refresh would render the
+  // untouched card as "Saving…" with a disabled button. Never cleared explicitly —
+  // the `pending &&` derivation below makes it inert once the transition ends.
+  const [savingRegion, setSavingRegion] = useState<Region | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -66,6 +71,7 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
       setError("check the number fields — something isn't a number");
       return;
     }
+    setSavingRegion("head");
     patch({ age, sex: form.sex });
   }
 
@@ -76,6 +82,7 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
       setError("check the number fields — something isn't a number");
       return;
     }
+    setSavingRegion("chest");
     patch({ weightLb, goalWeightLb });
   }
 
@@ -86,14 +93,19 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
       setError("check the number fields — something isn't a number");
       return;
     }
+    setSavingRegion("waist");
     patch({ heightCm, bodyFatPct });
   }
 
   function saveLegs() {
+    setSavingRegion("legs");
     patch({ activityLevel: form.activityLevel || null });
   }
 
-  const saveLabel = saved ? "Saved ✓" : pending ? "Saving…" : "Save profile";
+  // Per-card in-flight derivation — each card's disabled prop and "Saving…" label
+  // use its own region, so only the card that sent the PATCH shows as busy.
+  const cardPending = (r: Region) => pending && savingRegion === r;
+  const saveLabel = (r: Region) => (saved ? "Saved ✓" : cardPending(r) ? "Saving…" : "Save profile");
 
   return (
     <div>
@@ -166,8 +178,8 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
               <input className="plan-ed-inp" value={form.sex} onChange={set("sex")} />
             </div>
           </div>
-          <button className="btn-dark plan-ed-save" onClick={saveHead} disabled={pending}>
-            {saveLabel}
+          <button className="btn-dark plan-ed-save" onClick={saveHead} disabled={cardPending("head")}>
+            {saveLabel("head")}
           </button>
         </div>
       )}
@@ -199,8 +211,8 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
           <div className="plan-ed-hint">
             every weigh-in you log lands here — no deadline on the goal, the line just keeps heading there
           </div>
-          <button className="btn-dark plan-ed-save" onClick={saveChest} disabled={pending}>
-            {saveLabel}
+          <button className="btn-dark plan-ed-save" onClick={saveChest} disabled={cardPending("chest")}>
+            {saveLabel("chest")}
           </button>
         </div>
       )}
@@ -228,8 +240,8 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
               />
             </div>
           </div>
-          <button className="btn-dark plan-ed-save" onClick={saveWaist} disabled={pending}>
-            {saveLabel}
+          <button className="btn-dark plan-ed-save" onClick={saveWaist} disabled={cardPending("waist")}>
+            {saveLabel("waist")}
           </button>
         </div>
       )}
@@ -244,8 +256,8 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
             </div>
           </div>
           <div className="plan-ed-hint">soccer tue/thu — kal reads this for coaching tone, not math</div>
-          <button className="btn-dark plan-ed-save" onClick={saveLegs} disabled={pending}>
-            {saveLabel}
+          <button className="btn-dark plan-ed-save" onClick={saveLegs} disabled={cardPending("legs")}>
+            {saveLabel("legs")}
           </button>
         </div>
       )}
