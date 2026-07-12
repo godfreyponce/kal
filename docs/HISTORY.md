@@ -71,6 +71,49 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Plan screen Phase 2 (2026-07-12) — MERGED to main, owner-accepted; deploy pending
+
+The 3D figure + weight-trend build over Phase 1's core. Spec: build-order item 2 of
+`docs/superpowers/specs/2026-07-11-plan-screen-design.md`; visual source of truth
+`design/plan-figure.html` (scene PORTED constant-by-constant, not reinvented). Plan:
+`docs/superpowers/plans/2026-07-12-plan-screen-phase2.md`. Built subagent-driven (Sonnet
+workers + per-task reviews + Fable-model whole-branch final review), 16 commits
+(ae2ed43..d64d32d). Suite 102→118 (21 files).
+
+- **Figure island** — `app/plan/figure-canvas.tsx` ("use client", default export, mounted
+  via `next/dynamic ssr:false` so three@0.185.1 stays in a /plan-only client chunk):
+  procedural clay mannequin, OrbitControls (drag-rotate only, polar-clamped), raycast
+  tap→region, idle rotation (pauses on drag / prefers-reduced-motion, IntersectionObserver
+  render pause), region emissive tint via props (no globals), chips INSIDE the component
+  with per-frame projected leader lines + away-fade (RAF writes style.opacity only — React
+  owns className; the two never fight). Full disposal on unmount, StrictMode-safe.
+- **Profile section** — `app/plan/profile-section.tsx` replaces the flat `profile-form.tsx`
+  (deleted): four region editor cards (head=age/sex, chest=weight/goal+chart,
+  waist=bodyfat/height, legs=activity; default chest), per-card minimal PATCHes, in-flight
+  state scoped per card (`savingRegion`), height rule + inert "use my photos →" pill
+  (Phase 3 marker). Targets footer kept from Phase 1.
+- **Weight trend** — `lib/weigh-ins.ts` (window read) + `lib/trend-geometry.ts` (pure,
+  DB/DOM-free: time-scaled x, goal-stretched padded y-domain, 5-lb gridlines, crosshair
+  snap, recent-log deltas; goalY null at 0 entries — renderer shows text empty state) +
+  `app/plan/weight-trend.tsx` (hover crosshair keyed by DATE so router.refresh re-resolves).
+  90-day window computed in the page loader; no new REST route.
+- **Macros-dim** (deferred #5 item) — meal editor computes baseline/pending Σq×unitKcal
+  client-side (like-with-like, so yield-adjusted foods don't false-dim); strip + editing
+  header show live kcal (header anchored `meal.kcal − baseline + pending` to avoid jump),
+  macros dim @0.35 while pending ≠ baseline. No pre-save banner (owner-approved cut).
+- **Final-review catches (both latent in the design file / plan itself):** OrbitControls'
+  constructor resets `touch-action` to `none` — pan-y must be set AFTER construction, else
+  the island is a phone scroll-trap (design file annotated); dynamic chunk-load failure
+  crashed all of /plan → `import().catch` swaps in `FigureImportFallback` (static chips,
+  no three.js) honoring D5's "editing never depends on 3D".
+- **Verification** — 118/118, tsc clean, `/plan` ƒ, three absent from server chunks;
+  headless-Chrome pass (puppeteer-core + system Chrome; extension was disconnected):
+  WebGL render, live chips, leader projection, chip-tap card switch, macros-dim @0.35
+  computed, zero console errors. Owner phone pass on local network, then accepted;
+  activity-hint copy genericized at acceptance (public repo). Chart-polish follow-ups: #20.
+  Phase 3 (owner photo → GLB model) green-lit at acceptance — photos confirmed with owner
+  before any external upload.
+
 ## Plan screen Phase 1 (2026-07-11..12) — MERGED to main, owner-accepted; deploy pending
 
 The first editing UI for the three data sources everything else reads: profile, meal-plan

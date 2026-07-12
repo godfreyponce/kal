@@ -12,13 +12,13 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 
 ## Now
 
-- **Plan screen (#5) Phase 2 — CODE COMPLETE on branch `plan-screen-phase2`, awaiting OWNER
-  phone pass; NOT merged, NOT deployed.** 3D mannequin island (three@0.185.1, /plan-only
-  chunk) + per-region editor cards + weight-trend chart + macros-dim. 14 commits, 118/118,
-  tsc clean, /plan ƒ; headless browser pass done. Phone pass must cover: vertical-swipe
-  scroll on the canvas, reduced-motion, and the chart (log a weigh-in first — DB window is
-  empty). Phase 1 merged to main earlier 2026-07-12 (still undeployed). Phase 3 (owner 3D
-  model) has photos staged, needs service OK. Chart-polish follow-ups: #20.
+- **Plan screen (#5) Phase 2 — ACCEPTED, MERGED to main 2026-07-12; NOT deployed** (deploy
+  on owner go; Phase 1 also still undeployed — one deploy covers both). 3D mannequin island
+  + region editor cards + weight-trend chart + macros-dim. Detail: docs/HISTORY.md.
+  Chart-polish follow-ups: #20. **Phase 3 IN PROGRESS (owner green-lit 2026-07-12):**
+  photo → 3D model via external image-to-3D service — service being researched/proposed;
+  exact photos must be confirmed with the owner BEFORE any upload; GLB goes to PRIVATE
+  Vercel Blob, never the repo.
 - **Chat deviation copilot — DONE, deployed to prod, owner phone pass ✓** (kal-delta.vercel.app).
 - **v1 SHIPPED, prod live**; owner phone-verification of the 2026-07-07 Groceries "my serving"
   cards still pending.
