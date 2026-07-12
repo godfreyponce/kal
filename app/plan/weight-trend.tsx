@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { buildTrendGeometry, nearestPoint, recentLog, type TrendPoint } from "@/lib/trend-geometry";
+import { buildTrendGeometry, nearestPoint, recentLog } from "@/lib/trend-geometry";
 import type { WeighInView } from "@/lib/weigh-ins";
 
 // Matches the default viewBox (340×132) and PAD_L/PAD_R (10) baked into
@@ -28,7 +28,11 @@ function deltaLabel(delta: number): string {
 // Client-only presentation component: renders Phase 2's weight-trend chart from
 // already-computed geometry (lib/trend-geometry.ts). No fetch, no router.
 export function WeightTrend({ entries, goalWeightLb }: { entries: WeighInView[]; goalWeightLb: number | null }) {
-  const [hovered, setHovered] = useState<TrendPoint | null>(null);
+  // Keyed by date (not the TrendPoint object) so a re-render with new entries
+  // (e.g. router.refresh() after a save while the pointer rests on the chart)
+  // re-resolves the crosshair against the recomputed geometry; a vanished date
+  // degrades to no-crosshair.
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
 
   if (entries.length === 0) {
     return (
@@ -39,6 +43,7 @@ export function WeightTrend({ entries, goalWeightLb }: { entries: WeighInView[];
   }
 
   const geometry = buildTrendGeometry(entries, goalWeightLb);
+  const hovered = hoveredDate ? geometry.points.find((p) => p.date === hoveredDate) ?? null : null;
   const first = geometry.points[0];
   const latest = geometry.points[geometry.points.length - 1];
   const displayPoint = hovered ?? latest;
@@ -53,11 +58,11 @@ export function WeightTrend({ entries, goalWeightLb }: { entries: WeighInView[];
   function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * VIEWBOX_W;
-    setHovered(nearestPoint(geometry.points, x));
+    setHoveredDate(nearestPoint(geometry.points, x)?.date ?? null);
   }
 
   function handlePointerLeave() {
-    setHovered(null);
+    setHoveredDate(null);
   }
 
   return (
