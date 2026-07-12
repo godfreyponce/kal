@@ -33,13 +33,17 @@ export function MemoryList({ facts }: { facts: MemoryFactView[] }) {
 
   async function undo() {
     if (!undoContent) return;
-    await fetch("/api/memory-facts", {
+    if (undoTimer.current) clearTimeout(undoTimer.current); // freeze the snackbar while the re-POST is in flight
+    const res = await fetch("/api/memory-facts", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ content: undoContent }),
     });
+    if (!res.ok) {
+      showUndo(undoContent); // keep the fact recoverable — re-arm the snackbar
+      return;
+    }
     setUndoContent(null);
-    if (undoTimer.current) clearTimeout(undoTimer.current);
     startTransition(() => router.refresh());
   }
 
