@@ -71,6 +71,44 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Plan screen Phase 1 (2026-07-11..12) — MERGED to main, owner-accepted; deploy pending
+
+The first editing UI for the three data sources everything else reads: profile, meal-plan
+template, memory facts. Spec: `docs/superpowers/specs/2026-07-11-plan-screen-design.md`
+(owner picked the "Figure" direction; Phase 1 is the non-3D core — the three-variant mockup
+round lives in `design/plan-variants.html` → `plan-atlas.html` / `plan-figure.html`).
+Plan: `docs/superpowers/plans/2026-07-11-plan-screen-phase1.md`. Built subagent-driven
+(Sonnet workers + per-task reviews + whole-branch final review), 20 commits.
+
+- **Page** — `app/plan/page.tsx` (server, **force-dynamic**, `Promise.all` loader) +
+  `profile-form.tsx`, `meal-plan-editor.tsx`, `memory-list.tsx` (clients, fetch →
+  `startTransition(router.refresh())`, Groceries idiom). Nav pill on Today. CSS `.plan-*`
+  block in `globals.css`.
+- **Libs** — `lib/profile.ts` (singleton read/update; goal_date deliberately dead — owner
+  dropped deadlines; targets NOT writable here), `lib/plan.ts` (plan view; `recomputeTargets`
+  = ONLY runtime writer of `profile.target*`, sums raw macros × qty and rounds once, matching
+  seed `computeTargets`; template mutations all end in recompute), `lib/memory.ts` (facts
+  CRUD, oldest-first), `lib/errors.ts` (**ValidationError→400, NotFoundError→404 — routes
+  map by instanceof, never message text**; owner decision superseding the plan's regex).
+- **REST** — `PATCH /api/profile`; `POST /api/meals`, `PATCH/DELETE /api/meals/[id]`,
+  `PUT /api/meals/[id]/items` with `scope: "today" | "template"` (today = `setMealOverride`,
+  the chat ⇄ engine, ≥1 item; template = `replaceMealItems` + target re-derivation returned
+  as `{old, next}` for the recalc banner); `GET/POST /api/memory-facts`,
+  `PATCH/DELETE /api/memory-facts/[id]`. No auth in routes (proxy gates).
+- **UX contracts** — meal edit defaults to "Just today" (auto-reverts tomorrow, ⇄ marker);
+  every-day shows old→new targets banner; memory delete = immediate + 5s undo snackbar
+  (undo re-POSTs content; clear-all restores the whole batch); profile inputs 16px (iOS
+  zoom), NaN pre-checked client-side (JSON turns NaN→null = silent clears otherwise).
+- **Test infra** — suite 102/102 (19 files); `vitest.config.ts` sets
+  `fileParallelism: false`: profile/meals are live shared singletons and parallel files race
+  (profile snapshot/restore vs system-prompt double-read). Sentinels: `zz test plan
+  2099-06-06` meal, `zz-test-memory-2099:` prefix.
+- **Hardening from review gates** — setMealOverride now 404s unknown meals (was raw FK 500);
+  stale-editingId guard after in-flight saves; undo res.ok gate + re-arm; clearAll in-flight
+  guard; try/catch(+finally) on every client fetch. Known accepted quirks: editing a
+  ⇄-adjusted meal seeds from the TEMPLATE (override-aware seeding ticketed); `var(--surface)`
+  undefined app-wide (plan CSS uses literal #fff; global fix ticketed).
+
 ## Chat deviation copilot (2026-07-08..10) — MERGED to main, owner-accepted; deploy pending
 
 The chat's core mission delivered: when the owner is off-plan (traveling, nothing prepped,

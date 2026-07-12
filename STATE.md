@@ -8,24 +8,18 @@ talks only to `POST /api/chat` + REST routes (swappable brain).
 per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list`). Protocol:
 `AGENTS.md`. Original spec: `~/.claude/plans/okay-so-i-have-zesty-nova.md`.*
 
-**Last updated: 2026-07-11**
+**Last updated: 2026-07-12**
 
 ## Now
 
-- **Plan screen (#5) Phase 1 — BUILT on branch feat/plan-screen-phase1, pending owner review
-  (2026-07-11).** /plan is live locally: profile editor (PATCH /api/profile; goal-date dropped),
-  meal-plan editor with scoped saves (just-today = ⇄ meal_overrides engine; every-day rewrites
-  meal_items and re-derives profile targets), memory-facts manager (delete + undo). New libs:
-  profile/plan/memory/errors (typed ValidationError/NotFoundError). Suite 102/102 (19 files,
-  now sequential — vitest.config.ts), tsc clean, build route ƒ /plan. NOT merged/deployed.
-  Phase 2 next: 3D mannequin profile + weight-trend chart (design/plan-figure.html approved).
-- **Chat deviation copilot — DONE, owner-accepted, DEPLOYED to prod 2026-07-11**
-  (`kal-pihqj89rm` READY, aliased kal-delta.vercel.app; owner phone pass ✓ 2026-07-11).
-  Off-plan knowledge ladder, day-scoped `meal_overrides` (⇄ marker), chat photo attach,
-  prompt caching. Suite 89/89, migration 0005 applied. Detail: docs/HISTORY.md.
-  Closed #3 + #11; follow-ups #12 #13; parked idea #14.
-- **v1 SHIPPED, prod live** at https://kal-delta.vercel.app (Vercel project `kal`); owner
-  phone-verification of the 2026-07-07 Groceries "my serving" cards still pending.
+- **Plan screen (#5) Phase 1 — ACCEPTED, MERGED to main 2026-07-12; NOT deployed** (deploy on
+  owner go). /plan: profile editor, meal editor with scoped saves (just-today ⇄ vs every-day +
+  target re-derivation), memory manager. Detail: docs/HISTORY.md. Follow-up tickets filed at
+  acceptance. **Phase 2 next**: 3D mannequin profile + weight-trend chart per approved
+  design/plan-figure.html; Phase 3 (owner 3D model) has photos staged, needs service OK.
+- **Chat deviation copilot — DONE, deployed to prod, owner phone pass ✓** (kal-delta.vercel.app).
+- **v1 SHIPPED, prod live**; owner phone-verification of the 2026-07-07 Groceries "my serving"
+  cards still pending.
 - **Next up:** the work queue is GitHub Issues. `ready-for-agent` label = owner green-lit;
   unlabeled = confirm with the owner first.
 
@@ -48,6 +42,9 @@ npx tsc --noEmit         # must stay clean
 - `db/seed.ts`'s PROFILE block is the reset-path profile only (owner hand-edited); the live
   profile row differs — reconcile with the owner before touching either.
 - Next 16: `middleware`→`proxy`, `params` is a Promise; neon-http has no interactive txns;
-  Haiku rejects `thinking`/`effort` params; integration tests need per-file sentinel dates.
+  Haiku rejects `thinking`/`effort` params; integration tests need per-file sentinel dates AND
+  run sequentially (vitest.config.ts) — live-DB singleton state races under file parallelism.
+- Routes map errors by type (`ValidationError`→400, `NotFoundError`→404 from lib/errors.ts) —
+  never by message text. `var(--surface)` is consumed app-wide but UNDEFINED (issue filed).
 - This repo is PUBLIC (recruiter-visible) — no env values, credentials, or owner personal data
   in committed files or issues.
