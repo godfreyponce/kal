@@ -80,6 +80,9 @@ describe("setMealOverride", () => {
     await expect(
       setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: -1 }]),
     ).rejects.toThrow(/positive/);
+    await expect(
+      setMealOverride(DATE, 999999, [{ foodId: f1.id, quantity: 1 }]),
+    ).rejects.toThrow(/No meal/);
   });
 });
 

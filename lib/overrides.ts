@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
-import { foods, mealOverrides } from "../db/schema";
-import { ValidationError } from "./errors";
+import { foods, mealOverrides, meals } from "../db/schema";
+import { NotFoundError, ValidationError } from "./errors";
 import { formatMacros, formatPlanLine, resolveItem, sumResolved } from "./resolve-item";
 
 export type OverrideItemInput = { foodId: number; quantity: number };
@@ -55,6 +55,8 @@ export async function setMealOverride(
   items: OverrideItemInput[],
 ): Promise<SetMealOverrideResult> {
   if (items.length === 0) throw new ValidationError("items must be non-empty");
+  const [meal] = await db.select({ id: meals.id }).from(meals).where(eq(meals.id, mealId));
+  if (!meal) throw new NotFoundError(`No meal with id ${mealId}`);
   const rows = await db
     .select()
     .from(foods)
