@@ -170,7 +170,7 @@ export function MealPlanEditor({
                 {adjusted.has(meal.id) && <span className="plan-adjusted" aria-label="adjusted today">⇄</span>}
               </span>
               <span className="plan-meal-end">
-                <span className="plan-meal-kc">{editing ? Math.round(pendingMealKcal) : meal.kcal} kcal</span>
+                <span className="plan-meal-kc">{editing ? Math.round(meal.kcal - baselineMealKcal + pendingMealKcal) : meal.kcal} kcal</span>
                 {!editing && (
                   <button className="plan-edit-btn" onClick={() => beginEdit(meal.id)}>Edit</button>
                 )}
