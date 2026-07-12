@@ -5,12 +5,16 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-// Ported from design/plan-figure.html lines 797-1016 (three.js mannequin scene). Chips,
-// leader-lines, and the per-frame projection (design lines 952-1003, minus the anchors) stay
-// out of this file — Task 6 owns that wiring. This component renders ONLY the canvas (or the
-// WebGL-unavailable fallback text).
+// Ported from design/plan-figure.html lines 797-1016 (three.js mannequin scene) plus
+// 952-1003 (chip rail + projected leader lines). This component renders the canvas (or the
+// WebGL-unavailable fallback text), the chip rail (plain DOM — must render regardless of
+// WebGL success, per the fallback contract), and the leaders SVG whose lines/pins are
+// projected from the scene's hotspot markers every frame. Height rule, photos pill, and
+// note have no per-frame dependency and stay in profile-section.tsx (Task 6 controller
+// adjustment).
 type Region = "head" | "chest" | "waist" | "legs";
 type ClayMesh = THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+const REGIONS: Region[] = ["head", "chest", "waist", "legs"];
 
 type SceneHandles = {
   tintRegion: (region: Region) => void;
@@ -18,9 +22,11 @@ type SceneHandles = {
 };
 
 export default function FigureCanvas({
+  chips,
   selectedRegion,
   onSelectRegion,
 }: {
+  chips: { region: Region; kicker: string; value: string; top: number }[];
   selectedRegion: Region;
   onSelectRegion: (region: Region) => void;
 }) {
@@ -28,6 +34,16 @@ export default function FigureCanvas({
   const sceneRef = useRef<SceneHandles | null>(null);
   const onSelectRegionRef = useRef(onSelectRegion);
   const [failed, setFailed] = useState(false);
+
+  // Leader-line DOM refs (chip buttons, svg, and its line/circle children) — keyed by
+  // region via ref callbacks. Read/written imperatively by the RAF projection loop below;
+  // React only ever manages `className` on these nodes (active/on state), never the
+  // per-frame x1/y1/x2/y2/cx/cy attributes or opacity, so the two never fight over the
+  // same DOM property.
+  const leadersElRef = useRef<SVGSVGElement>(null);
+  const chipElsRef = useRef<Partial<Record<Region, HTMLButtonElement>>>({});
+  const lineElsRef = useRef<Partial<Record<Region, SVGLineElement>>>({});
+  const dotElsRef = useRef<Partial<Record<Region, SVGCircleElement>>>({});
 
   // Keep the "latest" callback ref current without mutating it during render.
   useEffect(() => {
@@ -148,7 +164,7 @@ export default function FigureCanvas({
     shadow.position.y = 0.002;
     scene.add(shadow);
 
-    // hotspot anchors (local coords on the group) — Task 6 projects these onto the leader-line pins
+    // hotspot anchors (local coords on the group) — projected onto the leader-line pins below
     const anchorPositions: Record<Region, THREE.Vector3> = {
       head: new THREE.Vector3(0, 1.575, 0.125),
       chest: new THREE.Vector3(0, 1.19, 0.15),
@@ -224,6 +240,34 @@ export default function FigureCanvas({
     });
     io.observe(wrap);
 
+    // leader lines: fixed callout chips on the rail → projected pins on the body
+    // (design lines 952-1003). Chip geometry (x1/y1, from the chip's own offsetLeft/Top)
+    // is static — measured once, and again whenever the ResizeObserver below fires.
+    const leadersEl = leadersElRef.current;
+    const chipEls = chipElsRef.current;
+    const lineEls = lineElsRef.current;
+    const dotEls = dotElsRef.current;
+    const wv = new THREE.Vector3(),
+      camDir = new THREE.Vector3(),
+      outward = new THREE.Vector3(),
+      axis = new THREE.Vector3();
+
+    type ChipMeta = { c: HTMLButtonElement; line: SVGLineElement; dot: SVGCircleElement; marker: THREE.Object3D };
+    let chipMeta: ChipMeta[] | null = null;
+    let W = wrap.clientWidth;
+    let H = wrap.clientHeight;
+
+    function measureChips() {
+      chipMeta = REGIONS.map((r) => {
+        const c = chipEls[r]!;
+        const line = lineEls[r]!;
+        const dot = dotEls[r]!;
+        line.setAttribute("x1", String(c.offsetLeft + c.offsetWidth + 3));
+        line.setAttribute("y1", String(c.offsetTop + c.offsetHeight / 2));
+        return { c, line, dot, marker: markers[r] };
+      });
+    }
+
     let raf = 0;
     function tick() {
       raf = requestAnimationFrame(tick);
@@ -231,6 +275,31 @@ export default function FigureCanvas({
       if (!interacting && !reduced) group.rotation.y += 0.0035;
       controls.update();
       renderer.render(scene, camera);
+
+      if (!chipMeta) {
+        measureChips();
+        leadersEl?.classList.add("live");
+      }
+      for (const m of chipMeta!) {
+        m.marker.getWorldPosition(wv);
+        axis.set(0, wv.y, 0);
+        outward.copy(wv).sub(axis).normalize();
+        camDir.copy(camera.position).sub(axis).normalize();
+        const facing = outward.dot(camDir);
+        wv.project(camera);
+        const px = ((wv.x + 1) / 2) * W;
+        const py = ((-wv.y + 1) / 2) * H;
+        const away = facing < -0.15;
+        m.line.setAttribute("x2", String(px));
+        m.line.setAttribute("y2", String(py));
+        m.dot.setAttribute("cx", String(px));
+        m.dot.setAttribute("cy", String(py));
+        // Written directly (never via classList) — React owns each element's className
+        // (active/on state) and would clobber a class-based away-fade on re-render.
+        m.line.style.opacity = away ? "0.15" : "0.8";
+        m.dot.style.opacity = away ? "0.15" : "1";
+        m.c.style.opacity = away ? "0.35" : "1";
+      }
     }
     tick();
 
@@ -241,6 +310,9 @@ export default function FigureCanvas({
       camera.aspect = w / h;
       camera.setViewOffset(w, h, RAIL_SHIFT, 0, w, h);
       camera.updateProjectionMatrix();
+      W = w;
+      H = h;
+      chipMeta = null;
     });
     ro.observe(wrap);
 
@@ -268,9 +340,50 @@ export default function FigureCanvas({
     sceneRef.current?.tintRegion(selectedRegion);
   }, [selectedRegion]);
 
-  if (failed) {
-    return <div className="plan-fig-fallback">3d unavailable — needs webgl</div>;
-  }
-
-  return <div ref={wrapRef} className="plan-fig-canvas" />;
+  return (
+    <>
+      {failed ? (
+        <div className="plan-fig-fallback">3d unavailable — needs webgl</div>
+      ) : (
+        <div ref={wrapRef} className="plan-fig-canvas" />
+      )}
+      <svg ref={leadersElRef} className="plan-fig-leaders">
+        {REGIONS.map((r) => (
+          <line
+            key={`line-${r}`}
+            ref={(el) => {
+              lineElsRef.current[r] = el ?? undefined;
+            }}
+            data-region={r}
+          />
+        ))}
+        {REGIONS.map((r) => (
+          <circle
+            key={`dot-${r}`}
+            ref={(el) => {
+              dotElsRef.current[r] = el ?? undefined;
+            }}
+            data-region={r}
+            r={3.5}
+            className={selectedRegion === r ? "on" : undefined}
+          />
+        ))}
+      </svg>
+      {chips.map((chip) => (
+        <button
+          key={chip.region}
+          type="button"
+          ref={(el) => {
+            chipElsRef.current[chip.region] = el ?? undefined;
+          }}
+          className={`plan-fig-chip${selectedRegion === chip.region ? " active" : ""}`}
+          style={{ top: chip.top }}
+          onClick={() => onSelectRegion(chip.region)}
+        >
+          <span className="plan-fig-chip-k">{chip.kicker}</span>
+          <span className="plan-fig-chip-v">{chip.value}</span>
+        </button>
+      ))}
+    </>
+  );
 }

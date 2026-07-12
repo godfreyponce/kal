@@ -1554,11 +1554,22 @@ body {
   position: relative; height: 400px; margin-top: 4px;
   border-radius: 16px; overflow: hidden;
 }
+.plan-fig3d canvas { display: block; }
 .plan-fig-canvas, .plan-fig-loading { position: absolute; inset: 0; }
 .plan-fig-fallback {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
 }
+
+/* projected leader lines from the callout chips to the body's hotspot pins (design 130-134) */
+.plan-fig-leaders {
+  position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+  opacity: 0; transition: opacity 300ms;
+}
+.plan-fig-leaders.live { opacity: 1; }
+.plan-fig-leaders line { stroke: #c9c5bb; stroke-width: 1; stroke-dasharray: 1 3; transition: opacity 250ms; }
+.plan-fig-leaders circle { fill: #fdfcfa; stroke: #b7b3a8; stroke-width: 1.4; transition: opacity 250ms; }
+.plan-fig-leaders circle.on { stroke: var(--accent); }
 
 /* height dimension rule (design lines 100-113) */
 .plan-fig-dim {

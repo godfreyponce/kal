@@ -113,51 +113,33 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
   const cardPending = (r: Region) => pending && savingRegion === r;
   const saveLabel = (r: Region) => (saved ? "Saved ✓" : cardPending(r) ? "Saving…" : "Save profile");
 
+  // Chip values live here (they're derived from `profile` + `form`'s live-saved state);
+  // the chips themselves — and the leader lines that track them onto the body — render
+  // inside FigureCanvas (Task 6), which has no other reason to know about profile fields.
+  const chips: { region: Region; kicker: string; value: string; top: number }[] = [
+    {
+      region: "head",
+      kicker: "AGE, SEX",
+      value: `${profile.age} ${profile.sex.charAt(0).toUpperCase()}`,
+      top: 34,
+    },
+    { region: "chest", kicker: "WEIGHT", value: `${profile.weightLb} lb`, top: 116 },
+    {
+      region: "waist",
+      kicker: "BODY FAT",
+      value: profile.bodyFatPct === null ? "—" : `${profile.bodyFatPct} %`,
+      top: 198,
+    },
+    { region: "legs", kicker: "ACTIVITY", value: profile.activityLevel ?? "—", top: 280 },
+  ];
+
   return (
     <div>
       <div className="plan-fig3d">
-        <FigureCanvas selectedRegion={region} onSelectRegion={selectRegion} />
+        <FigureCanvas chips={chips} selectedRegion={region} onSelectRegion={selectRegion} />
         <div className="plan-fig-dim">
           <span className="plan-fig-dim-label">HEIGHT {profile.heightCm} CM</span>
         </div>
-        <button
-          type="button"
-          className={`plan-fig-chip${region === "head" ? " active" : ""}`}
-          style={{ top: 34 }}
-          onClick={() => selectRegion("head")}
-        >
-          <span className="plan-fig-chip-k">AGE, SEX</span>
-          <span className="plan-fig-chip-v">
-            {profile.age} {profile.sex.charAt(0).toUpperCase()}
-          </span>
-        </button>
-        <button
-          type="button"
-          className={`plan-fig-chip${region === "chest" ? " active" : ""}`}
-          style={{ top: 116 }}
-          onClick={() => selectRegion("chest")}
-        >
-          <span className="plan-fig-chip-k">WEIGHT</span>
-          <span className="plan-fig-chip-v">{profile.weightLb} lb</span>
-        </button>
-        <button
-          type="button"
-          className={`plan-fig-chip${region === "waist" ? " active" : ""}`}
-          style={{ top: 198 }}
-          onClick={() => selectRegion("waist")}
-        >
-          <span className="plan-fig-chip-k">BODY FAT</span>
-          <span className="plan-fig-chip-v">{profile.bodyFatPct === null ? "—" : `${profile.bodyFatPct} %`}</span>
-        </button>
-        <button
-          type="button"
-          className={`plan-fig-chip${region === "legs" ? " active" : ""}`}
-          style={{ top: 280 }}
-          onClick={() => selectRegion("legs")}
-        >
-          <span className="plan-fig-chip-k">ACTIVITY</span>
-          <span className="plan-fig-chip-v">{profile.activityLevel ?? "—"}</span>
-        </button>
         <button type="button" className="plan-fig-mkme" onClick={() => setNoteOpen(!noteOpen)}>
           use my photos →
         </button>
