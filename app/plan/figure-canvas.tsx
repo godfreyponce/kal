@@ -4,6 +4,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+// Type-only — erased at compile time, so this does NOT pull GLTFLoader into the initial
+// chunk. The runtime import is dynamic, inside the load path (see the effect below).
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 // Ported from design/plan-figure.html lines 797-1016 (three.js mannequin scene) plus
 // 952-1003 (chip rail + projected leader lines). This component renders the canvas (or the
@@ -15,6 +18,23 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 type Region = "head" | "chest" | "waist" | "legs";
 type ClayMesh = THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
 const REGIONS: Region[] = ["head", "chest", "waist", "legs"];
+
+// Owner-model placement (Phase 3, D1): the loaded model's bbox TOP is scaled/positioned to
+// meet the mannequin's head-top (head sphere center 1.575 + radius 0.115 * y-scale 1.08 —
+// see the head `part()` call below), bbox BOTTOM lands at the mannequin's mid-thigh line
+// (0.55). The blob shadow stays on the ground — the model hovers there by design.
+const MODEL_TOP_Y = 1.575 + 0.115 * 1.08;
+const MODEL_BOTTOM_Y = 0.55;
+
+// Region y-bands (D2 raycast mapping, D3 anchor centers): fractions of the placed model's
+// world y-range [MODEL_BOTTOM_Y, MODEL_TOP_Y], measured from the top down — head 20%,
+// chest next 30%, waist next 20%, legs bottom 30% (thighs ARE the legs region, per D2).
+const MODEL_BAND_FRACTIONS: Record<Region, [number, number]> = {
+  head: [0, 0.2],
+  chest: [0.2, 0.5],
+  waist: [0.5, 0.7],
+  legs: [0.7, 1],
+};
 
 type SceneHandles = {
   tintRegion: (region: Region) => void;
@@ -191,7 +211,13 @@ export default function FigureCanvas({
 
     // region tinting — prop-driven (design's window.__tintRegion global, lines 929-933)
     let tinted: ClayMesh[] = [];
+    // Phase 3: which body is currently on screen — starts as the mannequin `group`,
+    // swaps to the loaded model on success (D1). Idle rotation + raycast target it;
+    // tintRegion no-ops once the model is active (D2 — single material, no per-part tint).
+    let modelActive = false;
+    let activeBody: THREE.Object3D = group;
     function tintRegion(r: Region) {
+      if (modelActive) return; // D2: one material — tinting would light the whole body
       tinted.forEach((m) => m.material.emissive.setHex(0x000000));
       tinted = meshesByRegion[r];
       tinted.forEach((m) => {
@@ -200,6 +226,17 @@ export default function FigureCanvas({
       });
     }
     sceneRef.current = { tintRegion, markers };
+
+    // D2: single-mesh model has no per-part `userData.region` — map the raycast hit's
+    // world y into the bands above (fractions measured from the top down).
+    function regionForY(y: number): Region {
+      const range = MODEL_TOP_Y - MODEL_BOTTOM_Y;
+      const fracFromTop = Math.min(1, Math.max(0, (MODEL_TOP_Y - y) / range));
+      if (fracFromTop < MODEL_BAND_FRACTIONS.head[1]) return "head";
+      if (fracFromTop < MODEL_BAND_FRACTIONS.chest[1]) return "chest";
+      if (fracFromTop < MODEL_BAND_FRACTIONS.waist[1]) return "waist";
+      return "legs";
+    }
 
     // raycast tap-to-select (distinguish click from drag, design lines 936-950)
     const ray = new THREE.Raycaster();
@@ -216,8 +253,10 @@ export default function FigureCanvas({
       const b = renderer.domElement.getBoundingClientRect();
       ptr.set(((e.clientX - b.left) / b.width) * 2 - 1, -((e.clientY - b.top) / b.height) * 2 + 1);
       ray.setFromCamera(ptr, camera);
-      const hit = ray.intersectObjects(group.children, true)[0];
-      const region = hit?.object.userData.region as Region | undefined;
+      const hit = ray.intersectObjects(activeBody.children, true)[0];
+      const region = modelActive
+        ? hit && regionForY(hit.point.y)
+        : (hit?.object.userData.region as Region | undefined);
       if (region) onSelectRegionRef.current(region);
     }
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
@@ -273,7 +312,7 @@ export default function FigureCanvas({
     function tick() {
       raf = requestAnimationFrame(tick);
       if (!onScreen) return;
-      if (!interacting && !reduced) group.rotation.y += 0.0035;
+      if (!interacting && !reduced) activeBody.rotation.y += 0.0035;
       controls.update();
       renderer.render(scene, camera);
 
@@ -317,7 +356,106 @@ export default function FigureCanvas({
     });
     ro.observe(wrap);
 
+    // Phase 3 (D1/D5): lazy-load the owner's model AFTER the mannequin above has built —
+    // the mannequin renders immediately either way, and the model swaps in if/when it
+    // arrives. `disposed` is the StrictMode guard: if this effect's cleanup already ran by
+    // the time the load resolves, dispose whatever was loaded and bail rather than touch a
+    // torn-down scene.
+    let disposed = false;
+
+    async function loadOwnerModel() {
+      let gltf: GLTF;
+      try {
+        // GLTFLoader + MeshoptDecoder are dynamically imported here, not at module scope,
+        // so they stay out of the initial /plan chunk parse — only fetched once the load
+        // actually starts.
+        const [{ GLTFLoader }, { MeshoptDecoder }] = await Promise.all([
+          import("three/examples/jsm/loaders/GLTFLoader.js"),
+          import("three/examples/jsm/libs/meshopt_decoder.module.js"),
+        ]);
+        if (disposed) return;
+        const loader = new GLTFLoader();
+        loader.setMeshoptDecoder(MeshoptDecoder);
+        gltf = await loader.loadAsync("/api/model");
+      } catch {
+        // Chunk-load failure, 404 (no model uploaded), 500 (store error), a network
+        // reject, or a glTF parse error all land here — console-silent, mannequin stays,
+        // nothing else changes (the D4 fallback contract).
+        return;
+      }
+      if (disposed) {
+        // Cleanup already ran while the load was in flight — free what we just loaded.
+        gltf.scene.traverse((obj) => {
+          if (!(obj instanceof THREE.Mesh)) return;
+          obj.geometry.dispose();
+          (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((m) => m.dispose());
+        });
+        return;
+      }
+
+      const model = gltf.scene;
+
+      // D1: override every mesh material with the mannequin's clay material. The loaded
+      // materials are never rendered with, so dispose them immediately; the new clay
+      // materials (and the kept geometries) join the cleanup inventory below.
+      model.traverse((obj) => {
+        if (!(obj instanceof THREE.Mesh)) return;
+        geometries.push(obj.geometry);
+        (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((m) => m.dispose());
+        const clayMat = new THREE.MeshStandardMaterial({ color: CLAY, roughness: 0.88, metalness: 0 });
+        materials.push(clayMat);
+        obj.material = clayMat;
+      });
+
+      // D1: scale so the loaded bbox TOP meets the mannequin's head-top and the bbox
+      // BOTTOM meets the mid-thigh line; center x/z on the controls target (0, _, 0).
+      const rawBox = new THREE.Box3().setFromObject(model);
+      const scale = (MODEL_TOP_Y - MODEL_BOTTOM_Y) / (rawBox.max.y - rawBox.min.y);
+      model.scale.setScalar(scale);
+      model.updateMatrixWorld(true);
+      const scaledBox = new THREE.Box3().setFromObject(model);
+      model.position.set(
+        -(scaledBox.max.x + scaledBox.min.x) / 2,
+        MODEL_BOTTOM_Y - scaledBox.min.y,
+        -(scaledBox.max.z + scaledBox.min.z) / 2
+      );
+
+      // Detach the mannequin (its geometry/material are already in `geometries`/
+      // `materials` for cleanup disposal below — not disposed now), attach the model,
+      // and make it the rotating/raycast target from here on.
+      scene.remove(group);
+      model.rotation.y = group.rotation.y; // carry the idle spin over — no visual snap
+      scene.add(model);
+      activeBody = model;
+      modelActive = true;
+
+      model.updateMatrixWorld(true);
+      const finalBox = new THREE.Box3().setFromObject(model);
+
+      // D3: reposition the four existing marker anchors onto the model's band centers —
+      // world y = each band's center (see MODEL_BAND_FRACTIONS), x=0 except legs (offset
+      // like the mannequin's thigh), z = the model's front surface + a small standoff.
+      // worldToLocal re-expresses each in the model's local space so the anchors keep
+      // tracking it through idle rotation, mirroring how the mannequin's anchors are
+      // local children of `group`.
+      const range = MODEL_TOP_Y - MODEL_BOTTOM_Y;
+      const ANCHOR_Z_OFFSET = 0.02; // small standoff past the front surface
+      const bandCenterY = (band: [number, number]) => MODEL_TOP_Y - ((band[0] + band[1]) / 2) * range;
+      const anchorWorld: Record<Region, THREE.Vector3> = {
+        head: new THREE.Vector3(0, bandCenterY(MODEL_BAND_FRACTIONS.head), finalBox.max.z + ANCHOR_Z_OFFSET),
+        chest: new THREE.Vector3(0, bandCenterY(MODEL_BAND_FRACTIONS.chest), finalBox.max.z + ANCHOR_Z_OFFSET),
+        waist: new THREE.Vector3(0, bandCenterY(MODEL_BAND_FRACTIONS.waist), finalBox.max.z + ANCHOR_Z_OFFSET),
+        legs: new THREE.Vector3(0.08, bandCenterY(MODEL_BAND_FRACTIONS.legs), finalBox.max.z + ANCHOR_Z_OFFSET),
+      };
+      for (const r of REGIONS) {
+        model.add(markers[r]); // reparents from `group`
+        markers[r].position.copy(model.worldToLocal(anchorWorld[r]));
+      }
+    }
+    void loadOwnerModel();
+
     return () => {
+      disposed = true;
       cancelAnimationFrame(raf);
       io.disconnect();
       ro.disconnect();
