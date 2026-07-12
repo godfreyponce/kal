@@ -15,6 +15,7 @@ export function MemoryList({ facts }: { facts: MemoryFactView[] }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
   const [undoContents, setUndoContents] = useState<string[] | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const undoing = useRef(false);
@@ -93,6 +94,8 @@ export function MemoryList({ facts }: { facts: MemoryFactView[] }) {
   }
 
   async function clearAll() {
+    if (clearing) return;
+    setClearing(true);
     setError(null);
     const deleted: string[] = [];
     try {
@@ -101,7 +104,9 @@ export function MemoryList({ facts }: { facts: MemoryFactView[] }) {
         if (res.ok) deleted.push(fact.content);
       }
     } catch {
-      setError("network error — try again");
+      setError(`network error — cleared ${deleted.length} of ${facts.length} facts`);
+    } finally {
+      setClearing(false);
     }
     if (deleted.length > 0) {
       showUndo(deleted);
@@ -143,7 +148,7 @@ export function MemoryList({ facts }: { facts: MemoryFactView[] }) {
       {facts.length === 0 && <div className="plan-fact-empty">kal has no memories yet</div>}
 
       {facts.length > 0 && (
-        <button className="plan-clear-all" onClick={clearAll}>clear all memory</button>
+        <button className="plan-clear-all" onClick={clearAll} disabled={clearing}>clear all memory</button>
       )}
 
       {undoContents && (
