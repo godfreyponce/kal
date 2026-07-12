@@ -78,6 +78,7 @@ export default async function TodayPage() {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
           <div style={{ display: "flex", gap: 8 }}>
             <SignOut />
+            <Link href="/plan" className="chat-link">Plan</Link>
             <Link href="/groceries" className="chat-link">Groceries</Link>
             <Link href="/chat" className="chat-link">Chat →</Link>
           </div>

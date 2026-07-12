@@ -1370,3 +1370,35 @@ body {
 .gr-photo-field { display: flex; gap: 10px; align-items: flex-start; }
 .gr-photo-preview { width: 56px; height: 56px; flex-shrink: 0; object-fit: contain; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
 .gr-photo-controls { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+
+/* ===== Plan screen (app/plan) ===== */
+.plan section { margin-top: 22px; }
+.plan-sec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.plan-kicker {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--faint);
+}
+.plan-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 13px 14px;
+}
+.plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.plan-lbl {
+  display: block; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: 3px;
+}
+.plan-inp {
+  font-family: var(--font-mono); font-size: 16px; font-variant-numeric: tabular-nums;
+  color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 7px;
+  padding: 7px 9px; width: 100%;
+}
+.plan-inp:focus { outline: 2px solid rgba(217, 119, 87, 0.4); outline-offset: 1px; border-color: var(--accent); }
+.plan-targets {
+  background: var(--surface-2); border-radius: 10px; padding: 9px 12px; margin-top: 12px;
+}
+.plan-targets-v { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.plan-targets-v b { font-weight: 500; }
+.mac-p { color: var(--protein); }
+.mac-c { color: var(--carbs); }
+.mac-f { color: var(--fat); }
+.plan-save { margin-top: 12px; }
