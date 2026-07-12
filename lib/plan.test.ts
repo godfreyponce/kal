@@ -59,3 +59,55 @@ describe("recomputeTargets", () => {
     expect(row.targetKcal).toBe(res.next.kcal);
   });
 });
+
+describe("replaceMealItems (template scope)", () => {
+  it("replaces items and re-derives targets", async () => {
+    const f = await firstFood();
+    const { id } = await createMeal({ name: TEST_MEAL, timeHint: "test hint" });
+    const base = await recomputeTargets();
+    const res = await replaceMealItems(id, [{ foodId: f.id, quantity: 3 }]);
+    expect(res.next.kcal).toBe(base.next.kcal + 3 * f.kcal);
+    const view = await getPlanView();
+    const m = view.meals.find((x) => x.id === id)!;
+    expect(m.items).toHaveLength(1);
+    expect(m.items[0].foodId).toBe(f.id);
+    expect(m.timeHint).toBe("test hint");
+    // replace again — last write wins
+    const res2 = await replaceMealItems(id, []);
+    expect(res2.next.kcal).toBe(base.next.kcal);
+  });
+
+  it("rejects unknown meals, unknown foods, and bad quantities", async () => {
+    const f = await firstFood();
+    await expect(replaceMealItems(999999, [{ foodId: f.id, quantity: 1 }])).rejects.toThrow(/No meal/);
+    const { id } = await createMeal({ name: TEST_MEAL });
+    await expect(replaceMealItems(id, [{ foodId: 999999, quantity: 1 }])).rejects.toThrow(/No food/);
+    await expect(replaceMealItems(id, [{ foodId: f.id, quantity: 0 }])).rejects.toThrow(/positive/);
+  });
+});
+
+describe("meal CRUD", () => {
+  it("createMeal appends with the next sortOrder; updateMeal renames", async () => {
+    const { id } = await createMeal({ name: TEST_MEAL });
+    const view = await getPlanView();
+    const created = view.meals.find((m) => m.id === id)!;
+    expect(created.sortOrder).toBe(Math.max(...view.meals.map((m) => m.sortOrder)));
+    await updateMeal(id, { name: `${TEST_MEAL} renamed`, timeHint: null });
+    const after = (await getPlanView()).meals.find((m) => m.id === id)!;
+    expect(after.name).toBe(`${TEST_MEAL} renamed`);
+    expect(after.timeHint).toBeNull();
+    expect(await updateMeal(999999, { name: "x" })).toBeNull();
+  });
+
+  it("deleteMeal cascades items and re-derives targets", async () => {
+    const f = await firstFood();
+    const { id } = await createMeal({ name: TEST_MEAL });
+    const base = await recomputeTargets();
+    await replaceMealItems(id, [{ foodId: f.id, quantity: 2 }]);
+    const res = await deleteMeal(id);
+    expect(res.next.kcal).toBe(base.next.kcal);
+    const view = await getPlanView();
+    expect(view.meals.find((m) => m.id === id)).toBeUndefined();
+    await expect(deleteMeal(id)).rejects.toThrow(/No meal/);
+  });
+});
