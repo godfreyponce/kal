@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { ValidationError } from "@/lib/errors";
 import { updateProfile, type ProfilePatch } from "@/lib/profile";
 
 // PATCH /api/profile — partial update of the singleton profile row.
@@ -24,7 +25,7 @@ export async function PATCH(req: NextRequest) {
   try {
     return Response.json(await updateProfile(patch));
   } catch (err) {
-    if (err instanceof Error && /must|empty|required/.test(err.message)) {
+    if (err instanceof ValidationError) {
       return Response.json({ error: err.message }, { status: 400 });
     }
     throw err;

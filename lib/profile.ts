@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { profile } from "../db/schema";
+import { ValidationError } from "./errors";
 
 export type ProfileView = {
   heightCm: number;
@@ -50,21 +51,21 @@ export async function updateProfile(patch: ProfilePatch): Promise<ProfileView> {
   const set: Partial<typeof profile.$inferInsert> = {};
   if (patch.heightCm !== undefined) {
     if (!Number.isInteger(patch.heightCm) || patch.heightCm <= 0)
-      throw new Error("heightCm must be a positive integer");
+      throw new ValidationError("heightCm must be a positive integer");
     set.heightCm = patch.heightCm;
   }
   if (patch.weightLb !== undefined) {
     if (!Number.isFinite(patch.weightLb) || patch.weightLb <= 0)
-      throw new Error("weightLb must be positive");
+      throw new ValidationError("weightLb must be positive");
     set.weightLb = String(patch.weightLb);
   }
   if (patch.age !== undefined) {
     if (!Number.isInteger(patch.age) || patch.age <= 0)
-      throw new Error("age must be a positive integer");
+      throw new ValidationError("age must be a positive integer");
     set.age = patch.age;
   }
   if (patch.sex !== undefined) {
-    if (!patch.sex.trim()) throw new Error("sex must be non-empty");
+    if (!patch.sex.trim()) throw new ValidationError("sex must be non-empty");
     set.sex = patch.sex.trim();
   }
   if (patch.bodyFatPct !== undefined) {
@@ -72,18 +73,18 @@ export async function updateProfile(patch: ProfilePatch): Promise<ProfileView> {
       patch.bodyFatPct !== null &&
       (!Number.isFinite(patch.bodyFatPct) || patch.bodyFatPct <= 0 || patch.bodyFatPct >= 100)
     )
-      throw new Error("bodyFatPct must be between 0 and 100");
+      throw new ValidationError("bodyFatPct must be between 0 and 100");
     set.bodyFatPct = patch.bodyFatPct === null ? null : String(patch.bodyFatPct);
   }
   if (patch.goalWeightLb !== undefined) {
     if (patch.goalWeightLb !== null && (!Number.isFinite(patch.goalWeightLb) || patch.goalWeightLb <= 0))
-      throw new Error("goalWeightLb must be positive");
+      throw new ValidationError("goalWeightLb must be positive");
     set.goalWeightLb = patch.goalWeightLb === null ? null : String(patch.goalWeightLb);
   }
   if (patch.activityLevel !== undefined) {
     set.activityLevel = patch.activityLevel === null ? null : patch.activityLevel.trim() || null;
   }
-  if (Object.keys(set).length === 0) throw new Error("empty patch");
+  if (Object.keys(set).length === 0) throw new ValidationError("empty patch");
   await db.update(profile).set(set).where(eq(profile.id, 1));
   return getProfile();
 }

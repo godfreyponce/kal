@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import { foods, mealOverrides } from "../db/schema";
+import { ValidationError } from "./errors";
 import { formatMacros, formatPlanLine, resolveItem, sumResolved } from "./resolve-item";
 
 export type OverrideItemInput = { foodId: number; quantity: number };
@@ -53,15 +54,15 @@ export async function setMealOverride(
   mealId: number,
   items: OverrideItemInput[],
 ): Promise<SetMealOverrideResult> {
-  if (items.length === 0) throw new Error("items must be non-empty");
+  if (items.length === 0) throw new ValidationError("items must be non-empty");
   const rows = await db
     .select()
     .from(foods)
     .where(inArray(foods.id, items.map((i) => i.foodId)));
   const byId = new Map(rows.map((r) => [r.id, r]));
   for (const it of items) {
-    if (!byId.has(it.foodId)) throw new Error(`No food with id ${it.foodId}`);
-    if (!(it.quantity > 0)) throw new Error("quantity must be positive");
+    if (!byId.has(it.foodId)) throw new ValidationError(`No food with id ${it.foodId}`);
+    if (!(it.quantity > 0)) throw new ValidationError("quantity must be positive");
   }
 
   const writeBatchId = randomUUID();

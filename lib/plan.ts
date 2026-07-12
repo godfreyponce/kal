@@ -2,6 +2,7 @@
 import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import { foods, mealItems, meals, profile } from "../db/schema";
+import { NotFoundError, ValidationError } from "./errors";
 import { resolveItem } from "./resolve-item";
 
 export type PlanItemView = {
@@ -30,6 +31,26 @@ export type PlanTargets = { kcal: number; proteinG: number; carbsG: number; fatG
 export type PlanView = { meals: PlanMealView[]; totals: PlanTargets };
 export type RetargetResult = { old: PlanTargets; next: PlanTargets };
 export type PlanItemInput = { foodId: number; quantity: number };
+
+/** Sum raw food macros × qty, round ONCE at the end (matches computeTargets in db/seed-data.ts). */
+function sumRawMacros(
+  rows: Array<{ quantity: string; kcal: number; proteinG: string; carbsG: string; fatG: string }>,
+): PlanTargets {
+  const t = { kcal: 0, p: 0, c: 0, f: 0 };
+  for (const r of rows) {
+    const q = Number(r.quantity);
+    t.kcal += r.kcal * q;
+    t.p += Number(r.proteinG) * q;
+    t.c += Number(r.carbsG) * q;
+    t.f += Number(r.fatG) * q;
+  }
+  return {
+    kcal: Math.round(t.kcal),
+    proteinG: Math.round(t.p),
+    carbsG: Math.round(t.c),
+    fatG: Math.round(t.f),
+  };
+}
 
 export async function getPlanView(): Promise<PlanView> {
   const [mealRows, itemRows] = await Promise.all([
@@ -89,15 +110,6 @@ export async function getPlanView(): Promise<PlanView> {
 
   // Totals use the seed's rule: sum raw food macros × qty, round ONCE at the end
   // (matches computeTargets in db/seed-data.ts, so plan totals == derived targets).
-  const t = { kcal: 0, p: 0, c: 0, f: 0 };
-  for (const r of itemRows) {
-    const q = Number(r.quantity);
-    t.kcal += r.kcal * q;
-    t.p += Number(r.proteinG) * q;
-    t.c += Number(r.carbsG) * q;
-    t.f += Number(r.fatG) * q;
-  }
-
   return {
     meals: mealRows.map((m) => {
       const items = byMeal.get(m.id) ?? [];
@@ -110,12 +122,7 @@ export async function getPlanView(): Promise<PlanView> {
         kcal: items.reduce((s, i) => s + i.kcal, 0),
       };
     }),
-    totals: {
-      kcal: Math.round(t.kcal),
-      proteinG: Math.round(t.p),
-      carbsG: Math.round(t.c),
-      fatG: Math.round(t.f),
-    },
+    totals: sumRawMacros(itemRows),
   };
 }
 
@@ -131,21 +138,8 @@ export async function recomputeTargets(): Promise<RetargetResult> {
     })
     .from(mealItems)
     .innerJoin(foods, eq(mealItems.foodId, foods.id));
-  const t = { kcal: 0, p: 0, c: 0, f: 0 };
-  for (const r of rows) {
-    const q = Number(r.quantity);
-    t.kcal += r.kcal * q;
-    t.p += Number(r.proteinG) * q;
-    t.c += Number(r.carbsG) * q;
-    t.f += Number(r.fatG) * q;
-  }
   const [prev] = await db.select().from(profile).where(eq(profile.id, 1));
-  const next: PlanTargets = {
-    kcal: Math.round(t.kcal),
-    proteinG: Math.round(t.p),
-    carbsG: Math.round(t.c),
-    fatG: Math.round(t.f),
-  };
+  const next: PlanTargets = sumRawMacros(rows);
   await db
     .update(profile)
     .set({
@@ -168,7 +162,7 @@ export async function recomputeTargets(): Promise<RetargetResult> {
 
 async function assertItemsValid(items: PlanItemInput[]) {
   for (const it of items) {
-    if (!(it.quantity > 0)) throw new Error("quantity must be positive");
+    if (!(it.quantity > 0)) throw new ValidationError("quantity must be positive");
   }
   if (items.length === 0) return;
   const rows = await db
@@ -177,7 +171,7 @@ async function assertItemsValid(items: PlanItemInput[]) {
     .where(inArray(foods.id, items.map((i) => i.foodId)));
   const have = new Set(rows.map((r) => r.id));
   for (const it of items) {
-    if (!have.has(it.foodId)) throw new Error(`No food with id ${it.foodId}`);
+    if (!have.has(it.foodId)) throw new ValidationError(`No food with id ${it.foodId}`);
   }
 }
 
@@ -185,7 +179,7 @@ async function assertItemsValid(items: PlanItemInput[]) {
  *  Empty items = the meal stays but contributes nothing. */
 export async function replaceMealItems(mealId: number, items: PlanItemInput[]): Promise<RetargetResult> {
   const [meal] = await db.select({ id: meals.id }).from(meals).where(eq(meals.id, mealId));
-  if (!meal) throw new Error(`No meal with id ${mealId}`);
+  if (!meal) throw new NotFoundError(`No meal with id ${mealId}`);
   await assertItemsValid(items);
   await db.delete(mealItems).where(eq(mealItems.mealId, mealId));
   if (items.length > 0) {
@@ -198,7 +192,7 @@ export async function replaceMealItems(mealId: number, items: PlanItemInput[]): 
 
 export async function createMeal(input: { name: string; timeHint?: string | null }): Promise<{ id: number }> {
   const name = input.name?.trim();
-  if (!name) throw new Error("name required");
+  if (!name) throw new ValidationError("name required");
   const rows = await db.select({ sortOrder: meals.sortOrder }).from(meals);
   const nextSort = rows.length === 0 ? 1 : Math.max(...rows.map((r) => r.sortOrder)) + 1;
   const [row] = await db
@@ -214,11 +208,11 @@ export async function updateMeal(
 ): Promise<{ id: number } | null> {
   const set: Partial<typeof meals.$inferInsert> = {};
   if (patch.name !== undefined) {
-    if (!patch.name.trim()) throw new Error("name required");
+    if (!patch.name.trim()) throw new ValidationError("name required");
     set.name = patch.name.trim();
   }
   if (patch.timeHint !== undefined) set.timeHint = patch.timeHint?.trim() || null;
-  if (Object.keys(set).length === 0) throw new Error("empty patch");
+  if (Object.keys(set).length === 0) throw new ValidationError("empty patch");
   const rows = await db.update(meals).set(set).where(eq(meals.id, id)).returning({ id: meals.id });
   return rows[0] ?? null;
 }
@@ -226,6 +220,6 @@ export async function updateMeal(
 /** Delete a meal (items cascade; day rows cascade; logs keep with meal_id null). */
 export async function deleteMeal(id: number): Promise<RetargetResult> {
   const rows = await db.delete(meals).where(eq(meals.id, id)).returning({ id: meals.id });
-  if (rows.length === 0) throw new Error(`No meal with id ${id}`);
+  if (rows.length === 0) throw new NotFoundError(`No meal with id ${id}`);
   return recomputeTargets();
 }

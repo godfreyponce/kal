@@ -23,7 +23,7 @@ beforeAll(async () => {
 
 async function cleanup() {
   await db.delete(meals).where(like(meals.name, `${TEST_MEAL}%`)); // meal_items cascade
-  await db.update(profile).set(targetSnapshot).where(eq(profile.id, 1));
+  if (targetSnapshot) await db.update(profile).set(targetSnapshot).where(eq(profile.id, 1));
 }
 afterEach(cleanup);
 afterAll(cleanup);
