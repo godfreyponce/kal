@@ -8,15 +8,48 @@ import type { ProfileView } from "@/lib/profile";
 import type { WeighInView } from "@/lib/weigh-ins";
 import { WeightTrend } from "./weight-trend";
 
+type Region = "head" | "chest" | "waist" | "legs";
+
+// D5 fallback: if the figure-canvas chunk fails to load (flaky network, stale post-deploy
+// HTML — this is a PWA), degrade to the same chips as plain DOM instead of throwing and
+// taking down all of /plan (there is no error.tsx). Same props signature as FigureCanvas so
+// the dynamic import's .catch() can swap it in without the caller knowing.
+function FigureImportFallback({
+  chips,
+  selectedRegion,
+  onSelectRegion,
+}: {
+  chips: { region: Region; kicker: string; value: string; top: number }[];
+  selectedRegion: Region;
+  onSelectRegion: (region: Region) => void;
+}) {
+  return (
+    <>
+      <div className="plan-fig-fallback">3d unavailable</div>
+      {chips.map((chip) => (
+        // duplicated from figure-canvas deliberately: this path must not import three.js
+        <button
+          key={chip.region}
+          type="button"
+          className={`plan-fig-chip${selectedRegion === chip.region ? " active" : ""}`}
+          style={{ top: chip.top }}
+          onClick={() => onSelectRegion(chip.region)}
+        >
+          <span className="plan-fig-chip-k">{chip.kicker}</span>
+          <span className="plan-fig-chip-v">{chip.value}</span>
+        </button>
+      ))}
+    </>
+  );
+}
+
 // Phase 2: the flat form (profile-form.tsx, deleted) becomes a 3D figure + chip rail +
 // one swapping region editor card. The mannequin scene (Task 5) mounts into .plan-fig3d;
 // chips are DOM siblings and already work — Task 6 moves them onto the figure itself.
-const FigureCanvas = dynamic(() => import("./figure-canvas"), {
+const FigureCanvas = dynamic(() => import("./figure-canvas").catch(() => ({ default: FigureImportFallback })), {
   ssr: false,
   loading: () => <div className="plan-fig-loading" />,
 });
-
-type Region = "head" | "chest" | "waist" | "legs";
 
 export function ProfileSection({ profile, weighIns }: { profile: ProfileView; weighIns: WeighInView[] }) {
   const router = useRouter();
