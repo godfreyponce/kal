@@ -1379,7 +1379,8 @@ body {
   text-transform: uppercase; color: var(--faint);
 }
 .plan-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  /* literal #fff like .gcard — var(--surface) is consumed app-wide but never defined (pre-existing gap) */
+  background: #fff; border: 1px solid var(--border); border-radius: 14px;
   padding: 13px 14px;
 }
 .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
