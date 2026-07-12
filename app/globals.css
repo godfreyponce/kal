@@ -1526,3 +1526,8 @@ body {
   display: flex; align-items: center; gap: 14px; z-index: 50;
 }
 .plan-snack button { background: none; border: none; color: var(--accent); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; cursor: pointer; }
+.plan-clear-all {
+  width: 100%; margin-top: 14px; background: none; border: none; cursor: pointer;
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint);
+}
+.plan-clear-all:hover { color: var(--protein); }

@@ -70,20 +70,25 @@ export function MealPlanEditor({
     const mealId = editingId;
     setSaving(true);
     setError(null);
-    const res = await fetch(`/api/meals/${mealId}/items`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ scope, items: items.filter((i) => i.quantity > 0).map((i) => ({ foodId: i.foodId, quantity: i.quantity })) }),
-    });
-    setSaving(false);
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError(body.error ?? "save failed");
-      return;
+    try {
+      const res = await fetch(`/api/meals/${mealId}/items`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scope, items: items.filter((i) => i.quantity > 0).map((i) => ({ foodId: i.foodId, quantity: i.quantity })) }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body.error ?? "save failed");
+        return;
+      }
+      if (body.scope === "template") setBanner(body.targets);
+      setEditingId((cur) => (cur === mealId ? null : cur));
+      startTransition(() => router.refresh());
+    } catch {
+      setError("network error — try again");
+    } finally {
+      setSaving(false);
     }
-    if (body.scope === "template") setBanner(body.targets);
-    setEditingId((cur) => (cur === mealId ? null : cur));
-    startTransition(() => router.refresh());
   }
 
   async function removeMeal() {
@@ -93,33 +98,45 @@ export function MealPlanEditor({
       return;
     }
     const mealId = editingId;
-    const res = await fetch(`/api/meals/${mealId}`, { method: "DELETE" });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError(body.error ?? "delete failed");
-      return;
+    try {
+      const res = await fetch(`/api/meals/${mealId}`, { method: "DELETE" });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body.error ?? "delete failed");
+        return;
+      }
+      setBanner(body.targets);
+      setEditingId((cur) => (cur === mealId ? null : cur));
+      startTransition(() => router.refresh());
+    } catch {
+      setError("network error — try again");
     }
-    setBanner(body.targets);
-    setEditingId((cur) => (cur === mealId ? null : cur));
-    startTransition(() => router.refresh());
   }
 
   async function addMeal() {
     if (!newMeal.name.trim()) return;
-    const res = await fetch("/api/meals", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: newMeal.name, timeHint: newMeal.timeHint || null }),
-    });
-    if (res.ok) {
+    try {
+      const res = await fetch("/api/meals", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: newMeal.name, timeHint: newMeal.timeHint || null }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "add failed");
+        return;
+      }
       setAddingMeal(false);
       setNewMeal({ name: "", timeHint: "" });
       startTransition(() => router.refresh());
+    } catch {
+      setError("network error — try again");
     }
   }
 
   return (
     <div>
+      {error && <div className="gr-error">{error}</div>}
       <div className="plan-totals">
         <span>PLAN <b>{plan.totals.kcal}</b> KCAL</span>
         <span>
@@ -174,7 +191,6 @@ export function MealPlanEditor({
 
             {editing && (
               <div className="plan-edit">
-                {error && <div className="gr-error">{error}</div>}
                 {items.map((it, idx) => (
                   <div className="plan-edit-row" key={it.foodId}>
                     <span className="plan-food-mid">

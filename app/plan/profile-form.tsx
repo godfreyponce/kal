@@ -29,26 +29,45 @@ export function ProfileForm({ profile }: { profile: ProfileView }) {
 
   async function save() {
     setError(null);
-    const res = await fetch("/api/profile", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        weightLb: Number(form.weightLb),
-        goalWeightLb: form.goalWeightLb === "" ? null : Number(form.goalWeightLb),
-        heightCm: Number(form.heightCm),
-        age: Number(form.age),
-        sex: form.sex,
-        bodyFatPct: form.bodyFatPct === "" ? null : Number(form.bodyFatPct),
-        activityLevel: form.activityLevel || null,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "save failed");
+    const weightLb = Number(form.weightLb);
+    const heightCm = Number(form.heightCm);
+    const age = Number(form.age);
+    const bodyFatPct = form.bodyFatPct === "" ? null : Number(form.bodyFatPct);
+    const goalWeightLb = form.goalWeightLb === "" ? null : Number(form.goalWeightLb);
+    if (
+      Number.isNaN(weightLb) ||
+      Number.isNaN(heightCm) ||
+      Number.isNaN(age) ||
+      (bodyFatPct !== null && Number.isNaN(bodyFatPct)) ||
+      (goalWeightLb !== null && Number.isNaN(goalWeightLb))
+    ) {
+      setError("check the number fields — something isn't a number");
       return;
     }
-    setSaved(true);
-    startTransition(() => router.refresh());
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          weightLb,
+          goalWeightLb,
+          heightCm,
+          age,
+          sex: form.sex,
+          bodyFatPct,
+          activityLevel: form.activityLevel || null,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "save failed");
+        return;
+      }
+      setSaved(true);
+      startTransition(() => router.refresh());
+    } catch {
+      setError("network error — try again");
+    }
   }
 
   return (
