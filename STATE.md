@@ -12,9 +12,9 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 
 ## Now
 
-- **Plan screen (#5) — ALL THREE PHASES ACCEPTED + MERGED to main 2026-07-12; NOT
-  deployed** (deploy on owner go — one deploy ships the whole /plan: editors, 3D figure +
-  weight chart + macros-dim, owner model). Owner model: private kal-private Blob store →
+- **Plan screen (#5) — COMPLETE and DEPLOYED to prod 2026-07-12** (kal-delta.vercel.app,
+  commit f7c4f66; smoke: login 200, /api/model unauth 401, gated routes 307). Owner
+  phone-verify of prod /plan pending. Owner model: private kal-private Blob store →
   GET /api/model → figure swap-in, mannequin fallback (re-uploads take ≤1h, cache).
   Detail: docs/HISTORY.md. Follow-ups: #20 chart polish, #21 texture-dispose hardening.
   Owner hygiene pending: delete Rodin uploads, cancel the $6 Creator plan.
