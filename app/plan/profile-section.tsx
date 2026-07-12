@@ -277,7 +277,7 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
               <input className="plan-ed-inp" value={form.activityLevel} onChange={set("activityLevel")} />
             </div>
           </div>
-          <div className="plan-ed-hint">soccer tue/thu — kal reads this for coaching tone, not math</div>
+          <div className="plan-ed-hint">kal reads this for coaching tone, not math</div>
           <button className="btn-dark plan-ed-save" onClick={saveLegs} disabled={cardPending("legs")}>
             {saveLabel("legs")}
           </button>
