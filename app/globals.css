@@ -1548,3 +1548,75 @@ body {
 .plan-tr-log > div { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); padding: 4px 0; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
 .plan-tr-log em { font-style: normal; color: var(--faint); margin-left: 6px; }
 .plan-tr-empty { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; color: var(--faint); }
+
+/* Plan — profile figure placeholder + region editor cards (Phase 2, design/plan-figure.html) */
+.plan-fig3d {
+  position: relative; height: 400px; margin-top: 4px;
+  border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+  background: #fff;
+}
+.plan-fig-placeholder {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--faint);
+}
+
+/* height dimension rule (design lines 100-113) */
+.plan-fig-dim {
+  position: absolute; right: 12px; top: 26px; bottom: 40px; width: 1px;
+  background: #b7b3a8; pointer-events: none;
+}
+.plan-fig-dim::before, .plan-fig-dim::after {
+  content: ""; position: absolute; left: -5px; width: 11px; height: 1px; background: #b7b3a8;
+}
+.plan-fig-dim::before { top: 0; }
+.plan-fig-dim::after { bottom: 0; }
+.plan-fig-dim-label {
+  position: absolute; right: -4px; top: 50%;
+  transform: rotate(-90deg) translateX(50%); transform-origin: right center;
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.12em; color: var(--faint);
+  white-space: nowrap; pointer-events: none;
+}
+
+/* fixed callout chips (design lines 117-129) */
+.plan-fig-chip {
+  position: absolute; left: 10px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0;
+  background: rgba(253, 252, 250, 0.92);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 4px 9px 3px; cursor: pointer;
+  transition: opacity 250ms, border-color 150ms;
+  box-shadow: 0 1px 2px rgba(60, 50, 40, 0.08);
+}
+.plan-fig-chip-k { font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+.plan-fig-chip-v { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.plan-fig-chip.active { border-color: var(--accent); }
+.plan-fig-chip.active .plan-fig-chip-k, .plan-fig-chip.active .plan-fig-chip-v { color: var(--accent); }
+
+/* your-model affordance (design lines 166-174) */
+.plan-fig-mkme {
+  position: absolute; right: 10px; bottom: 10px;
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--muted); background: rgba(253, 252, 250, 0.92);
+  border: 1px solid var(--border); border-radius: 9999px; padding: 5px 10px; cursor: pointer;
+}
+.plan-fig-mkme:hover { color: var(--accent); border-color: var(--accent); }
+.plan-fig-mkme-note { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); line-height: 1.7; padding: 8px 2px 0; }
+
+/* editor card under the figure (design lines 141-163) */
+.plan-ed {
+  background: #fff; border: 1px solid var(--border); border-radius: 14px;
+  padding: 13px 14px; margin-top: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 1px 2px rgba(60, 50, 40, 0.06);
+}
+.plan-ed-k { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); margin-bottom: 9px; }
+.plan-ed-frow { display: flex; gap: 8px; }
+.plan-ed-fld { flex: 1; }
+.plan-ed-lbl { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint); margin-bottom: 3px; }
+.plan-ed-inp {
+  font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums;
+  color: var(--ink); background: #fff; border: 1px solid var(--border); border-radius: 7px;
+  padding: 7px 9px; width: 100%;
+}
+.plan-ed-inp:focus { outline: 2px solid rgba(217, 119, 87, 0.4); outline-offset: 1px; border-color: var(--accent); }
+.plan-ed-hint { font-family: var(--font-mono); font-size: 8.5px; color: var(--faint); margin-top: 8px; line-height: 1.6; }
+.plan-ed-save { margin-top: 10px; }

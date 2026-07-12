@@ -6,7 +6,8 @@ import { listMemoryFacts } from "@/lib/memory";
 import { listGroceries } from "@/lib/groceries";
 import { getOverridesForDate } from "@/lib/overrides";
 import { todayInAppTz } from "@/lib/time";
-import { ProfileForm } from "./profile-form";
+import { listWeighIns } from "@/lib/weigh-ins";
+import { ProfileSection } from "./profile-section";
 import { MealPlanEditor } from "./meal-plan-editor";
 import { MemoryList } from "./memory-list";
 
@@ -15,12 +16,16 @@ export const dynamic = "force-dynamic";
 
 export default async function PlanPage() {
   const today = todayInAppTz();
-  const [profile, plan, facts, groceries, overrides] = await Promise.all([
+  const d = new Date(today + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() - 90);
+  const since = d.toISOString().slice(0, 10);
+  const [profile, plan, facts, groceries, overrides, weighIns] = await Promise.all([
     getProfile(),
     getPlanView(),
     listMemoryFacts(),
     listGroceries(),
     getOverridesForDate(today),
+    listWeighIns(since),
   ]);
   const adjustedMealIds = Array.from(overrides.keys());
 
@@ -39,7 +44,7 @@ export default async function PlanPage() {
         <div className="plan-sec-head">
           <span className="plan-kicker">Profile</span>
         </div>
-        <ProfileForm profile={profile} />
+        <ProfileSection profile={profile} weighIns={weighIns} />
       </section>
 
       <section>
