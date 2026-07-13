@@ -12,11 +12,8 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 
 ## Now
 
-- **#19+#20+#21 batch — DEPLOYED to prod 2026-07-13** (commits 53d41d4..ee0880a; smoke:
-  login 200, /api/model unauth 401, gated 307). `--surface: #fff` now defined — chat/login
-  surfaces turn white (owner approved direction from login before/after); weight-chart
-  polish; figure-canvas texture-dispose hardening. Owner phone-verify pending → then close
-  #19 #20 #21 + HISTORY entry.
+- **#19+#20+#21 polish batch — DONE, deployed to prod, owner pass ✓ 2026-07-13**
+  (`--surface` token, weight-chart polish, texture-dispose hardening; detail: docs/HISTORY.md).
 - **Plan screen (#5) — COMPLETE and DEPLOYED to prod 2026-07-12** (kal-delta.vercel.app,
   commit f7c4f66; smoke: login 200, /api/model unauth 401, gated routes 307). Owner
   phone-verify of prod /plan pending. Owner model: private kal-private Blob store →

@@ -71,6 +71,28 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Polish batch #19+#20+#21 (2026-07-13) — DEPLOYED to prod, owner-accepted
+
+- **#19 `--surface` token** (`app/globals.css`): `:root` now defines `--surface: #fff`. Eight
+  rules (chat tool cards + their Undo, composer box, plus/new-chat buttons, rstrip stat chips,
+  login input, chat links) previously resolved to transparent — undefined var makes `background`
+  invalid at computed-value time — and blended into the warm canvas. Owner chose white surfaces
+  after a live login before/after toggle. The Plan screen's two literal-`#fff` workarounds
+  (`.plan-card`, `.plan-recalc`) now use the token (no visual change there).
+- **#20 weight chart polish** (`lib/trend-geometry.ts`, `app/plan/weight-trend.tsx`):
+  `formatDateLabel` exported from the lib, component's duplicate MONTHS/formatter deleted;
+  GOAL label renders `goalWeightLb.toFixed(1)` (matches point/readout formatting; added a
+  `goalWeightLb !== null` TS-narrowing guard, no behavior change); `shouldShowDots(count)`
+  in the lib (MAX_DOTS = 40) gates per-point dots for dense series; `deltaLabel(0)` → `""`
+  (was `+0.0`; the function lives in the component and stayed there — the repo has no
+  component-test convention). +3 lib unit tests, written TDD.
+- **#21 texture-dispose hardening** (`app/plan/figure-canvas.tsx`): `disposeMaterial()` helper
+  walks the material's properties, disposes any `THREE.Texture`, then `material.dispose()`
+  (which does NOT cascade to maps); both dispose paths use it.
+- Commits 53d41d4 / 4203af7 / ee0880a (+ docs 2a230ae); `vercel --prod`; smoke: login 200,
+  `/api/model` unauth 401, gated routes 307. Known leftover: the chart's aria-label still
+  interpolates the raw goal number (out of #20's scope; cosmetic-for-screen-readers only).
+
 ## Plan screen Phase 3 (2026-07-12) — MERGED to main, owner-accepted; deploy pending
 
 The "use my photos →" promise landed: /plan's figure loads the owner's personal 3D model,
