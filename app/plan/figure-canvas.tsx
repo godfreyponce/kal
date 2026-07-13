@@ -41,6 +41,15 @@ type SceneHandles = {
   markers: Record<Region, THREE.Object3D>;
 };
 
+// Material.dispose() does NOT dispose the material's texture maps (three.js docs) — walk
+// its properties and dispose any that are textures first.
+function disposeMaterial(material: THREE.Material) {
+  for (const value of Object.values(material)) {
+    if (value instanceof THREE.Texture) value.dispose();
+  }
+  material.dispose();
+}
+
 export default function FigureCanvas({
   chips,
   selectedRegion,
@@ -388,7 +397,7 @@ export default function FigureCanvas({
         gltf.scene.traverse((obj) => {
           if (!(obj instanceof THREE.Mesh)) return;
           obj.geometry.dispose();
-          (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((m) => m.dispose());
+          (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach(disposeMaterial);
         });
         return;
       }
@@ -401,7 +410,7 @@ export default function FigureCanvas({
       model.traverse((obj) => {
         if (!(obj instanceof THREE.Mesh)) return;
         geometries.push(obj.geometry);
-        (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((m) => m.dispose());
+        (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach(disposeMaterial);
         const clayMat = new THREE.MeshStandardMaterial({ color: CLAY, roughness: 0.88, metalness: 0 });
         materials.push(clayMat);
         obj.material = clayMat;
