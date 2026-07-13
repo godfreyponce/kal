@@ -7,7 +7,7 @@ export async function GET() {
 
 // POST /api/memory-facts — the user tells Kal something directly.
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const content = typeof body.content === "string" ? body.content : "";
   if (!content.trim()) return Response.json({ error: "content is required" }, { status: 400 });
   return Response.json(await addMemoryFact(content), { status: 201 });

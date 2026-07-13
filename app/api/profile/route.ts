@@ -6,7 +6,7 @@ import { updateProfile, type ProfilePatch } from "@/lib/profile";
 // goal_date is not accepted: the owner dropped deadlines; targets only move
 // via plan re-derivation (/api/meals/[id]/items with scope "template").
 export async function PATCH(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const patch: ProfilePatch = {};
 
   // Non-nullable numerics: skip null/undefined.

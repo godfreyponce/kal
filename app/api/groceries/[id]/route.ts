@@ -8,7 +8,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (!Number.isInteger(groceryId)) {
     return Response.json({ error: "invalid id" }, { status: 400 });
   }
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const patch: Partial<GroceryInput> = {};
 
   // name is required (non-null); the rest may be set to null to clear them.

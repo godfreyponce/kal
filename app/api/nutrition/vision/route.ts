@@ -7,7 +7,7 @@ type Allowed = (typeof ALLOWED)[number];
 // POST /api/nutrition/vision  body: { imageBase64, mediaType }
 // Reads a Nutrition Facts photo with Claude vision → one serving's macros.
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : "";
   const mediaType = body.mediaType as string;
   if (!imageBase64) return Response.json({ error: "imageBase64 is required" }, { status: 400 });

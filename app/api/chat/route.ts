@@ -65,7 +65,7 @@ function setRollingCacheMark(messages: Msg[]) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
   const message = typeof body.message === "string" ? body.message.trim() : "";
   const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : null;

@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return Response.json({ error: "invalid meal id" }, { status: 400 });
   }
 
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const status = body.status as MealStatusValue;
   if (!ALLOWED.includes(status)) {
     return Response.json({ error: `status must be one of ${ALLOWED.join(", ")}` }, { status: 400 });

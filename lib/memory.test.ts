@@ -1,9 +1,11 @@
 import "../db/env";
 import { describe, it, expect, afterEach, afterAll } from "vitest";
 import { like } from "drizzle-orm";
+import { NextRequest } from "next/server";
 import { db } from "../db";
 import { memoryFacts } from "../db/schema";
 import { addMemoryFact, deleteMemoryFact, listMemoryFacts, updateMemoryFact } from "./memory";
+import { POST } from "../app/api/memory-facts/route";
 
 // Sentinel content prefix for this FILE (parallel-safe cleanup by prefix).
 const P = "zz-test-memory-2099:";
@@ -35,5 +37,17 @@ describe("memory facts", () => {
     await expect(addMemoryFact("   ")).rejects.toThrow(/required/);
     const a = await addMemoryFact(`${P} keep`);
     await expect(updateMemoryFact(a.id, "")).rejects.toThrow(/required/);
+  });
+});
+
+describe("POST /api/memory-facts — literal-null body", () => {
+  it("returns 400, not a 500, for a literal null JSON body", async () => {
+    const req = new NextRequest("http://localhost/api/memory-facts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "null",
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
   });
 });

@@ -7,7 +7,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const { id } = await ctx.params;
   const mealId = Number(id);
   if (!Number.isInteger(mealId)) return Response.json({ error: "invalid id" }, { status: 400 });
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const patch: { name?: string; timeHint?: string | null } = {};
   if (body.name !== undefined && body.name !== null) patch.name = String(body.name);
   if (body.timeHint !== undefined) patch.timeHint = body.timeHint ? String(body.timeHint) : null;

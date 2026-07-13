@@ -8,7 +8,7 @@ export async function GET() {
 
 // POST /api/groceries — create. body: GroceryInput (servingGrams + kcal required).
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const servingGrams = Number(body.servingGrams);
   const kcal = Number(body.kcal);

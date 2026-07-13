@@ -5,7 +5,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const { id } = await ctx.params;
   const factId = Number(id);
   if (!Number.isInteger(factId)) return Response.json({ error: "invalid id" }, { status: 400 });
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const content = typeof body.content === "string" ? body.content : "";
   if (!content.trim()) return Response.json({ error: "content is required" }, { status: 400 });
   const updated = await updateMemoryFact(factId, content);

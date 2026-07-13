@@ -10,7 +10,7 @@ const EXT: Record<string, string> = {
 // POST /api/upload  body: { imageBase64, mediaType } — stores a product photo on
 // Vercel Blob and returns its public URL (saved as the food's image_url).
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : "";
   const mediaType = typeof body.mediaType === "string" ? body.mediaType : "";
   if (!imageBase64) return Response.json({ error: "imageBase64 is required" }, { status: 400 });

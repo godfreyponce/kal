@@ -11,7 +11,7 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
   const { id } = await ctx.params;
   const mealId = Number(id);
   if (!Number.isInteger(mealId)) return Response.json({ error: "invalid id" }, { status: 400 });
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const scope = body.scope;
   if (scope !== "today" && scope !== "template") {
     return Response.json({ error: 'scope must be "today" or "template"' }, { status: 400 });

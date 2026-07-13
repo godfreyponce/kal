@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 
 // POST /api/auth/login  body: { password }
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const password = typeof body.password === "string" ? body.password : "";
 
   if (!process.env.APP_PASSWORD || password !== process.env.APP_PASSWORD) {

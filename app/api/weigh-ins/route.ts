@@ -6,7 +6,7 @@ import { todayInAppTz } from "@/lib/time";
 // POST /api/weigh-ins  body: { weightLb, date?, note? }
 // One weigh-in per day (date is unique) — re-posting the same day overwrites.
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) ?? {};
   const weight = Number(body.weightLb);
   if (!Number.isFinite(weight) || weight <= 0) {
     return Response.json({ error: "weightLb must be a positive number" }, { status: 400 });
