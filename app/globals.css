@@ -10,6 +10,7 @@
   --font-sans-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
 
   --canvas: #f7f6f3;
+  --surface: #fff;
   --surface-2: #f0efeb;
   --ink: #1f2421;
   --ink-soft: #2f3437;
@@ -1379,8 +1380,7 @@ body {
   text-transform: uppercase; color: var(--faint);
 }
 .plan-card {
-  /* literal #fff like .gcard — var(--surface) is consumed app-wide but never defined (pre-existing gap) */
-  background: #fff; border: 1px solid var(--border); border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
   padding: 13px 14px;
 }
 .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -1415,7 +1415,7 @@ body {
 .plan-macros { transition: opacity 150ms ease; }
 .plan-totals-dim { opacity: 0.35; }
 .plan-recalc {
-  border-left: 2px solid var(--accent); background: #fff; /* literal like .plan-card — var(--surface) undefined app-wide */
+  border-left: 2px solid var(--accent); background: var(--surface);
   border-radius: 0 10px 10px 0; padding: 9px 12px; margin: 10px 0;
 }
 .plan-recalc-k { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
