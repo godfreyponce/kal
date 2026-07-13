@@ -21,10 +21,13 @@ const Y_PAD_FRACTION = 0.08;
 // A 1-lb floor keeps a flat (or nearly flat) line centered and off the top/bottom edge.
 const MIN_Y_PAD_LB = 1;
 const GRID_STEP_LB = 5;
+// Above this many points, per-point dots overlap (e.g. daily weigh-ins over 90 days) —
+// the renderer skips them and keeps just the path + the latest-point marker.
+const MAX_DOTS = 40;
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
-function formatDateLabel(date: string): string {
+export function formatDateLabel(date: string): string {
   const d = new Date(date + "T00:00:00Z");
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
 }
@@ -87,6 +90,10 @@ export function buildTrendGeometry(
   };
 
   return { points, pathD, gridlines, goalY, xLabels };
+}
+
+export function shouldShowDots(pointCount: number): boolean {
+  return pointCount <= MAX_DOTS;
 }
 
 export function nearestPoint(points: TrendPoint[], x: number): TrendPoint | null {

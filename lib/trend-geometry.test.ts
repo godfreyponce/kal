@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildTrendGeometry, nearestPoint, recentLog } from "./trend-geometry";
+import { buildTrendGeometry, nearestPoint, recentLog, formatDateLabel, shouldShowDots } from "./trend-geometry";
 
 describe("buildTrendGeometry", () => {
   it("0 entries: empty points, null path/labels/gridlines/goal", () => {
@@ -163,5 +163,21 @@ describe("recentLog", () => {
 
   it("empty entries returns empty", () => {
     expect(recentLog([])).toEqual([]);
+  });
+});
+
+describe("formatDateLabel", () => {
+  it("formats an ISO date as MONTH DAY", () => {
+    expect(formatDateLabel("2026-07-04")).toBe("JUL 4");
+  });
+});
+
+describe("shouldShowDots", () => {
+  it("shows dots at or below the 40-point threshold", () => {
+    expect(shouldShowDots(40)).toBe(true);
+  });
+
+  it("hides dots above the 40-point threshold", () => {
+    expect(shouldShowDots(41)).toBe(false);
   });
 });

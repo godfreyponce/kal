@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { buildTrendGeometry, nearestPoint, recentLog } from "@/lib/trend-geometry";
+import { buildTrendGeometry, nearestPoint, recentLog, formatDateLabel, shouldShowDots } from "@/lib/trend-geometry";
 import type { WeighInView } from "@/lib/weigh-ins";
 
 // Matches the default viewBox (340×132) and PAD_L/PAD_R (10) baked into
@@ -12,15 +12,8 @@ const CHART_X1 = 10;
 const CHART_X2 = 330;
 const GOAL_LINE_X2 = 278; // dashed goal line stops short of the right-aligned "GOAL n" label
 
-const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-
-// Duplicated from lib/trend-geometry.ts (not exported there) — see task brief.
-function formatDateLabel(date: string): string {
-  const d = new Date(date + "T00:00:00Z");
-  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
-}
-
 function deltaLabel(delta: number): string {
+  if (delta === 0) return "";
   const sign = delta < 0 ? "−" : "+";
   return `${sign}${Math.abs(delta).toFixed(1)}`;
 }
@@ -86,11 +79,11 @@ export function WeightTrend({ entries, goalWeightLb }: { entries: WeighInView[];
             </text>
           </g>
         ))}
-        {geometry.goalY !== null && (
+        {geometry.goalY !== null && goalWeightLb !== null && (
           <>
             <line className="plan-tr-goal" x1={CHART_X1} y1={geometry.goalY} x2={GOAL_LINE_X2} y2={geometry.goalY} />
             <text className="plan-tr-goal-lab" x={CHART_X2} y={geometry.goalY + 3} textAnchor="end">
-              GOAL {goalWeightLb}
+              GOAL {goalWeightLb.toFixed(1)}
             </text>
           </>
         )}
@@ -103,11 +96,13 @@ export function WeightTrend({ entries, goalWeightLb }: { entries: WeighInView[];
           opacity={hovered ? 0.7 : 0}
         />
         {geometry.pathD && <path className="plan-tr-line" d={geometry.pathD} />}
-        <g fill="#2f3437">
-          {geometry.points.slice(0, -1).map((p) => (
-            <circle key={p.date} cx={p.x} cy={p.y} r={2.3} />
-          ))}
-        </g>
+        {shouldShowDots(geometry.points.length) && (
+          <g fill="#2f3437">
+            {geometry.points.slice(0, -1).map((p) => (
+              <circle key={p.date} cx={p.x} cy={p.y} r={2.3} />
+            ))}
+          </g>
+        )}
         <circle cx={latest.x} cy={latest.y} r={5.5} fill="#fff" />
         <circle cx={latest.x} cy={latest.y} r={4} fill="var(--accent)" />
         {geometry.xLabels && (
