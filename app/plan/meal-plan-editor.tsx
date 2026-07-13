@@ -58,16 +58,16 @@ export function MealPlanEditor({
   const round3 = (x: number) => Math.round(x * 1000) / 1000;
 
   function bump(idx: number, dir: 1 | -1) {
-    setItems(items.map((it, i) => (i === idx ? { ...it, quantity: Math.max(0, round3(it.quantity + dir * step(it))) } : it)));
+    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, quantity: Math.max(0, round3(it.quantity + dir * step(it))) } : it)));
   }
   function setQty(idx: number, raw: string) {
     const q = Number(raw);
-    setItems(items.map((it, i) => (i === idx ? { ...it, quantity: Number.isFinite(q) ? q : it.quantity } : it)));
+    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, quantity: Number.isFinite(q) ? q : it.quantity } : it)));
   }
   function addFood(foodId: number) {
     const f = groceries.find((g) => g.id === foodId);
-    if (!f || items.some((it) => it.foodId === foodId)) return;
-    setItems([...items, { foodId: f.id, quantity: 1, foodName: f.name, servingDesc: f.servingDesc, servingGrams: f.servingGrams, unitKcal: f.kcal }]);
+    if (!f) return;
+    setItems((prev) => (prev.some((it) => it.foodId === foodId) ? prev : [...prev, { foodId: f.id, quantity: 1, foodName: f.name, servingDesc: f.servingDesc, servingGrams: f.servingGrams, unitKcal: f.kcal }]));
   }
 
   async function save() {
