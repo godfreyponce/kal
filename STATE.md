@@ -12,6 +12,10 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 
 ## Now
 
+- **#15+#16+#17 code-health batch — built+DEPLOYED to prod 2026-07-13** (commits
+  e53ee3c^^..e53ee3c; 122/122 tests, smoke green). Null-body→400 sweep across all 15 routes
+  (+regression test, vitest gained the `@/` alias), memory-facts id tiebreak in system-prompt,
+  meal-plan-editor functional updaters. Nothing visual — awaiting owner OK to close.
 - **#19+#20+#21 polish batch — DONE, deployed to prod, owner pass ✓ 2026-07-13**
   (`--surface` token, weight-chart polish, texture-dispose hardening; detail: docs/HISTORY.md).
 - **Plan screen (#5) — COMPLETE and DEPLOYED to prod 2026-07-12** (kal-delta.vercel.app,
