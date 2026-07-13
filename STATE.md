@@ -12,12 +12,14 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 
 ## Now
 
-- **#15+#16+#17 code-health batch — built+DEPLOYED to prod 2026-07-13** (commits
-  e53ee3c^^..e53ee3c; 122/122 tests, smoke green). Null-body→400 sweep across all 15 routes
-  (+regression test, vitest gained the `@/` alias), memory-facts id tiebreak in system-prompt,
-  meal-plan-editor functional updaters. Nothing visual — awaiting owner OK to close.
-- **#19+#20+#21 polish batch — DONE, deployed to prod, owner pass ✓ 2026-07-13**
-  (`--surface` token, weight-chart polish, texture-dispose hardening; detail: docs/HISTORY.md).
+- **Next up: Trends screen (#6) — GREEN-LIT (`ready-for-agent`), not started.** Re-scope
+  first: the weight chart it asks for was built into /plan during #5 Phase 2, so #6 likely
+  shrinks to weekly adherence + a screen reusing the chart (scope note on the issue). Then
+  3-variant HTML mockups (owner rule) BEFORE building.
+- **2026-07-13 batches — DONE, deployed, closed:** #19+#20+#21 polish (`--surface` token,
+  chart polish, texture-dispose) and #15+#16+#17 code-health (null-body→400 sweep + first
+  route-level test via new vitest `@/` alias, memory-facts tiebreak, functional updaters).
+  Detail: docs/HISTORY.md.
 - **Plan screen (#5) — COMPLETE and DEPLOYED to prod 2026-07-12** (kal-delta.vercel.app,
   commit f7c4f66; smoke: login 200, /api/model unauth 401, gated routes 307). Owner
   phone-verify of prod /plan pending. Owner model: private kal-private Blob store →
@@ -27,8 +29,6 @@ per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list
 - **Chat deviation copilot — DONE, deployed to prod, owner phone pass ✓** (kal-delta.vercel.app).
 - **v1 SHIPPED, prod live**; owner phone-verification of the 2026-07-07 Groceries "my serving"
   cards still pending.
-- **Next up:** the work queue is GitHub Issues. `ready-for-agent` label = owner green-lit;
-  unlabeled = confirm with the owner first.
 
 ## Run / verify (do this first)
 

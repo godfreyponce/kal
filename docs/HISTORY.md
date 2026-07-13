@@ -71,6 +71,25 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Code-health batch #15+#16+#17 (2026-07-13) — DEPLOYED to prod, owner-accepted
+
+- **#15 null-body → 400** (commit 1a2ba16, 15 files under `app/api`): every
+  `req.json().catch(() => ({}))` is now `(await req.json().catch(() => ({}))) ?? {}` — a
+  literal-`null` JSON body previously parsed successfully and then threw reading properties
+  of null (unhandled 500). Sweep covered all 15 body-reading routes, not just the four
+  families named in the issue. Regression test in `lib/memory.test.ts` imports the
+  memory-facts `POST` handler directly and asserts 400 (verified 500-before/400-after).
+  **Infra:** `vitest.config.ts` now resolves the `@/` tsconfig alias — this is what makes
+  route-handler imports in tests possible (first route-level test in the repo).
+- **#16 memory-facts ordering** (b3d1317): `lib/system-prompt.ts` adds an
+  `asc(memoryFacts.id)` tiebreak, matching `lib/memory.ts` — same-millisecond inserts now
+  render identically in chat and /plan.
+- **#17 functional updaters** (e53ee3c): meal-plan-editor `bump`/`setQty`/`addFood` use
+  `setItems(prev => …)`; `addFood`'s duplicate-foodId guard moved inside the updater (the
+  one spot where a mechanical swap alone would have left a stale read).
+- 122/122 tests, tsc clean, `vercel --prod`, smoke green. Note: prod null-body probe returns
+  401 (auth gates before body parsing) — the 400 path is proven by the integration test.
+
 ## Polish batch #19+#20+#21 (2026-07-13) — DEPLOYED to prod, owner-accepted
 
 - **#19 `--surface` token** (`app/globals.css`): `:root` now defines `--surface: #fff`. Eight
