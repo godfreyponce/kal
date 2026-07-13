@@ -8,15 +8,20 @@ talks only to `POST /api/chat` + REST routes (swappable brain).
 per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list`). Protocol:
 `AGENTS.md`. Original spec: `~/.claude/plans/okay-so-i-have-zesty-nova.md`.*
 
-**Last updated: 2026-07-12**
+**Last updated: 2026-07-13**
 
 ## Now
 
+- **#19+#20+#21 batch — DEPLOYED to prod 2026-07-13** (commits 53d41d4..ee0880a; smoke:
+  login 200, /api/model unauth 401, gated 307). `--surface: #fff` now defined — chat/login
+  surfaces turn white (owner approved direction from login before/after); weight-chart
+  polish; figure-canvas texture-dispose hardening. Owner phone-verify pending → then close
+  #19 #20 #21 + HISTORY entry.
 - **Plan screen (#5) — COMPLETE and DEPLOYED to prod 2026-07-12** (kal-delta.vercel.app,
   commit f7c4f66; smoke: login 200, /api/model unauth 401, gated routes 307). Owner
   phone-verify of prod /plan pending. Owner model: private kal-private Blob store →
   GET /api/model → figure swap-in, mannequin fallback (re-uploads take ≤1h, cache).
-  Detail: docs/HISTORY.md. Follow-ups: #20 chart polish, #21 texture-dispose hardening.
+  Detail: docs/HISTORY.md.
   Owner hygiene pending: delete Rodin uploads, cancel the $6 Creator plan.
 - **Chat deviation copilot — DONE, deployed to prod, owner phone pass ✓** (kal-delta.vercel.app).
 - **v1 SHIPPED, prod live**; owner phone-verification of the 2026-07-07 Groceries "my serving"
@@ -53,6 +58,6 @@ npx tsc --noEmit         # must stay clean
   Haiku rejects `thinking`/`effort` params; integration tests need per-file sentinel dates AND
   run sequentially (vitest.config.ts) — live-DB singleton state races under file parallelism.
 - Routes map errors by type (`ValidationError`→400, `NotFoundError`→404 from lib/errors.ts) —
-  never by message text. `var(--surface)` is consumed app-wide but UNDEFINED (issue filed).
+  never by message text.
 - This repo is PUBLIC (recruiter-visible) — no env values, credentials, or owner personal data
   in committed files or issues.
