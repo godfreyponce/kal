@@ -71,7 +71,10 @@ export async function assembleSystemPrompt(date: string): Promise<SystemPromptBl
       .where(gte(weighIns.date, since))
       .orderBy(desc(weighIns.date))
       .limit(10),
-    db.select({ content: memoryFacts.content }).from(memoryFacts).orderBy(asc(memoryFacts.createdAt)),
+    db
+      .select({ content: memoryFacts.content })
+      .from(memoryFacts)
+      .orderBy(asc(memoryFacts.createdAt), asc(memoryFacts.id)),
     getOverridesForDate(date),
   ]);
   const itemsByMeal = new Map<number, PlanMeal["items"]>();
