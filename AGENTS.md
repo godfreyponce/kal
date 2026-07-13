@@ -17,6 +17,15 @@ never env values, credentials, or the owner's personal data.
   STATE.md, add the feature's detail section to `docs/HISTORY.md`, and commit them alongside
   the feature. Don't record work the owner hasn't accepted yet.
 
+# Session hygiene — keep the window lean (owner rule, 2026-07-12)
+
+Target **≤140k tokens of working context per session.** This works because state lives
+OUTSIDE the conversation: `STATE.md` (snapshot), GitHub Issues (queue), `docs/HISTORY.md`
+(archive), `.superpowers/sdd/progress.md` (mid-build ledger). Suggest a fresh window at
+natural seams — phase acceptance, plan approval, deploy — rather than letting a session
+balloon; a decision that lives only in conversation memory doesn't exist, so write it to
+the right file the moment it's made.
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
