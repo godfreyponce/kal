@@ -1,34 +1,32 @@
+---
+glass: kal
+status: in-progress
+last_worked_on: 2026-07-14
+next_action: "#6 — weekly adherence module on /plan"
+blocked_on: "owner pick among design/plan-adherence-variants.html (A Scoreboard / B Ledger / C Meter strip)"
+phase: "v1 shipped; /plan deployed to prod"
+---
+
 # Kal — Project State
 
 Personal, single-user fitness chat PWA. A Claude-powered assistant that knows the owner's
 profile, meal plan, and daily log, and reads/writes that log via server-side tools. Frontend
 talks only to `POST /api/chat` + REST routes (swappable brain).
 
-*Thin snapshot — update continuously as work progresses. Full build archive, file map, and
-per-feature detail: `docs/HISTORY.md`. Work queue: GitHub Issues (`gh issue list`). Protocol:
-`AGENTS.md`. Original spec: `~/.claude/plans/okay-so-i-have-zesty-nova.md`.*
-
-**Last updated: 2026-07-13**
+*Thin snapshot. `next_action` above names the ticket that is up now — start there.
+Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `AGENTS.md`.*
 
 ## Now
 
-- **Next up: Trends screen (#6) — GREEN-LIT (`ready-for-agent`), not started.** Re-scope
-  first: the weight chart it asks for was built into /plan during #5 Phase 2, so #6 likely
-  shrinks to weekly adherence + a screen reusing the chart (scope note on the issue). Then
-  3-variant HTML mockups (owner rule) BEFORE building.
-- **2026-07-13 batches — DONE, deployed, closed:** #19+#20+#21 polish (`--surface` token,
-  chart polish, texture-dispose) and #15+#16+#17 code-health (null-body→400 sweep + first
-  route-level test via new vitest `@/` alias, memory-facts tiebreak, functional updaters).
-  Detail: docs/HISTORY.md.
-- **Plan screen (#5) — COMPLETE and DEPLOYED to prod 2026-07-12** (kal-delta.vercel.app,
-  commit f7c4f66; smoke: login 200, /api/model unauth 401, gated routes 307). Owner
-  phone-verify of prod /plan pending. Owner model: private kal-private Blob store →
-  GET /api/model → figure swap-in, mannequin fallback (re-uploads take ≤1h, cache).
-  Detail: docs/HISTORY.md.
-  Owner hygiene pending: delete Rodin uploads, cancel the $6 Creator plan.
-- **Chat deviation copilot — DONE, deployed to prod, owner phone pass ✓** (kal-delta.vercel.app).
-- **v1 SHIPPED, prod live**; owner phone-verification of the 2026-07-07 Groceries "my serving"
-  cards still pending.
+*Unaccepted work only. Anything the owner has accepted belongs in `docs/HISTORY.md`, not here.*
+
+- **#6 — weekly adherence on /plan.** Re-scoped 2026-07-13 (decisions on the issue): no Trends
+  screen; "X/7 days on plan" over the 7 most recent completed days; day rule = kcal ±10% AND
+  protein ≥90%; unlogged = off-plan. Shape: `lib/adherence.ts` + a server section on /plan
+  between Profile and Meal plan. **Blocked on the owner's mockup pick.**
+- Owner phone-verify of prod `/plan` — still outstanding.
+- Owner phone-verify of the 2026-07-07 Groceries "my serving" cards — still outstanding.
+- Owner hygiene: delete the Rodin uploads, cancel the $6 Creator plan.
 
 ## Run / verify (do this first)
 
@@ -38,7 +36,7 @@ npm test                 # vitest; needs DATABASE_URL (hits live Neon)
 npx tsc --noEmit         # must stay clean
 ```
 
-## Gotchas (short form — full detail in docs/HISTORY.md)
+## Gotchas (things that would still bite you today)
 
 - `npm run db:seed` is a FULL WIPE — for live data use `npx tsx db/apply-seed-v2.ts` (idempotent).
 - NEVER `vercel env pull` into `.env.local` — encrypted vars come back as `""` and break local

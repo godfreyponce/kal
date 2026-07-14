@@ -112,7 +112,11 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
   `/api/model` unauth 401, gated routes 307. Known leftover: the chart's aria-label still
   interpolates the raw goal number (out of #20's scope; cosmetic-for-screen-readers only).
 
-## Plan screen Phase 3 (2026-07-12) — MERGED to main, owner-accepted; deploy pending
+## Plan screen Phase 3 (2026-07-12) — DEPLOYED to prod, owner-accepted
+
+**Deploy:** the whole /plan feature set (Phases 1–3) shipped in one deploy, 2026-07-12 —
+kal-delta.vercel.app, commit f7c4f66; smoke: login 200, `/api/model` unauth 401, gated routes 307.
+Owner phone-verify of prod /plan still outstanding.
 
 The "use my photos →" promise landed: /plan's figure loads the owner's personal 3D model,
 mannequin as permanent fallback. Plan: `docs/superpowers/plans/2026-07-12-plan-screen-phase3.md`.
@@ -151,7 +155,7 @@ commits (e42577d..316078e + STATE).
   Tickets: #21 (texture-dispose hardening if a textured GLB ever uploads). Owner hygiene
   at acceptance: delete Rodin uploads, cancel Creator plan.
 
-## Plan screen Phase 2 (2026-07-12) — MERGED to main, owner-accepted; deploy pending
+## Plan screen Phase 2 (2026-07-12) — DEPLOYED to prod, owner-accepted (see Phase 3 for the deploy)
 
 The 3D figure + weight-trend build over Phase 1's core. Spec: build-order item 2 of
 `docs/superpowers/specs/2026-07-11-plan-screen-design.md`; visual source of truth
@@ -194,7 +198,7 @@ workers + per-task reviews + Fable-model whole-branch final review), 16 commits
   Phase 3 (owner photo → GLB model) green-lit at acceptance — photos confirmed with owner
   before any external upload.
 
-## Plan screen Phase 1 (2026-07-11..12) — MERGED to main, owner-accepted; deploy pending
+## Plan screen Phase 1 (2026-07-11..12) — DEPLOYED to prod, owner-accepted (see Phase 3 for the deploy)
 
 The first editing UI for the three data sources everything else reads: profile, meal-plan
 template, memory facts. Spec: `docs/superpowers/specs/2026-07-11-plan-screen-design.md`
@@ -232,7 +236,7 @@ Plan: `docs/superpowers/plans/2026-07-11-plan-screen-phase1.md`. Built subagent-
   ⇄-adjusted meal seeds from the TEMPLATE (override-aware seeding ticketed); `var(--surface)`
   undefined app-wide (plan CSS uses literal #fff; global fix ticketed).
 
-## Chat deviation copilot (2026-07-08..10) — MERGED to main, owner-accepted; deploy pending
+## Chat deviation copilot (2026-07-08..10) — DEPLOYED to prod, owner-accepted (phone pass ✓)
 
 The chat's core mission delivered: when the owner is off-plan (traveling, nothing prepped,
 eating out), Kal finds real macros, adapts **today's plan only**, and logs reality — cheaply.
