@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan — weekly adherence, final reference (E · calendar week · L3)</title>
+<style>
+  :root {
+    --canvas: #f7f6f3;
+    --surface: #fff;
+    --surface-2: #f0efeb;
+    --ink: #1f2421;
+    --ink-soft: #2f3437;
+    --muted: #787774;
+    --faint: #9b9a96;
+    --border: #e6e4df;
+    --protein: #9f2f2d;
+    --green-tx: #346538;
+    --accent: #d97757;
+    --font-sans-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #b9b7b2; color: var(--ink);
+    font-family: var(--font-sans-stack); line-height: 1.6;
+    -webkit-font-smoothing: antialiased; padding: 32px 20px 64px;
+  }
+  .page-head { max-width: 1320px; margin: 0 auto 10px; color: #f4f3f0; }
+  .page-head h1 { font-family: var(--font-serif); font-weight: 500; font-size: 24px; letter-spacing: -0.02em; }
+  .page-head p { font-family: var(--font-mono); font-size: 11.5px; opacity: 0.85; margin-top: 4px; }
+  .note {
+    max-width: 1320px; margin: 0 auto 26px; color: #f4f3f0;
+    font-family: var(--font-mono); font-size: 11px; line-height: 1.7;
+    border-left: 2px solid rgba(244, 243, 240, 0.5); padding-left: 12px; opacity: 0.9;
+  }
+  .note b { color: #fff; font-weight: 500; }
+  .row {
+    display: flex; flex-wrap: wrap; gap: 36px; justify-content: center;
+    align-items: flex-start; max-width: 1320px; margin: 0 auto;
+  }
+  .variant { width: 396px; max-width: 100%; }
+  .vlabel {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #f4f3f0; margin-bottom: 4px;
+  }
+  .vdesc {
+    font-family: var(--font-mono); font-size: 11px; color: #eceae6;
+    opacity: 0.85; margin-bottom: 12px; min-height: 4.6em;
+  }
+  .vdesc b { color: #fff; font-weight: 500; }
+
+  .screen {
+    background: var(--canvas); border-radius: 20px; padding: 24px 22px 28px;
+    box-shadow: 0 14px 40px rgba(31, 36, 33, 0.18);
+  }
+  .plan-sec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .plan-kicker {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint);
+  }
+  .plan-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 13px 14px;
+  }
+  .screen section + section { margin-top: 22px; }
+  .ghost { opacity: 0.4; pointer-events: none; }
+  .ghost .plan-card {
+    color: var(--faint); font-family: var(--font-mono); font-size: 11px;
+    text-align: center; padding: 18px 14px;
+  }
+
+  /* ---- hero block: number + label + two-mark legend ---- */
+  .adh-body { display: flex; align-items: flex-start; gap: 14px; }
+  .adh-hero { flex-shrink: 0; padding-top: 2px; }
+  .adh-num {
+    font-family: var(--font-mono); font-size: 30px; line-height: 1.05;
+    color: var(--ink); letter-spacing: -0.02em;
+  }
+  .adh-num small { font-size: 17px; color: var(--faint); }
+  .adh-lbl {
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--muted); margin-top: 1px; max-width: 80px; line-height: 1.35;
+  }
+  .adh-legend { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+  .leg-row {
+    display: flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono); font-size: 9px; color: var(--faint);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .leg-dash {
+    display: inline-block; width: 13px; flex-shrink: 0;
+    border-top: 1.5px dashed rgba(31,36,33,0.5);
+  }
+  .leg-dot {
+    display: inline-block; width: 7px; height: 7px; flex-shrink: 0; margin: 0 3px;
+    border-radius: 9999px; background: var(--green-tx);
+  }
+  .adh-strip { flex: 1; min-width: 0; }
+
+  /* ---- plot: track 64px; 2,200 kcal target = 48px tall = 16px from top ---- */
+  .plot { position: relative; }
+  .plot .cells { position: relative; z-index: 1; }
+  .e-line {
+    position: absolute; z-index: 2; left: 0; right: 0; top: 16px; height: 0;
+    border-top: 1.5px dashed rgba(31, 36, 33, 0.45);
+  }
+  .cells { display: flex; justify-content: space-between; gap: 4px; }
+  .cell { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; cursor: default; }
+  .track {
+    width: 15px; height: 64px; border-radius: 4px; position: relative; overflow: hidden;
+    background: var(--surface-2);
+  }
+  .track.ahead { background: #f6f5f2; }
+  .track.void::after {
+    content: ""; position: absolute; inset: 0;
+    background: repeating-linear-gradient(135deg, rgba(159,47,45,0.30) 0 1.5px, transparent 1.5px 5px);
+  }
+  .fill { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 4px 4px 0 0; }
+  .fill.hit  { background: var(--green-tx); }
+  .fill.miss { background: var(--protein); }
+  .fill.now  { background: var(--accent); }
+  .tex-miss {
+    background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.34) 0 1.5px, transparent 1.5px 4px);
+  }
+  .dow { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.04em; color: var(--faint); }
+  .cell.today .dow { color: var(--accent); font-weight: 500; }
+  .cell.ahead .dow { color: #c9c7c2; }
+  .cell:hover .dow { color: var(--ink); }
+
+  /* protein dot: filled = hit, red ring = short, dashed = today in progress */
+  .pdot { width: 7px; height: 7px; border-radius: 9999px; flex-shrink: 0; }
+  .pdot.ok    { background: var(--green-tx); }
+  .pdot.short { border: 1.5px solid var(--protein); }
+  .pdot.now   { border: 1.5px dashed var(--accent); }
+  .pdot.hide  { visibility: hidden; }
+
+  .now-tag {
+    position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent); white-space: nowrap;
+  }
+  .tip {
+    position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #f4f3f0; border-radius: 7px; padding: 6px 9px;
+    font-family: var(--font-mono); font-size: 9.5px; line-height: 1.55; white-space: nowrap;
+    opacity: 0; transition: opacity 0.12s; pointer-events: none; z-index: 5; text-align: left;
+  }
+  .tip b { font-weight: 500; }
+  .tip .k-ok  { color: #a9d3ab; }
+  .tip .k-bad { color: #eda9a7; }
+  .tip .k-now { color: #f0b49a; }
+  .tip .verdict { display: block; margin-top: 2px; }
+  .tip .v-hit  { color: #a9d3ab; }
+  .tip .v-miss { color: #eda9a7; }
+  .tip .v-wip  { color: #f0b49a; }
+  .tip .v-ahead{ color: #b8b6b1; }
+  .cell:hover .tip { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Weekly adherence — final reference</h1>
+  <p>variant E · fixed Mon→Sun week · L3 hero legend · both macros in the legend AND the hover · target 2,200 kcal / 180 g protein</p>
+</div>
+<div class="note">
+  <b>The legend under the number now explains both marks:</b> the dashed line is your kcal target, the dot is protein.
+  Every day's hover shows <b>kcal AND protein, each as "got of target"</b>, then the verdict.<br>
+  Left card = Tuesday (today live, hover forced open on it so you can see the popup). Right card = the same week finished on Sunday.
+</div>
+
+<div class="row">
+
+  <!-- ============ TUESDAY, today live, hover shown ============ -->
+  <div class="variant">
+    <div class="vlabel">Tuesday · today live (hover shown)</div>
+    <div class="vdesc"><b>Mon settled green, today climbing in terracotta.</b> The hover on today reads both macros so far and what's left; a finished day (hover Monday in the live file) reads both macros vs target and ✓/✕.</div>
+    <div class="screen">
+      <section class="ghost">
+        <div class="plan-sec-head"><span class="plan-kicker">Profile</span><span class="plan-kicker">drag to rotate, tap to edit</span></div>
+        <div class="plan-card">figure · weight · targets</div>
+      </section>
+      <section>
+        <div class="plan-sec-head"><span class="plan-kicker">Adherence</span><span class="plan-kicker">this week</span></div>
+        <div class="plan-card">
+          <div class="adh-body">
+            <div class="adh-hero">
+              <div class="adh-num">1<small>/7</small></div>
+              <div class="adh-lbl">days on plan</div>
+              <div class="adh-legend">
+                <div class="leg-row"><span class="leg-dash"></span>2,200 kcal</div>
+                <div class="leg-row"><span class="leg-dot"></span>180 g protein</div>
+              </div>
+            </div>
+            <div class="adh-strip">
+              <div class="plot">
+                <div class="e-line"></div>
+                <div class="cells">
+                  <div class="cell"><div class="tip"><b>Mon 7/13</b><br>kcal <span class="k-ok">2,180</span> of 2,200<br>protein <span class="k-ok">184</span> of 180 g<br><span class="verdict v-hit">✓ on plan</span></div><div class="track"><div class="fill hit" style="height: 48px;"></div></div><span class="pdot ok"></span><span class="dow">M</span></div>
+                  <div class="cell today" id="show">
+                    <span class="now-tag">now</span>
+                    <div class="tip"><b>Tue 7/14 · today</b><br>kcal <span class="k-now">940</span> of 2,200<br>protein <span class="k-now">78</span> of 180 g<br><span class="verdict v-wip">1,260 kcal left</span></div>
+                    <div class="track"><div class="fill now" style="height: 20px;"></div></div>
+                    <span class="pdot now"></span><span class="dow">T</span>
+                  </div>
+                  <div class="cell ahead"><div class="tip"><b>Wed 7/15</b><br><span class="verdict v-ahead">not yet</span></div><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">W</span></div>
+                  <div class="cell ahead"><div class="tip"><b>Thu 7/16</b><br><span class="verdict v-ahead">not yet</span></div><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">T</span></div>
+                  <div class="cell ahead"><div class="tip"><b>Fri 7/17</b><br><span class="verdict v-ahead">not yet</span></div><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">F</span></div>
+                  <div class="cell ahead"><div class="tip"><b>Sat 7/18</b><br><span class="verdict v-ahead">not yet</span></div><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></div>
+                  <div class="cell ahead"><div class="tip"><b>Sun 7/19</b><br><span class="verdict v-ahead">not yet</span></div><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="ghost">
+        <div class="plan-sec-head"><span class="plan-kicker">Meal plan</span><span class="plan-kicker">4 meals</span></div>
+        <div class="plan-card">meal editor</div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============ SUNDAY, week finished ============ -->
+  <div class="variant">
+    <div class="vlabel">Sunday · week whole</div>
+    <div class="vdesc"><b>The full week on the record.</b> Wednesday's blowout (red, textured), Friday un-logged (struck-through track + red protein ring), and today's live Sunday one dinner from a fifth green. 4/7 so far.</div>
+    <div class="screen">
+      <section class="ghost">
+        <div class="plan-sec-head"><span class="plan-kicker">Profile</span><span class="plan-kicker">drag to rotate, tap to edit</span></div>
+        <div class="plan-card">figure · weight · targets</div>
+      </section>
+      <section>
+        <div class="plan-sec-head"><span class="plan-kicker">Adherence</span><span class="plan-kicker">this week</span></div>
+        <div class="plan-card">
+          <div class="adh-body">
+            <div class="adh-hero">
+              <div class="adh-num">4<small>/7</small></div>
+              <div class="adh-lbl">days on plan</div>
+              <div class="adh-legend">
+                <div class="leg-row"><span class="leg-dash"></span>2,200 kcal</div>
+                <div class="leg-row"><span class="leg-dot"></span>180 g protein</div>
+              </div>
+            </div>
+            <div class="adh-strip">
+              <div class="plot">
+                <div class="e-line"></div>
+                <div class="cells">
+                  <div class="cell"><div class="tip"><b>Mon 7/13</b><br>kcal <span class="k-ok">2,180</span> of 2,200<br>protein <span class="k-ok">184</span> of 180 g<br><span class="verdict v-hit">✓ on plan</span></div><div class="track"><div class="fill hit" style="height: 48px;"></div></div><span class="pdot ok"></span><span class="dow">M</span></div>
+                  <div class="cell"><div class="tip"><b>Tue 7/14</b><br>kcal <span class="k-ok">2,246</span> of 2,200<br>protein <span class="k-ok">176</span> of 180 g<br><span class="verdict v-hit">✓ on plan</span></div><div class="track"><div class="fill hit" style="height: 49px;"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+                  <div class="cell"><div class="tip"><b>Wed 7/15</b><br>kcal <span class="k-bad">2,680</span> of 2,200<br>protein <span class="k-ok">175</span> of 180 g<br><span class="verdict v-miss">✕ 480 over kcal</span></div><div class="track"><div class="fill miss tex-miss" style="height: 58px;"></div></div><span class="pdot ok"></span><span class="dow">W</span></div>
+                  <div class="cell"><div class="tip"><b>Thu 7/16</b><br>kcal <span class="k-ok">2,185</span> of 2,200<br>protein <span class="k-ok">171</span> of 180 g<br><span class="verdict v-hit">✓ on plan</span></div><div class="track"><div class="fill hit" style="height: 48px;"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+                  <div class="cell"><div class="tip"><b>Fri 7/17</b><br>nothing logged<br><span class="verdict v-miss">✕ off plan</span></div><div class="track void"></div><span class="pdot short"></span><span class="dow">F</span></div>
+                  <div class="cell"><div class="tip"><b>Sat 7/18</b><br>kcal <span class="k-ok">2,090</span> of 2,200<br>protein <span class="k-ok">168</span> of 180 g<br><span class="verdict v-hit">✓ on plan</span></div><div class="track"><div class="fill hit" style="height: 46px;"></div></div><span class="pdot ok"></span><span class="dow">S</span></div>
+                  <div class="cell today">
+                    <span class="now-tag">now</span>
+                    <div class="tip"><b>Sun 7/19 · today</b><br>kcal <span class="k-now">1,980</span> of 2,200<br>protein <span class="k-now">166</span> of 180 g<br><span class="verdict v-wip">220 kcal left</span></div>
+                    <div class="track"><div class="fill now" style="height: 43px;"></div></div>
+                    <span class="pdot now"></span><span class="dow">S</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="ghost">
+        <div class="plan-sec-head"><span class="plan-kicker">Meal plan</span><span class="plan-kicker">4 meals</span></div>
+        <div class="plan-card">meal editor</div>
+      </section>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

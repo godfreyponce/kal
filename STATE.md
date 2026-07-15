@@ -3,7 +3,7 @@ glass: kal
 status: in-progress
 last_worked_on: 2026-07-14
 next_action: "#6 — weekly adherence module on /plan"
-blocked_on: "owner pick among design/plan-adherence-variants.html (A Scoreboard / B Ledger / C Meter strip)"
+blocked_on: "nothing — design + spec approved 2026-07-14; next is /plan-ticket #6 (gate 1)"
 phase: "v1 shipped; /plan deployed to prod"
 ---
 
@@ -20,10 +20,16 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
 
 *Unaccepted work only. Anything the owner has accepted belongs in `docs/HISTORY.md`, not here.*
 
-- **#6 — weekly adherence on /plan.** Re-scoped 2026-07-13 (decisions on the issue): no Trends
-  screen; "X/7 days on plan" over the 7 most recent completed days; day rule = kcal ±10% AND
-  protein ≥90%; unlogged = off-plan. Shape: `lib/adherence.ts` + a server section on /plan
-  between Profile and Meal plan. **Blocked on the owner's mockup pick.**
+- **#6 — weekly adherence on /plan. Design + spec APPROVED 2026-07-14; not built.** Next step:
+  `/plan-ticket #6` (fresh session → gate 1). Spec:
+  `docs/superpowers/specs/2026-07-14-weekly-adherence-design.md`. Visual ref:
+  `design/plan-adherence-final.html`. Final scope (evolved past the issue's original re-scope
+  note): "X/7 days on plan" over a **fixed Monday→Sunday calendar week** (NOT a rolling 7 days);
+  day rule = kcal ±10% AND protein ≥90%; unlogged past day = off-plan; today shown live/unjudged,
+  days ahead blank; denominator always 7, resets Monday. Shape: pure `lib/adherence.ts`
+  (`judgeDay`/`weekDays`/`classifyWeek` + thin `getWeekAdherence`) + a **server** component on
+  /plan (CSS-only hover) between Profile and Meal plan. Follow-ons filed: #22 (mobile tap sheet),
+  #23 (swipe-up calendar).
 - Owner phone-verify of prod `/plan` — still outstanding.
 - Owner phone-verify of the 2026-07-07 Groceries "my serving" cards — still outstanding.
 - Owner hygiene: delete the Rodin uploads, cancel the $6 Creator plan.
