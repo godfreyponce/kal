@@ -7,7 +7,7 @@ import { listGroceries } from "@/lib/groceries";
 import { getOverridesForDate } from "@/lib/overrides";
 import { todayInAppTz } from "@/lib/time";
 import { listWeighIns } from "@/lib/weigh-ins";
-import { getWeekAdherence } from "@/lib/adherence";
+import { getWeekAdherence, getWeekDayFoods } from "@/lib/adherence";
 import { ProfileSection } from "./profile-section";
 import { WeeklyAdherence } from "./weekly-adherence";
 import { MealPlanEditor } from "./meal-plan-editor";
@@ -21,15 +21,17 @@ export default async function PlanPage() {
   const d = new Date(today + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() - 90);
   const since = d.toISOString().slice(0, 10);
-  const [profile, plan, facts, groceries, overrides, weighIns, weekAdherence] = await Promise.all([
-    getProfile(),
-    getPlanView(),
-    listMemoryFacts(),
-    listGroceries(),
-    getOverridesForDate(today),
-    listWeighIns(since),
-    getWeekAdherence(today),
-  ]);
+  const [profile, plan, facts, groceries, overrides, weighIns, weekAdherence, weekDayFoods] =
+    await Promise.all([
+      getProfile(),
+      getPlanView(),
+      listMemoryFacts(),
+      listGroceries(),
+      getOverridesForDate(today),
+      listWeighIns(since),
+      getWeekAdherence(today),
+      getWeekDayFoods(today),
+    ]);
   const adjustedMealIds = Array.from(overrides.keys());
 
   return (
@@ -57,7 +59,7 @@ export default async function PlanPage() {
           <span className="plan-kicker">this week</span>
         </div>
         <div className="plan-card">
-          <WeeklyAdherence week={weekAdherence} />
+          <WeeklyAdherence week={weekAdherence} foodsByDate={weekDayFoods} />
         </div>
       </section>
 

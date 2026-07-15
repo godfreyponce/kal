@@ -71,6 +71,46 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Adherence day-detail modal — #22 (2026-07-15) — COMMITTED & pushed to main; deployed-prod phone-verify pending
+
+Tapping a day in the #6 adherence strip now opens a centered day-detail modal on `/plan`: the
+day's date, an on/off-plan verdict, a kcal bar (consumed vs target) + note, a protein bar + note,
+and the day's logged foods — each food row expanding on tap to reveal its own kcal + protein.
+Reuses the Today meal-popup shell verbatim (rise/sink, scrim, Escape, `aria-modal`, the
+`.mpop-item`→`.mpop-serv` expand mechanic). Owner-approved paradigm: **modal card, not a bottom
+sheet** (3-variant mockup `design/plan-day-detail-variants.html`); the expandable per-food rows
+were an owner add. Plan: `docs/superpowers/plans/2026-07-14-issue-22.md`.
+
+- **Client/server split (the crux):** `lib/adherence.ts` imports the DB, so a client component
+  can't pull runtime helpers from it without bundling Neon into the browser. Extracted all DB-free
+  display + rule logic into new **`lib/adherence-view.ts`** — `Macros`/`DayCell`/`DayFood` types,
+  the rule constants (`KCAL_TOLERANCE`/`PROTEIN_FLOOR`), `judgeDay`/`kcalWithinBand`/`proteinMet`,
+  the shared `dayVerdict` (verdict copy for both strip and modal), and `bucketDayFoods`.
+  `lib/adherence.ts` now imports + **re-exports** these (existing importers unchanged) and adds
+  the one new query.
+- **Data:** `getWeekDayFoods(today?)` — one `log_entries ⋈ foods` read over the calendar week,
+  ordered by `(date, id)`, numeric columns `.mapWith(Number)`, bucketed by date via the pure
+  `bucketDayFoods` (amount label from `resolveItem`; displayed kcal/protein are the STORED
+  per-entry values so they agree with the strip's summed totals). Preloaded in `/plan`'s existing
+  `Promise.all` (instant open, no fetch-on-tap route).
+- **UI:** `app/plan/weekly-adherence.tsx` became a **client component** — each cell is now a
+  `<button>` (ahead days `disabled`) that opens the modal; verdict copy routed through the shared
+  `dayVerdict`. New `app/plan/day-detail-modal.tsx` reuses `.mpop*` + adds `.dd-*` stat bars /
+  verdict pill. `.cell` got a button reset in `app/globals.css`.
+- **Mobile tooltip fix (folded in):** tapping a cell on a phone was firing the desktop `:hover`
+  tooltip (a black box). Gated `.cell:hover .tip` behind `@media (hover: hover) and (pointer: fine)`
+  so it shows only on true-hover devices; the day modal is the mobile path.
+- **Verification:** `npx tsc --noEmit` clean; `npm test` **146/146 across 23 files** (12 new
+  DB-free cases in `lib/adherence-view.test.ts` — `dayVerdict`/`judgeDay`/`bucketDayFoods`, no
+  `db/env` import since they never touch the DB). The client/server boundary was proven by a
+  production `next build` (client graph compiled with no DB-in-browser error). Owner phone-verified
+  the modal + tooltip fix on a local prod build served over Tailscale HTTPS.
+- **Phone-testing gotcha discovered** (now in STATE.md): Next dev won't hydrate on a bare-IP
+  origin and prod's `Secure` cookie needs HTTPS → phone-test via `tailscale serve` over
+  `https://<host>.ts.net`, not `http://<tailscale-IP>:3100`.
+- **Follow-ons:** #24 (redesign the modal's mobile open/close animation, ref
+  spottedinprod.com/clips) filed 2026-07-15; #23 (swipe-up calendar history) still open. Both unlabeled.
+
 ## Weekly adherence on /plan — #6 (2026-07-14) — COMMITTED & pushed to main; owner phone-verify on prod pending
 
 A weekly-adherence module on `/plan`, between Profile and Meal plan: a headline "X/7 days on

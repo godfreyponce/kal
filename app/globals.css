@@ -532,6 +532,44 @@ body {
   opacity: 0.6;
 }
 
+/* ---- Adherence day-detail modal (#22) — reuses the .mpop shell ---- */
+.dd-verdict { font-family: var(--font-mono); font-size: 12px; margin: 2px 0 14px; }
+.dd-verdict.v-hit  { color: var(--green-tx); }
+.dd-verdict.v-miss { color: var(--protein); }
+.dd-verdict.v-wip  { color: var(--accent); }
+.dd-verdict.v-ahead{ color: var(--faint); }
+
+.dd-empty {
+  font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+  padding: 22px 0 8px; text-align: center;
+}
+
+.dd-stats { display: flex; flex-direction: column; gap: 13px; margin-bottom: 16px; }
+.dd-stat-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.dd-lab {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--faint);
+}
+.dd-val { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dd-val b { color: var(--ink); font-weight: 500; font-size: 15px; }
+.dd-bar { height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; position: relative; }
+.dd-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.dd-bar-fill.hit       { background: var(--green-tx); }
+.dd-bar-fill.over      { background: var(--protein); }
+.dd-bar-fill.pro-ok    { background: var(--green-tx); }
+.dd-bar-fill.pro-short { background: var(--protein); }
+.dd-bar-fill.now       { background: var(--accent); }
+.dd-target { position: absolute; top: -2px; bottom: -2px; width: 1.5px; background: var(--ink); opacity: 0.55; }
+.dd-note { font-family: var(--font-mono); font-size: 10.5px; margin-top: 5px; }
+.dd-note.good { color: var(--green-tx); }
+.dd-note.bad  { color: var(--protein); }
+.dd-note.wip  { color: var(--muted); }
+.dd-foods-label {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--faint);
+  padding-top: 13px; border-top: 1px solid var(--ink); margin-bottom: 2px;
+}
+
 /* weigh-in (Sunday) */
 .weigh {
   margin-top: 22px;
@@ -1584,7 +1622,13 @@ body {
   border-top: 1.5px dashed rgba(31, 36, 33, 0.45);
 }
 .cells { display: flex; justify-content: space-between; gap: 4px; }
-.cell { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; cursor: default; }
+.cell {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  position: relative; cursor: pointer;
+  border: 0; background: none; font: inherit; padding: 4px 0 0; margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.cell:disabled { cursor: default; }
 .track { width: 15px; height: 64px; border-radius: 4px; position: relative; overflow: hidden; background: var(--surface-2); }
 .track.ahead { background: #f6f5f2; }
 .track.void::after {
@@ -1628,7 +1672,11 @@ body {
 .tip .v-miss { color: #eda9a7; }
 .tip .v-wip  { color: #f0b49a; }
 .tip .v-ahead{ color: #b8b6b1; }
-.cell:hover .tip { opacity: 1; }
+/* Reveal the strip tooltip only on true hover devices (desktop). On touch, tapping a
+   cell emulates :hover and would flash this box — #22 replaces it with the day modal. */
+@media (hover: hover) and (pointer: fine) {
+  .cell:hover .tip { opacity: 1; }
+}
 
 /* Plan — profile figure placeholder + region editor cards (Phase 2, design/plan-figure.html) */
 .plan-fig3d {

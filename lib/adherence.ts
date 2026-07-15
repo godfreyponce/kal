@@ -1,45 +1,23 @@
-// Pure weekly-adherence logic. No DB, no DOM — plain functions over strings/maps so
-// the query wrapper (getWeekAdherence) and the renderer (weekly-adherence.tsx) can be
-// tested and changed independently. Mirrors lib/trend-geometry.ts.
+// Weekly-adherence DB queries. Pure logic lives in lib/adherence-view.ts (DB-free);
+// this file adds the Neon reads. classifyWeek stays here (server-only use).
 
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "../db";
-import { profile, logEntries } from "../db/schema";
+import { profile, logEntries, foods } from "../db/schema";
 import { todayInAppTz } from "./time";
+import { resolveItem } from "./resolve-item";
+import {
+  judgeDay,
+  type Macros,
+  type DayCell,
+  type DayState,
+  type WeekAdherence,
+  type DayFood,
+} from "./adherence-view";
 
-export type Macros = { kcal: number; proteinG: number };
-
-export type DayState =
-  | "on-plan"   // past day, judged, passed
-  | "off-plan"  // past day, judged, failed (has log entries)
-  | "unlogged"  // past day, no log entries at all
-  | "today"     // the current day, in progress — never judged, never counted
-  | "ahead";    // a day later this week — nothing to show
-
-export type DayCell = {
-  date: string;              // YYYY-MM-DD
-  dow: string;               // positional: M T W T F S S
-  state: DayState;
-  consumed: Macros | null;   // null for "ahead"; present (possibly {0,0}) otherwise
-};
-
-export type WeekAdherence = {
-  targets: Macros;
-  days: DayCell[];           // exactly 7, Monday→Sunday
-  onPlanCount: number;       // count of days in state "on-plan" (0..7)
-};
-
-// The day rule, in one place.
-const KCAL_TOLERANCE = 0.1; // ±10% of target
-const PROTEIN_FLOOR = 0.9;  // ≥90% of target
-
-export function judgeDay(consumed: Macros, targets: Macros): boolean {
-  const kcalOk =
-    consumed.kcal >= targets.kcal * (1 - KCAL_TOLERANCE) &&
-    consumed.kcal <= targets.kcal * (1 + KCAL_TOLERANCE);
-  const proteinOk = consumed.proteinG >= targets.proteinG * PROTEIN_FLOOR;
-  return kcalOk && proteinOk;
-}
+// Re-export so existing importers (weekly-adherence.tsx, lib/adherence.test.ts) are unchanged.
+export { judgeDay, KCAL_TOLERANCE, PROTEIN_FLOOR } from "./adherence-view";
+export type { Macros, DayState, DayCell, WeekAdherence, DayFood } from "./adherence-view";
 
 // The 7 ISO dates Monday→Sunday for the week containing `today`.
 // Civil-date arithmetic on the string — UTC only (Vercel runs UTC).
@@ -110,4 +88,34 @@ export async function getWeekAdherence(today: string = todayInAppTz()): Promise<
 
   const targets: Macros = { kcal: p.targetKcal, proteinG: p.targetProteinG };
   return classifyWeek(today, targets, consumedByDate);
+}
+
+import { bucketDayFoods } from "./adherence-view";
+
+/**
+ * The week's logged foods, bucketed by date — powers the day-detail modal (#22).
+ * One read: every log_entry in the calendar week joined to its food, ordered so the
+ * modal shows foods in log order. Numeric columns come back as strings → Number().
+ */
+export async function getWeekDayFoods(
+  today: string = todayInAppTz(),
+): Promise<Record<string, DayFood[]>> {
+  const week = weekDays(today);
+  const rows = await db
+    .select({
+      date: logEntries.date,
+      quantity: sql<number>`${logEntries.quantity}`.mapWith(Number),
+      kcal: logEntries.kcal, // integer → already a number
+      proteinG: sql<number>`${logEntries.proteinG}`.mapWith(Number),
+      name: foods.name,
+      servingDesc: foods.servingDesc,
+      rawToCookedYield: sql<number | null>`${foods.rawToCookedYield}`.mapWith(
+        (v) => (v === null ? null : Number(v)),
+      ),
+    })
+    .from(logEntries)
+    .innerJoin(foods, eq(logEntries.foodId, foods.id))
+    .where(and(gte(logEntries.date, week[0]), lte(logEntries.date, week[6])))
+    .orderBy(asc(logEntries.date), asc(logEntries.id));
+  return bucketDayFoods(rows);
 }

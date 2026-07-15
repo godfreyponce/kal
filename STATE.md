@@ -1,10 +1,10 @@
 ---
 glass: kal
 status: in-progress
-last_worked_on: 2026-07-14
-next_action: "none in ready-for-agent pool — owner to green-light next (recommended: #22 mobile day-detail sheet)"
-blocked_on: "queue empty of ready-for-agent after #6 shipped; #22 + #23 filed but unlabeled — need owner to fill template + green-light"
-phase: "v1 shipped; /plan deployed to prod; weekly-adherence (#6) built, prod phone-verify pending"
+last_worked_on: 2026-07-15
+next_action: "none in ready-for-agent pool — owner to green-light next (open follow-ons: #24 mobile modal animation, #23 swipe-up calendar history; both unlabeled)"
+blocked_on: "queue has no ready-for-agent items; #23 + #24 filed but unlabeled — owner to fill template + green-light before an agent starts"
+phase: "v1 shipped; weekly-adherence (#6) + tap-a-day detail modal (#22) built & on main; deployed-prod phone-verify pending"
 ---
 
 # Kal — Project State
@@ -20,8 +20,9 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
 
 *Unaccepted work only. Anything the owner has accepted belongs in `docs/HISTORY.md`, not here.*
 
-- Owner phone-verify of prod `/plan` — the new **weekly-adherence** section (#6, just shipped)
-  plus the earlier profile/trend work — still outstanding.
+- Owner phone-verify of **deployed** prod `/plan` — the weekly-adherence strip (#6) + the new
+  tap-a-day detail modal (#22). Both got an owner phone pass on a local prod build over Tailscale
+  (2026-07-15); the deployed-prod pass is still outstanding.
 - Owner phone-verify of the 2026-07-07 Groceries "my serving" cards — still outstanding.
 - Owner hygiene: delete the Rodin uploads, cancel the $6 Creator plan.
 
@@ -48,6 +49,12 @@ npx tsc --noEmit         # must stay clean
 - Any page reading live DB or the current day MUST `export const dynamic = "force-dynamic"`
   (Next 16 prerenders static by default; invisible in dev; build route table: `/` must be `ƒ`).
 - After editing `globals.css`, Turbopack dev serves STALE CSS — `rm -rf .next`, restart, hard-refresh.
+- Phone-testing an authed page (e.g. `/plan`) over Tailscale needs **HTTPS**, not the bare
+  `http://<tailscale-IP>:3100`: Next **dev** silently fails to hydrate on an insecure (non-localhost)
+  origin — client JS dead, inputs/buttons frozen, no console error — and Next **prod** sets the
+  session cookie `Secure` (`lib/session.ts`), so it's dropped over plain HTTP → login loops back.
+  Fix: `npm run build && PORT=3100 npx next start -p 3100`, then `tailscale serve --bg http://127.0.0.1:3100`
+  and open the `https://<host>.ts.net` URL. Tear down: `tailscale serve --https=443 off`.
 - `db/seed.ts`'s PROFILE block is the reset-path profile only (owner hand-edited); the live
   profile row differs — reconcile with the owner before touching either.
 - Next 16: `middleware`→`proxy`, `params` is a Promise; neon-http has no interactive txns;

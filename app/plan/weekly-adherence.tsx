@@ -1,13 +1,16 @@
-// app/plan/weekly-adherence.tsx
-// Server component — renders the approved weekly-adherence design
-// (design/plan-adherence-final.html). No "use client": the only interactivity is a
-// pure-CSS :hover tooltip. Mobile tap-for-detail is issue #22.
+"use client";
+
+// Client component — the strip renders server-provided data and opens a day-detail
+// modal on tap (issue #22). Runtime helpers come from lib/adherence-view (DB-free);
+// types come from lib/adherence (type-only import, erased). Desktop keeps the :hover tooltip.
+import { useState } from "react";
 import type { WeekAdherence, DayCell } from "@/lib/adherence";
+import { dayVerdict, kcalWithinBand, proteinMet } from "@/lib/adherence-view";
+import type { DayFood } from "@/lib/adherence-view";
+import { DayDetailModal } from "./day-detail-modal";
 
 const TRACK_PX = 64;   // .track height
 const TARGET_PX = 48;  // kcal target height within the track (matches .e-line top: 16px)
-const KCAL_TOLERANCE = 0.1;
-const PROTEIN_FLOOR = 0.9;
 
 const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHDAY = (iso: string) => {
@@ -20,17 +23,25 @@ const num = (n: number) => Math.round(n).toLocaleString("en-US");
 const barPx = (kcal: number, targetKcal: number) =>
   Math.min(TRACK_PX, Math.round((kcal / targetKcal) * TARGET_PX));
 
-function Cell({ day, targets }: { day: DayCell; targets: WeekAdherence["targets"] }) {
+function Cell({
+  day,
+  targets,
+  onOpen,
+}: {
+  day: DayCell;
+  targets: WeekAdherence["targets"];
+  onOpen: (day: DayCell) => void;
+}) {
   const label = MONTHDAY(day.date);
 
   if (day.state === "ahead") {
     return (
-      <div className="cell ahead">
+      <button type="button" className="cell ahead" disabled>
         <div className="tip"><b>{label}</b><br /><span className="verdict v-ahead">not yet</span></div>
         <div className="track ahead" />
         <span className="pdot hide" />
         <span className="dow">{day.dow}</span>
-      </div>
+      </button>
     );
   }
 
@@ -39,7 +50,7 @@ function Cell({ day, targets }: { day: DayCell; targets: WeekAdherence["targets"
   if (day.state === "today") {
     const left = targets.kcal - c.kcal;
     return (
-      <div className="cell today">
+      <button type="button" className="cell today" onClick={() => onOpen(day)}>
         <span className="now-tag">now</span>
         <div className="tip">
           <b>{label} · today</b><br />
@@ -50,40 +61,30 @@ function Cell({ day, targets }: { day: DayCell; targets: WeekAdherence["targets"
         <div className="track"><div className="fill now" style={{ height: `${barPx(c.kcal, targets.kcal)}px` }} /></div>
         <span className="pdot now" />
         <span className="dow">{day.dow}</span>
-      </div>
+      </button>
     );
   }
 
   if (day.state === "unlogged") {
     return (
-      <div className="cell">
+      <button type="button" className="cell" onClick={() => onOpen(day)}>
         <div className="tip"><b>{label}</b><br />nothing logged<br /><span className="verdict v-miss">✕ off plan</span></div>
         <div className="track void" />
         <span className="pdot short" />
         <span className="dow">{day.dow}</span>
-      </div>
+      </button>
     );
   }
 
-  // on-plan | off-plan — a past, logged day.
-  const kcalOk = c.kcal >= targets.kcal * (1 - KCAL_TOLERANCE) && c.kcal <= targets.kcal * (1 + KCAL_TOLERANCE);
-  const proteinOk = c.proteinG >= targets.proteinG * PROTEIN_FLOOR;
+  // on-plan | off-plan — a past, logged day. Number colors use the band checks;
+  // the verdict copy is the shared dayVerdict (also used by the modal).
+  const kcalOk = kcalWithinBand(c, targets);
+  const proteinOk = proteinMet(c, targets);
   const hit = day.state === "on-plan";
-
-  // Verdict copy. Spec §4a only specified "over kcal"; a day logged BELOW the −10% band
-  // ("under kcal") and the both-fail case are resolved here — kcal failure is primary and
-  // shows its direction; a within-band-but-low-protein day shows "short protein".
-  let verdict: string;
-  if (!kcalOk) {
-    verdict = c.kcal > targets.kcal ? `✕ ${num(c.kcal - targets.kcal)} over kcal` : `✕ ${num(targets.kcal - c.kcal)} under kcal`;
-  } else if (!proteinOk) {
-    verdict = "✕ short protein";
-  } else {
-    verdict = "✓ on plan";
-  }
+  const verdict = dayVerdict(day, targets).text;
 
   return (
-    <div className="cell">
+    <button type="button" className="cell" onClick={() => onOpen(day)}>
       <div className="tip">
         <b>{label}</b><br />
         kcal <span className={kcalOk ? "k-ok" : "k-bad"}>{num(c.kcal)}</span> of {num(targets.kcal)}<br />
@@ -95,12 +96,20 @@ function Cell({ day, targets }: { day: DayCell; targets: WeekAdherence["targets"
       </div>
       <span className={`pdot ${proteinOk ? "ok" : "short"}`} />
       <span className="dow">{day.dow}</span>
-    </div>
+    </button>
   );
 }
 
-export function WeeklyAdherence({ week }: { week: WeekAdherence }) {
+export function WeeklyAdherence({
+  week,
+  foodsByDate,
+}: {
+  week: WeekAdherence;
+  foodsByDate: Record<string, DayFood[]>;
+}) {
   const { targets, days, onPlanCount } = week;
+  const [open, setOpen] = useState<DayCell | null>(null);
+
   return (
     <div className="adh-body" role="group" aria-label={`${onPlanCount} of 7 days on plan this week`}>
       <div className="adh-hero">
@@ -116,11 +125,19 @@ export function WeeklyAdherence({ week }: { week: WeekAdherence }) {
           <div className="e-line" />
           <div className="cells">
             {days.map((day) => (
-              <Cell key={day.date} day={day} targets={targets} />
+              <Cell key={day.date} day={day} targets={targets} onOpen={setOpen} />
             ))}
           </div>
         </div>
       </div>
+      {open && (
+        <DayDetailModal
+          day={open}
+          targets={targets}
+          foods={foodsByDate[open.date] ?? []}
+          onClose={() => setOpen(null)}
+        />
+      )}
     </div>
   );
 }
