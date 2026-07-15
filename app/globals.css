@@ -1551,6 +1551,85 @@ body {
 .plan-tr-log em { font-style: normal; color: var(--faint); margin-left: 6px; }
 .plan-tr-empty { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; color: var(--faint); }
 
+/* Plan — weekly adherence (issue #6; design/plan-adherence-final.html) */
+.adh-body { display: flex; align-items: flex-start; gap: 14px; }
+.adh-hero { flex-shrink: 0; padding-top: 2px; }
+.adh-num {
+  font-family: var(--font-mono); font-size: 30px; line-height: 1.05;
+  color: var(--ink); letter-spacing: -0.02em;
+}
+.adh-num small { font-size: 17px; color: var(--faint); }
+.adh-lbl {
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--muted); margin-top: 1px; max-width: 80px; line-height: 1.35;
+}
+.adh-legend { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+.leg-row {
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: 9px; color: var(--faint);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.leg-dash { display: inline-block; width: 13px; flex-shrink: 0; border-top: 1.5px dashed rgba(31,36,33,0.5); }
+.leg-dot {
+  display: inline-block; width: 7px; height: 7px; flex-shrink: 0; margin: 0 3px;
+  border-radius: 9999px; background: var(--green-tx);
+}
+.adh-strip { flex: 1; min-width: 0; }
+
+/* plot: track 64px; target line at 16px from top = 48px from bottom */
+.plot { position: relative; }
+.plot .cells { position: relative; z-index: 1; }
+.e-line {
+  position: absolute; z-index: 2; left: 0; right: 0; top: 16px; height: 0;
+  border-top: 1.5px dashed rgba(31, 36, 33, 0.45);
+}
+.cells { display: flex; justify-content: space-between; gap: 4px; }
+.cell { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; cursor: default; }
+.track { width: 15px; height: 64px; border-radius: 4px; position: relative; overflow: hidden; background: var(--surface-2); }
+.track.ahead { background: #f6f5f2; }
+.track.void::after {
+  content: ""; position: absolute; inset: 0;
+  background: repeating-linear-gradient(135deg, rgba(159,47,45,0.30) 0 1.5px, transparent 1.5px 5px);
+}
+.fill { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 4px 4px 0 0; }
+.fill.hit  { background: var(--green-tx); }
+.fill.miss { background: var(--protein); }
+.fill.now  { background: var(--accent); }
+.tex-miss { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.34) 0 1.5px, transparent 1.5px 4px); }
+.dow { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.04em; color: var(--faint); }
+.cell.today .dow { color: var(--accent); font-weight: 500; }
+.cell.ahead .dow { color: #c9c7c2; }
+.cell:hover .dow { color: var(--ink); }
+
+/* protein dot: filled = hit, red ring = short, dashed accent = today in progress */
+.pdot { width: 7px; height: 7px; border-radius: 9999px; flex-shrink: 0; }
+.pdot.ok    { background: var(--green-tx); }
+.pdot.short { border: 1.5px solid var(--protein); }
+.pdot.now   { border: 1.5px dashed var(--accent); }
+.pdot.hide  { visibility: hidden; }
+
+.now-tag {
+  position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--accent); white-space: nowrap;
+}
+.tip {
+  position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #f4f3f0; border-radius: 7px; padding: 6px 9px;
+  font-family: var(--font-mono); font-size: 9.5px; line-height: 1.55; white-space: nowrap;
+  opacity: 0; transition: opacity 0.12s; pointer-events: none; z-index: 5; text-align: left;
+}
+.tip b { font-weight: 500; }
+.tip .k-ok  { color: #a9d3ab; }
+.tip .k-bad { color: #eda9a7; }
+.tip .k-now { color: #f0b49a; }
+.tip .verdict { display: block; margin-top: 2px; }
+.tip .v-hit  { color: #a9d3ab; }
+.tip .v-miss { color: #eda9a7; }
+.tip .v-wip  { color: #f0b49a; }
+.tip .v-ahead{ color: #b8b6b1; }
+.cell:hover .tip { opacity: 1; }
+
 /* Plan — profile figure placeholder + region editor cards (Phase 2, design/plan-figure.html) */
 .plan-fig3d {
   position: relative; height: 400px; margin-top: 4px;

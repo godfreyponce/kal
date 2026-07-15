@@ -71,6 +71,42 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Weekly adherence on /plan — #6 (2026-07-14) — COMMITTED & pushed to main; owner phone-verify on prod pending
+
+A weekly-adherence module on `/plan`, between Profile and Meal plan: a headline "X/7 days on
+plan" over a **fixed Monday→Sunday calendar week** (denominator always 7, resets Monday — NOT a
+rolling 7 days) plus a seven-bar Mon→Sun strip. Mirrors the weight-trend pure-logic/server-render
+split. Design + spec were owner-approved 2026-07-14 (`docs/superpowers/specs/2026-07-14-weekly-adherence-design.md`,
+visual ref `design/plan-adherence-final.html`); this ticket was pure wiring off that spec.
+
+- **Pure core** `lib/adherence.ts` (`judgeDay` / `weekDays` / `classifyWeek`), unit-tested in
+  `lib/adherence.test.ts` (12 cases). **Day rule:** a past day is *on plan* when logged kcal is
+  within ±10% of target **AND** protein ≥90% of target (thresholds `KCAL_TOLERANCE=0.10`,
+  `PROTEIN_FLOOR=0.90`, one place). **States:** on-plan / off-plan / unlogged (past day with no
+  rows → off-plan, rendered struck-through) / today (live, **never judged, never counted**) /
+  ahead (blank). All date math is UTC civil-string arithmetic (`new Date(d+"T00:00:00Z")`,
+  `getUTCDay`/`setUTCDate`) — Vercel runs UTC.
+- **Query wrapper** `getWeekAdherence(today?)`, co-located in `lib/adherence.ts`: two-query
+  `Promise.all` (profile targets + one grouped `coalesce(sum).mapWith(Number)` over the week's
+  `log_entries`), then `classifyWeek`. Defaults to `todayInAppTz()`. No new API route.
+- **UI** server component `app/plan/weekly-adherence.tsx` (no `"use client"` — the only
+  interactivity is a pure-CSS `:hover` tooltip; mobile tap-detail deferred to #22) + a verbatim
+  CSS port from the approved mockup into `app/globals.css` (only the mockup's `:root` dropped —
+  the app already defines every token). Wired into `app/plan/page.tsx`'s existing `Promise.all`.
+- **Verification:** `npx tsc --noEmit` clean; `npm test` 134/134 across 22 files (12 new). Live
+  `getWeekAdherence()` smoke against Neon returned correct targets ({kcal 3603, protein 216}) and
+  week classification. Browser render not driven — `/plan` is auth-gated (`/login` redirect) and
+  passwords are off-limits to the agent; CSS is verbatim from the approved mockup, so owner
+  phone-verify is the visual sign-off.
+- **Deviation from plan:** co-locating `getWeekAdherence` in `lib/adherence.ts` means the unit-test
+  file transitively imports `db/index.ts`, which throws `DATABASE_URL is not set` at import. The
+  plan omitted the repo's convention for DB-touching tests — **`import "../db/env";` as the first
+  line** (a dotenv side-effect that loads `.env.local`; 12 other test files do this). Adding that
+  line fixed it. The commit gate runs `tsc && npm test` with no `DATABASE_URL` in the env, so this
+  is mandatory, not optional — the plan's "isolated test passes unchanged" prediction was wrong.
+- **Follow-ons filed (not yet green-lit):** #22 mobile tap-for-day-detail sheet, #23 swipe-up
+  calendar history view.
+
 ## Code-health batch #15+#16+#17 (2026-07-13) — DEPLOYED to prod, owner-accepted
 
 - **#15 null-body → 400** (commit 1a2ba16, 15 files under `app/api`): every

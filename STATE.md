@@ -2,9 +2,9 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-14
-next_action: "#6 — weekly adherence module on /plan"
-blocked_on: "nothing — design + spec approved 2026-07-14; next is /plan-ticket #6 (gate 1)"
-phase: "v1 shipped; /plan deployed to prod"
+next_action: "none in ready-for-agent pool — owner to green-light next (recommended: #22 mobile day-detail sheet)"
+blocked_on: "queue empty of ready-for-agent after #6 shipped; #22 + #23 filed but unlabeled — need owner to fill template + green-light"
+phase: "v1 shipped; /plan deployed to prod; weekly-adherence (#6) built, prod phone-verify pending"
 ---
 
 # Kal — Project State
@@ -20,17 +20,8 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
 
 *Unaccepted work only. Anything the owner has accepted belongs in `docs/HISTORY.md`, not here.*
 
-- **#6 — weekly adherence on /plan. Design + spec APPROVED 2026-07-14; not built.** Next step:
-  `/plan-ticket #6` (fresh session → gate 1). Spec:
-  `docs/superpowers/specs/2026-07-14-weekly-adherence-design.md`. Visual ref:
-  `design/plan-adherence-final.html`. Final scope (evolved past the issue's original re-scope
-  note): "X/7 days on plan" over a **fixed Monday→Sunday calendar week** (NOT a rolling 7 days);
-  day rule = kcal ±10% AND protein ≥90%; unlogged past day = off-plan; today shown live/unjudged,
-  days ahead blank; denominator always 7, resets Monday. Shape: pure `lib/adherence.ts`
-  (`judgeDay`/`weekDays`/`classifyWeek` + thin `getWeekAdherence`) + a **server** component on
-  /plan (CSS-only hover) between Profile and Meal plan. Follow-ons filed: #22 (mobile tap sheet),
-  #23 (swipe-up calendar).
-- Owner phone-verify of prod `/plan` — still outstanding.
+- Owner phone-verify of prod `/plan` — the new **weekly-adherence** section (#6, just shipped)
+  plus the earlier profile/trend work — still outstanding.
 - Owner phone-verify of the 2026-07-07 Groceries "my serving" cards — still outstanding.
 - Owner hygiene: delete the Rodin uploads, cancel the $6 Creator plan.
 
@@ -64,5 +55,8 @@ npx tsc --noEmit         # must stay clean
   run sequentially (vitest.config.ts) — live-DB singleton state races under file parallelism.
 - Routes map errors by type (`ValidationError`→400, `NotFoundError`→404 from lib/errors.ts) —
   never by message text.
+- Any test file that (transitively) imports the DB must have `import "../db/env";` as its FIRST
+  line — the commit gate runs `npm test` with no `DATABASE_URL`, so `db/index.ts` throws otherwise
+  (bit #6: a "pure" unit test importing `lib/adherence.ts` pulled in `../db`). 12 test files do this.
 - This repo is PUBLIC (recruiter-visible) — no env values, credentials, or owner personal data
   in committed files or issues.
