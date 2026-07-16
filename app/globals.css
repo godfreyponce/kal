@@ -570,6 +570,88 @@ body {
   padding-top: 13px; border-top: 1px solid var(--ink); margin-bottom: 2px;
 }
 
+/* ---- #24 day-detail bottom sheet (dedicated namespace — NOT the shared .mpop-*) ---- */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;      /* dock the card to the bottom */
+  justify-content: center;
+}
+.sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(31, 36, 33, 0.32);
+  opacity: 0;
+  transition: opacity 0.24s ease-out;
+}
+.sheet.open .sheet-scrim { opacity: 1; }
+/* while dragging, scrim opacity is driven 1:1 from JS (scrimProgress) */
+.sheet.dragging .sheet-scrim { transition: none; opacity: var(--scrim-o, 1); }
+
+.sheet-card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  max-height: 88vh;
+  overflow-y: auto;              /* the card is the scroll container */
+  overscroll-behavior: contain;  /* don't chain scroll to the page */
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 22px 22px 0 0;  /* rounded top only — it's a sheet */
+  padding: 8px 22px calc(22px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -12px 48px rgba(31, 36, 33, 0.22);
+  transform: translateY(100%);   /* start fully offscreen, below the fold */
+  transition: transform 0.24s cubic-bezier(0.23, 1, 0.32, 1); /* exit: ease-out (Emil), 0.24s = EXIT_MS */
+  touch-action: pan-y;           /* let native vertical scroll happen; we hijack at the top */
+}
+.sheet.open .sheet-card {
+  transform: translateY(0);
+  /* enter: Emil's iOS drawer curve, settles flat (no overshoot) */
+  transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+/* while dragging: no transition, follow the finger via the JS-set var */
+.sheet.dragging .sheet-card {
+  transition: none;
+  transform: translateY(var(--sheet-y, 0px));
+}
+
+/* grabber handle — visual affordance that the whole sheet is draggable */
+.sheet-grab {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  margin: 6px auto 8px;
+  flex-shrink: 0;
+}
+
+/* header row (own classes — mirrors the mpop header look without sharing it) */
+.sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 2px; }
+.sheet-title {
+  font-family: var(--font-serif); font-size: 24px; font-weight: 500;
+  letter-spacing: -0.02em; flex: 1; min-width: 0; line-height: 1.2;
+}
+.sheet-x {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 9999px; border: 0;
+  background: var(--surface-2); color: var(--muted); font-size: 13px;
+  line-height: 1; cursor: pointer;
+}
+
+/* Reduced motion: no transform, no drag — plain opacity fade only. */
+@media (prefers-reduced-motion: reduce) {
+  .sheet-card {
+    transform: none;
+    opacity: 0;
+    transition: opacity 0.2s ease-in;
+    touch-action: auto;
+  }
+  .sheet.open .sheet-card { transform: none; opacity: 1; transition: opacity 0.2s ease-out; }
+  .sheet.dragging .sheet-card { transform: none; }   /* drag is JS-gated off too */
+  .sheet-scrim, .sheet.open .sheet-scrim { transition: opacity 0.2s ease; }
+}
+
 /* weigh-in (Sunday) */
 .weigh {
   margin-top: 22px;

@@ -9,12 +9,13 @@ const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const dateLabel = (iso: string) => {
   const d = new Date(iso + "T00:00:00Z"); // UTC, like the strip
-  return `${WEEKDAY[d.getUTCDay()]} · ${MONTH[d.getUTCMonth()]} ${d.getUTCDate()}`;
+  return `${WEEKDAY[d.getUTCDay()]}, ${MONTH[d.getUTCMonth()]} ${d.getUTCDate()}`; // "Thu, Jul 10"
 };
 
 // kcal bar: the target sits at a fixed mark so an over-target day visibly extends past it.
 const KCAL_TARGET_MARK = 78; // %
 const PROTEIN_TARGET_MARK = 90; // % (= the 0.9 floor)
+const EXIT_MS = 240; // must match the .sheet-card exit transition (see globals.css)
 
 export function DayDetailModal({
   day,
@@ -27,11 +28,12 @@ export function DayDetailModal({
   foods: DayFood[];
   onClose: () => void;
 }) {
-  // Rise & sink, matching meal-popup: mount closed, add .open next frame; on close
-  // drop .open and unmount after the 170ms exit.
+  // Bottom sheet: mount closed, add .open next frame to spring up; on close
+  // drop .open and unmount after the EXIT_MS sink-down.
   const [shown, setShown] = useState(false);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const closeBtn = useRef<HTMLButtonElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
@@ -40,7 +42,7 @@ export function DayDetailModal({
 
   const close = useCallback(() => {
     setShown(false);
-    window.setTimeout(onClose, 180);
+    window.setTimeout(onClose, EXIT_MS);
   }, [onClose]);
 
   useEffect(() => {
@@ -87,17 +89,19 @@ export function DayDetailModal({
       : `short ${num(targets.proteinG - c.proteinG)} g`;
 
   return (
-    <div className={`mpop${shown ? " open" : ""}`}>
-      <div className="mpop-scrim" onClick={close} />
+    <div className={`sheet${shown ? " open" : ""}`}>
+      <div className="sheet-scrim" onClick={close} />
       <div
-        className="mpop-card"
+        className="sheet-card"
+        ref={cardRef}
         role="dialog"
         aria-modal="true"
         aria-label={`${dateLabel(day.date)} detail`}
       >
-        <div className="mpop-head">
-          <span className="mpop-title">{dateLabel(day.date)}</span>
-          <button ref={closeBtn} type="button" className="mpop-x" onClick={close} aria-label="Close">
+        <div className="sheet-grab" aria-hidden="true" />
+        <div className="sheet-head">
+          <span className="sheet-title">{dateLabel(day.date)}</span>
+          <button ref={closeBtn} type="button" className="sheet-x" onClick={close} aria-label="Close">
             ✕
           </button>
         </div>
