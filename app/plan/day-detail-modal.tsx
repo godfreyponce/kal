@@ -241,7 +241,7 @@ export function DayDetailModal({
                 <div key={i}>
                   <button
                     type="button"
-                    className={`mpop-item${open ? " open" : ""}${last}`}
+                    className={`sheet-food${open ? " open" : ""}${last}`}
                     aria-expanded={open}
                     onClick={() => toggle(i)}
                   >
@@ -250,20 +250,22 @@ export function DayDetailModal({
                     <span className="mi-kcal">{num(f.kcal)}</span>
                     <span className="mi-caret">›</span>
                   </button>
-                  {open && (
-                    <div className={`mpop-serv${last}`}>
-                      <div className="mpop-stats">
-                        <span className="ms">
-                          <span className="ms-lab">kcal</span>
-                          <span className="ms-v">{num(f.kcal)}</span>
-                        </span>
-                        <span className="ms p">
-                          <span className="ms-lab">protein</span>
-                          <span className="ms-v">{num(f.proteinG)} g</span>
-                        </span>
+                  <div className={`sheet-food-wrap${open ? " open" : ""}${last}`}>
+                    <div className="sheet-food-inner">
+                      <div className="sheet-food-detail">
+                        <div className="mpop-stats">
+                          <span className="ms">
+                            <span className="ms-lab">kcal</span>
+                            <span className="ms-v">{num(f.kcal)}</span>
+                          </span>
+                          <span className="ms p">
+                            <span className="ms-lab">protein</span>
+                            <span className="ms-v">{num(f.proteinG)} g</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
