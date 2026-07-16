@@ -2,9 +2,9 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-15
-next_action: "none in ready-for-agent pool — owner to green-light next (open follow-ons: #24 mobile modal animation, #23 swipe-up calendar history; both unlabeled)"
-blocked_on: "queue has no ready-for-agent items; #23 + #24 filed but unlabeled — owner to fill template + green-light before an agent starts"
-phase: "v1 shipped; weekly-adherence (#6) + tap-a-day detail modal (#22) built & on main; deployed-prod phone-verify pending"
+next_action: "none in ready-for-agent pool — owner to green-light next (open follow-on: #23 swipe-up calendar history, unlabeled)"
+blocked_on: "queue has no ready-for-agent items; #23 filed but unlabeled — owner to fill template + green-light before an agent starts"
+phase: "v1 shipped; weekly-adherence (#6) + tap-a-day detail modal (#22) + native sheet motion (#24) built & on main; on-phone / deployed-prod phone-verify pending"
 ---
 
 # Kal — Project State
@@ -20,7 +20,12 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
 
 *Unaccepted work only. Anything the owner has accepted belongs in `docs/HISTORY.md`, not here.*
 
-- Owner phone-verify of **deployed** prod `/plan` — the weekly-adherence strip (#6) + the new
+- Owner on-phone feel-tuning + phone-verify of the **#24 day-detail bottom sheet** (drag/flick
+  dismiss, scroll-aware hijack, scrim coupling, food-row weight-expand, reduced-motion fallback,
+  and that the Today meal-popup is unchanged). Not yet tested on a device — final motion constants
+  are owner-tuned; the passive-listener / `touch-action` interaction on iOS Safari is the likely
+  tuning spot.
+- Owner phone-verify of **deployed** prod `/plan` — the weekly-adherence strip (#6) + the
   tap-a-day detail modal (#22). Both got an owner phone pass on a local prod build over Tailscale
   (2026-07-15); the deployed-prod pass is still outstanding.
 - Owner phone-verify of the 2026-07-07 Groceries "my serving" cards — still outstanding.

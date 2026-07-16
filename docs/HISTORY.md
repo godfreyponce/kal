@@ -71,6 +71,47 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Adherence day-detail modal — native mobile sheet motion — #24 (2026-07-15) — COMMITTED & pushed to main; on-phone feel-tuning + phone-verify pending
+
+Follow-on to #22. The day-detail modal read like a desktop popover on a phone (it borrowed the
+Today meal-popup's centered rise/sink). Rebuilt as a native-feeling **single-detent bottom sheet**
+on `/plan`: springs up from offscreen and sinks back down, whole-sheet drag-to-dismiss, scrim
+opacity coupled to sheet position, and a weight-animated food-row expand. Owner-provided motion
+reference: spottedinprod.com/clips. Hand-rolled (pointer events + CSS transitions, **no new
+dependency** — matches the rest of the app; a motion library was left as an explicit owner call).
+Plan: `docs/superpowers/plans/2026-07-15-issue-24.md`.
+
+- **Dedicated `.sheet-*` namespace (the boundary):** the modal moved entirely off the shared
+  `.mpop-*` classes onto new `.sheet` / `.sheet-scrim` / `.sheet-card` / `.sheet-head` /
+  `.sheet-food*` classes, so the **Today meal-popup is byte-for-byte untouched**. The DB-free
+  content logic (`kPct`/`kBar`/`kNote`/verdict, the `.dd-*` stat bars) is unchanged; only the
+  shell + food-row markup changed. (The food detail still reuses the read-only shared
+  `.mpop-stats`/`.ms*` strip as-is.)
+- **Gesture math extracted + unit-tested:** new **`lib/sheet-gesture.ts`** — three pure functions
+  the drag handler consumes: `rubberBand` (iOS diminishing-resistance past the open detent),
+  `shouldDismiss` (past-distance-ratio OR velocity flick), `scrimProgress` (scrim↔position
+  coupling). DB-free, so no `db/env` sentinel; 12 assertions in `lib/sheet-gesture.test.ts`.
+- **Drag wiring:** a `useEffect` attaches **native non-passive** pointer listeners on the card
+  ref (React's synthetic move handlers can be passive, so `preventDefault` wouldn't fire). It's
+  **scroll-aware** — a downward pull only hijacks the sheet when the list is scrolled to the top
+  (`scrollTop <= 0`); otherwise the card scrolls natively. Mouse is ignored (drag is a touch
+  affordance); scrim opacity is driven 1:1 from JS during the drag. Enter/exit curves reconciled
+  to Emil Kowalski's iOS-drawer values; `EXIT_MS = 240` matches the `.sheet-card` exit transition.
+- **Food-row expand:** instant show/hide replaced with a height-growing `grid-template-rows
+  0fr→1fr` + detail fade (owner-validated technique), own `.sheet-food-wrap` classes; the detail
+  is now always mounted so the height can animate.
+- **Reduced motion:** `prefers-reduced-motion: reduce` → plain opacity fade (~0.2s), no transform,
+  drag JS-gated off, food expand instant. **Copy:** date label is now `Thu, Jul 10` (dropped the
+  middle-dot separator per the owner copy rule).
+- **Verification:** `npx tsc --noEmit` clean; `npm test` **158/158 across 24 files** (the new
+  DB-free gesture unit). ESLint clean. The gesture *feel* (drag physics, thresholds) is inherently
+  on-device — per the ticket, final motion constants are **owner-tuned on-phone**; that pass +
+  confirming the Today popup is unchanged are still outstanding. Watch item from the plan: the
+  passive-listener / `touch-action: pan-y` interaction on iOS Safari is the most likely thing to
+  need tuning.
+- **Structure:** shipped as **four per-task commits** (gesture math → sheet shell → drag → food
+  expand, each typecheck-green) at the owner's request, then this accept commit (STATE/HISTORY/plan).
+
 ## Adherence day-detail modal — #22 (2026-07-15) — COMMITTED & pushed to main; deployed-prod phone-verify pending
 
 Tapping a day in the #6 adherence strip now opens a centered day-detail modal on `/plan`: the
