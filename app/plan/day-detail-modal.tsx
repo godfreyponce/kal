@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DayCell, Macros, DayFood } from "@/lib/adherence-view";
 import { dayVerdict, kcalWithinBand, proteinMet } from "@/lib/adherence-view";
+import { rubberBand, shouldDismiss, scrimProgress } from "@/lib/sheet-gesture";
 
 const num = (n: number) => Math.round(n).toLocaleString("en-US");
 const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -31,6 +32,7 @@ export function DayDetailModal({
   // Bottom sheet: mount closed, add .open next frame to spring up; on close
   // drop .open and unmount after the EXIT_MS sink-down.
   const [shown, setShown] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const closeBtn = useRef<HTMLButtonElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -52,6 +54,97 @@ export function DayDetailModal({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [close]);
+
+  // Whole-sheet, scroll-aware drag-to-dismiss. Native non-passive listeners so we
+  // can preventDefault the scroll when hijacking a top-of-list downward pull.
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    // Reduced motion: no drag at all (CSS also disables the transform).
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let active = false; // are we dragging the SHEET (vs. letting it scroll)?
+    let startY = 0;
+    let lastY = 0;
+    let lastT = 0;
+    let velocity = 0; // px/ms, positive = downward
+    let pointerId = -1;
+
+    const setVars = (dy: number) => {
+      card.style.setProperty("--sheet-y", `${dy}px`);
+      card.style.setProperty("--scrim-o", `${scrimProgress(dy, card.offsetHeight)}`);
+    };
+    const clearVars = () => {
+      card.style.removeProperty("--sheet-y");
+      card.style.removeProperty("--scrim-o");
+    };
+
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") return; // pointer-drag is a touch affordance
+      pointerId = e.pointerId;
+      startY = lastY = e.clientY;
+      lastT = e.timeStamp;
+      velocity = 0;
+      active = false; // decide on first move whether this is a sheet-drag or a scroll
+    };
+
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerId !== pointerId) return;
+      const dyRaw = e.clientY - startY;
+
+      // Decide gesture ownership once: a downward pull with the list at the top
+      // drags the sheet; anything else is left to native scroll.
+      if (!active) {
+        if (dyRaw > 4 && card.scrollTop <= 0) {
+          active = true;
+          setDragging(true);
+          card.setPointerCapture(pointerId);
+        } else {
+          return; // let native scroll run
+        }
+      }
+
+      e.preventDefault(); // we own the gesture — stop native scroll
+
+      // velocity from the last sample (event.timeStamp is monotonic ms)
+      const dt = e.timeStamp - lastT;
+      if (dt > 0) velocity = (e.clientY - lastY) / dt;
+      lastY = e.clientY;
+      lastT = e.timeStamp;
+
+      // dy>0 follows the finger 1:1; dy<0 (past the open detent) rubber-bands.
+      const dy = dyRaw >= 0 ? dyRaw : -rubberBand(-dyRaw, card.offsetHeight); // ~0.55 factor
+      setVars(dy);
+    };
+
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerId !== pointerId || !active) {
+        active = false;
+        return;
+      }
+      active = false;
+      setDragging(false);
+      if (card.hasPointerCapture?.(pointerId)) card.releasePointerCapture(pointerId);
+      const dy = e.clientY - startY;
+      if (shouldDismiss({ dy, sheetHeight: card.offsetHeight, velocity })) {
+        clearVars();
+        close(); // drops .open → sheet transitions to translateY(100%), then unmounts
+      } else {
+        clearVars(); // removing .dragging + clearing the var → CSS springs back to translateY(0)
+      }
+    };
+
+    card.addEventListener("pointerdown", onDown);
+    card.addEventListener("pointermove", onMove, { passive: false });
+    card.addEventListener("pointerup", onUp);
+    card.addEventListener("pointercancel", onUp);
+    return () => {
+      card.removeEventListener("pointerdown", onDown);
+      card.removeEventListener("pointermove", onMove);
+      card.removeEventListener("pointerup", onUp);
+      card.removeEventListener("pointercancel", onUp);
+    };
   }, [close]);
 
   const toggle = (i: number) =>
@@ -89,7 +182,7 @@ export function DayDetailModal({
       : `short ${num(targets.proteinG - c.proteinG)} g`;
 
   return (
-    <div className={`sheet${shown ? " open" : ""}`}>
+    <div className={`sheet${shown ? " open" : ""}${dragging ? " dragging" : ""}`}>
       <div className="sheet-scrim" onClick={close} />
       <div
         className="sheet-card"
