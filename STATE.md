@@ -2,9 +2,9 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-17
-next_action: "none in ready-for-agent pool — owner to green-light next (#25 scrim bug is the nearest candidate; #26 tagged later, UI redesign deferred until technicals settle)"
-blocked_on: "queue has no ready-for-agent items; #25 (bug) awaits owner green-light, ideally fixed before/with the #23+#24 phone feel pass; #26 deferred by owner 2026-07-17"
-phase: "v1 shipped; weekly-adherence (#6) + day-detail sheet (#22/#24) + adherence history calendar (#23) built & on main; on-phone / deployed-prod phone-verify pending"
+next_action: "none in ready-for-agent pool — owner to green-light next (#25 closed 2026-07-17; #26 tagged later, UI redesign deferred until technicals settle)"
+blocked_on: "queue has no ready-for-agent items; remaining verify work is the owner phone passes (#23/#24, now incl. the #25 scrim fix) + deployed-prod checks"
+phase: "v1 shipped; weekly-adherence (#6) + day-detail sheet (#22/#24, #25 scrim fix) + adherence history calendar (#23) built & on main; on-phone / deployed-prod phone-verify pending"
 ---
 
 # Kal — Project State
@@ -23,12 +23,13 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
 - Owner on-phone feel pass of the **#23 adherence history calendar sheet** (swipe-up pull claim
   vs page scroll, drag/flick dismiss, abandoned-pull snap-back feel, pull thresholds are named
   constants atop `app/plan/adherence-calendar.tsx`). Down-drag dismiss was headless-unverifiable —
-  phone is the first real test. Bundle with the #25 scrim fix pass if convenient.
+  phone is the first real test. Bundle with the #24 pass if convenient.
 - Owner on-phone feel-tuning + phone-verify of the **#24 day-detail bottom sheet** (drag/flick
   dismiss, scroll-aware hijack, scrim coupling, food-row weight-expand, reduced-motion fallback,
   and that the Today meal-popup is unchanged). Not yet tested on a device — final motion constants
   are owner-tuned; the passive-listener / `touch-action` interaction on iOS Safari is the likely
-  tuning spot.
+  tuning spot. The #25 scrim fix landed 2026-07-17 — scrim now fades with the finger during drag;
+  verify that in this pass.
 - Owner phone-verify of **deployed** prod `/plan` — the weekly-adherence strip (#6) + the
   tap-a-day detail modal (#22). Both got an owner phone pass on a local prod build over Tailscale
   (2026-07-15); the deployed-prod pass is still outstanding.

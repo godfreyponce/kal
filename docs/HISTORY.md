@@ -71,6 +71,18 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Day-detail sheet scrim drag tracking fix — #25 (2026-07-17) — COMMITTED & pushed to main
+
+Bug filed out of #23's build: the #24 day-detail sheet wrote `--scrim-o` to `.sheet-card`, but
+`.sheet.dragging .sheet-scrim` reads it — and the scrim is the card's **sibling**, so the var
+never reached it (custom properties only inherit to descendants) and the scrim sat at full
+opacity during drag. Fix mirrors the calendar sheet's already-correct copy
+(`adherence-calendar.tsx:124-132`): resolve `card.parentElement` as the `.sheet` wrapper once
+and set/clear `--scrim-o` there; `--sheet-y` stays on the card (read by `.sheet-card` itself).
+Only `app/plan/day-detail-modal.tsx` touched (+1/-2 lines). Verified: tsc clean, 166/166
+(25 files). On-phone scrim-fade feel rides with the outstanding #24 phone pass.
+Plan: `docs/superpowers/plans/2026-07-17-issue-25.md`.
+
 ## Adherence history calendar sheet — #23 (2026-07-17) — COMMITTED & pushed to main; on-phone feel pass pending
 
 Follow-on to #6/#22/#24. Swiping up on the weekly-adherence strip (or tapping the "history" row

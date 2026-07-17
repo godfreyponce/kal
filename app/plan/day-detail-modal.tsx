@@ -71,13 +71,14 @@ export function DayDetailModal({
     let velocity = 0; // px/ms, positive = downward
     let pointerId = -1;
 
+    const sheet = card.parentElement as HTMLElement;
     const setVars = (dy: number) => {
       card.style.setProperty("--sheet-y", `${dy}px`);
-      card.style.setProperty("--scrim-o", `${scrimProgress(dy, card.offsetHeight)}`);
+      sheet.style.setProperty("--scrim-o", `${scrimProgress(dy, card.offsetHeight)}`);
     };
     const clearVars = () => {
       card.style.removeProperty("--sheet-y");
-      card.style.removeProperty("--scrim-o");
+      sheet.style.removeProperty("--scrim-o");
     };
 
     const onDown = (e: PointerEvent) => {
