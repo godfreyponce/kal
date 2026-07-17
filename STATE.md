@@ -2,8 +2,8 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-17
-next_action: "none in ready-for-agent pool — owner to green-light next (#26 tagged later, UI redesign deferred until technicals settle)"
-blocked_on: "queue has no ready-for-agent items; remaining verify work is the deployed-prod phone checks"
+next_action: "#12 — undo of a chat log batch leaves its created one-off food behind (/plan-ticket 12); pool also holds #18, #2, #1"
+blocked_on: ""
 phase: "v1 shipped; weekly-adherence (#6) + day-detail sheet (#22/#24, #25 scrim fix) + adherence history calendar (#23) built, on main, and owner phone-passed (2026-07-17); deployed-prod phone-verify pending"
 ---
 
