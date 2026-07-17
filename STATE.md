@@ -2,8 +2,8 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-17
-next_action: "none in ready-for-agent pool — owner to green-light next (open: #26 day-button bubble feel + history placement, #25 #24-scrim fix; both unlabeled)"
-blocked_on: "queue has no ready-for-agent items; #26/#25 filed but unlabeled — owner to fill template + green-light before an agent starts"
+next_action: "none in ready-for-agent pool — owner to green-light next (#25 scrim bug is the nearest candidate; #26 tagged later, UI redesign deferred until technicals settle)"
+blocked_on: "queue has no ready-for-agent items; #25 (bug) awaits owner green-light, ideally fixed before/with the #23+#24 phone feel pass; #26 deferred by owner 2026-07-17"
 phase: "v1 shipped; weekly-adherence (#6) + day-detail sheet (#22/#24) + adherence history calendar (#23) built & on main; on-phone / deployed-prod phone-verify pending"
 ---
 
