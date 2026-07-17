@@ -1,7 +1,7 @@
 // Weekly-adherence DB queries. Pure logic lives in lib/adherence-view.ts (DB-free);
 // this file adds the Neon reads. classifyWeek stays here (server-only use).
 
-import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lt, lte, sql } from "drizzle-orm";
 import { db } from "../db";
 import { profile, logEntries, foods } from "../db/schema";
 import { todayInAppTz } from "./time";
@@ -14,6 +14,7 @@ import {
   type WeekAdherence,
   type DayFood,
 } from "./adherence-view";
+import { classifyHistoryRows, type AdherenceHistory } from "./adherence-calendar";
 
 // Re-export so existing importers (weekly-adherence.tsx, lib/adherence.test.ts) are unchanged.
 export { judgeDay, KCAL_TOLERANCE, PROTEIN_FLOOR } from "./adherence-view";
@@ -118,4 +119,38 @@ export async function getWeekDayFoods(
     .where(and(gte(logEntries.date, week[0]), lte(logEntries.date, week[6])))
     .orderBy(asc(logEntries.date), asc(logEntries.id));
   return bucketDayFoods(rows);
+}
+
+/**
+ * Full adherence history for the #23 calendar sheet: one aggregate row per logged
+ * day before `today`, judged here so the client never needs targets.
+ * extras = any entry that day with meal_id IS NULL (ad-hoc food outside the plan).
+ * Verified (#23 task 2, Step 1): the only production inserts into log_entries are
+ * lib/tools.ts:359 (log_food tool — mealId = num(input.meal_id) ?? null, so plan-attached
+ * food carries a meal id and ad-hoc/one-off food carries null) and lib/meal-status.ts:111
+ * (gap-fill on "eaten", always writes the meal's own non-null mealId). The null/non-null
+ * split holds cleanly, so bool_or(meal_id IS NULL) is a correct extras signal.
+ */
+export async function getAdherenceHistory(today: string = todayInAppTz()): Promise<AdherenceHistory> {
+  const [[p], rows] = await Promise.all([
+    db
+      .select({ targetKcal: profile.targetKcal, targetProteinG: profile.targetProteinG })
+      .from(profile)
+      .where(eq(profile.id, 1)),
+    db
+      .select({
+        date: logEntries.date,
+        kcal: sql<number>`coalesce(sum(${logEntries.kcal}), 0)`.mapWith(Number),
+        proteinG: sql<number>`coalesce(sum(${logEntries.proteinG}), 0)`.mapWith(Number),
+        hasExtras: sql<boolean>`bool_or(${logEntries.mealId} is null)`,
+      })
+      .from(logEntries)
+      .where(lt(logEntries.date, today))
+      .groupBy(logEntries.date)
+      .orderBy(asc(logEntries.date)),
+  ]);
+
+  const targets: Macros = { kcal: p.targetKcal, proteinG: p.targetProteinG };
+  const days = classifyHistoryRows(rows, targets);
+  return { days, firstLogDate: days[0]?.date ?? null };
 }

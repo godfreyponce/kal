@@ -7,7 +7,7 @@ import { listGroceries } from "@/lib/groceries";
 import { getOverridesForDate } from "@/lib/overrides";
 import { todayInAppTz } from "@/lib/time";
 import { listWeighIns } from "@/lib/weigh-ins";
-import { getWeekAdherence, getWeekDayFoods } from "@/lib/adherence";
+import { getWeekAdherence, getWeekDayFoods, getAdherenceHistory } from "@/lib/adherence";
 import { ProfileSection } from "./profile-section";
 import { WeeklyAdherence } from "./weekly-adherence";
 import { MealPlanEditor } from "./meal-plan-editor";
@@ -21,7 +21,7 @@ export default async function PlanPage() {
   const d = new Date(today + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() - 90);
   const since = d.toISOString().slice(0, 10);
-  const [profile, plan, facts, groceries, overrides, weighIns, weekAdherence, weekDayFoods] =
+  const [profile, plan, facts, groceries, overrides, weighIns, weekAdherence, weekDayFoods, adherenceHistory] =
     await Promise.all([
       getProfile(),
       getPlanView(),
@@ -31,6 +31,7 @@ export default async function PlanPage() {
       listWeighIns(since),
       getWeekAdherence(today),
       getWeekDayFoods(today),
+      getAdherenceHistory(today),
     ]);
   const adjustedMealIds = Array.from(overrides.keys());
 
@@ -59,7 +60,7 @@ export default async function PlanPage() {
           <span className="plan-kicker">this week</span>
         </div>
         <div className="plan-card">
-          <WeeklyAdherence week={weekAdherence} foodsByDate={weekDayFoods} />
+          <WeeklyAdherence week={weekAdherence} foodsByDate={weekDayFoods} history={adherenceHistory} today={today} />
         </div>
       </section>
 

@@ -1,0 +1,465 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal — adherence calendar history (3 variants · issue #23)</title>
+<style>
+  :root{
+    --canvas:#f7f6f3; --surface:#fff; --surface-2:#f0efeb;
+    --ink:#1f2421; --ink-soft:#2f3437; --muted:#787774; --faint:#9b9a96;
+    --border:#e6e4df; --protein:#9f2f2d; --green-tx:#346538; --green-bg:#e6efe5; --accent:#d97757;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#b9b7b2; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:460px;margin:0 auto}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .note{
+    font-family:var(--mono);font-size:11px;line-height:1.7;margin:16px 0 18px;
+    border-left:2px solid rgba(244,243,240,.5);padding-left:12px;opacity:.92;
+  }
+  .note b{color:#fff;font-weight:500}
+
+  .seg{display:flex;gap:0;background:rgba(255,255,255,.14);border-radius:11px;padding:3px;margin:0 0 8px}
+  .seg button{
+    flex:1;border:0;background:none;color:#efeee9;font-family:var(--mono);font-size:11.5px;
+    letter-spacing:.02em;padding:9px 6px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;
+  }
+  .seg button.on{background:var(--canvas);color:var(--ink);font-weight:500}
+  .seg-hint{font-family:var(--mono);font-size:10.5px;opacity:.72;text-align:center;margin-bottom:16px;min-height:18px}
+
+  /* phone frame ------------------------------------------------------ */
+  .phone{position:relative;background:var(--canvas);border-radius:22px;padding:22px 20px 26px;
+    box-shadow:0 16px 44px rgba(31,36,33,.24);color:var(--ink);overflow:hidden;min-height:640px;
+    touch-action:pan-y;user-select:none;-webkit-user-select:none}
+  #stripCard{touch-action:none}
+  .plan-sec-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+  .plan-kicker{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .plan-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 16px}
+
+  /* the #6 strip, unchanged, plus the new history affordance --------- */
+  .adh-body{display:flex;align-items:flex-start;gap:14px}
+  .adh-hero{flex-shrink:0;padding-top:2px}
+  .adh-num{font-family:var(--serif);font-size:38px;font-weight:500;line-height:.9;letter-spacing:-.02em}
+  .adh-num small{font-size:17px;color:var(--faint)}
+  .adh-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+  .adh-legend{margin-top:9px;display:flex;flex-direction:column;gap:3px}
+  .leg-row{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .leg-dash{width:12px;height:0;border-top:1.5px dashed var(--faint)}
+  .leg-dot{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--protein)}
+  .adh-strip{flex:1;min-width:0}
+  .plot{position:relative}
+  .e-line{position:absolute;left:0;right:0;top:16px;border-top:1.5px dashed #d8d6d0}
+  .cells{display:flex;position:relative}
+  .cell{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;
+    border:0;background:none;font:inherit;padding:4px 0 2px;-webkit-tap-highlight-color:transparent}
+  .cell .track{width:15px;height:64px;border-radius:4px;position:relative;overflow:hidden;background:var(--surface-2)}
+  .cell.ahead .track{background:#f6f5f2}
+  .cell .fill{position:absolute;bottom:0;left:0;right:0;border-radius:4px 4px 0 0}
+  .fill.hit{background:var(--green-tx)}
+  .fill.miss{background:var(--protein)}
+  .fill.now{background:var(--accent)}
+  .cell .pdot{width:7px;height:7px;border-radius:50%}
+  .pdot.ok{background:var(--green-tx)}
+  .pdot.short{border:1.5px solid var(--protein)}
+  .pdot.now{background:var(--accent)}
+  .pdot.none{border:1.5px solid #d8d6d0}
+  .cell .dow{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;color:var(--muted)}
+  .cell.today .dow{color:var(--accent);font-weight:500}
+
+  .adh-more{
+    display:flex;align-items:center;justify-content:center;gap:6px;width:100%;
+    border:0;background:none;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;
+    margin-top:12px;padding:6px 0 2px;border-top:1px solid var(--surface-2);
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+  }
+  .adh-more svg{display:block;opacity:.75}
+
+  /* ghosted rest of /plan --------------------------------------------- */
+  .ghost{opacity:.38;pointer-events:none;margin-top:22px}
+  .ghost .gline{height:11px;border-radius:6px;background:var(--surface-2);margin-top:9px}
+  .ghost .gline.w60{width:60%} .ghost .gline.w80{width:80%} .ghost .gline.w45{width:45%}
+
+  /* calendar sheet ----------------------------------------------------- */
+  .sheet{position:absolute;inset:0;z-index:50;visibility:hidden}
+  .sheet.up{visibility:visible}
+  .sheet-scrim{position:absolute;inset:0;background:rgba(31,36,33,.34);opacity:0;transition:opacity .24s ease-out}
+  .sheet.open .sheet-scrim{opacity:1}
+  .sheet.dragging .sheet-scrim{transition:none;opacity:var(--scrim-o,1)}
+  .sheet-card{
+    position:absolute;left:0;right:0;bottom:0;background:var(--surface);
+    border-radius:22px 22px 0 0;box-shadow:0 -8px 32px rgba(31,36,33,.16);
+    padding:8px 18px 22px;transform:translateY(100%);
+    transition:transform .24s cubic-bezier(.23,1,.32,1);touch-action:none;
+  }
+  .sheet.open .sheet-card{transform:translateY(0);transition:transform .42s cubic-bezier(.32,.72,0,1)}
+  .sheet.dragging .sheet-card{transition:none;transform:translateY(var(--sheet-y,0px))}
+  .sheet-grab{width:36px;height:4px;border-radius:9999px;background:#dcdad4;margin:4px auto 10px}
+
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+  .cal-month{font-family:var(--serif);font-size:19px;font-weight:500;letter-spacing:-.01em}
+  .cal-nav{display:flex;gap:4px}
+  .cal-nav button{
+    width:30px;height:30px;border:1px solid var(--border);border-radius:9999px;background:none;
+    font-family:var(--mono);font-size:14px;color:var(--ink-soft);cursor:pointer;line-height:1;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .cal-nav button:disabled{opacity:.32;cursor:default}
+  .cal-sum{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:12px}
+
+  .cal-dows{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px}
+  .cal-dows span{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;color:var(--faint);text-align:center}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);row-gap:7px}
+  .cal-cell{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:40px;justify-content:flex-start;position:relative}
+  .cal-num{font-family:var(--mono);font-size:10px;color:var(--ink-soft)}
+  .cal-cell.future .cal-num,.cal-cell.pre .cal-num{color:#cfcdc7}
+  .cal-cell.today .cal-num{color:var(--accent);font-weight:500}
+
+  .cal-legend{display:flex;gap:14px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .cal-legend .leg-row{font-size:9.5px}
+
+  /* variant A — dots */
+  .v-dots .cal-dot{width:8px;height:8px;border-radius:50%}
+  .v-dots .on .cal-dot,.v-dots .onx .cal-dot{background:var(--green-tx)}
+  .v-dots .off .cal-dot{border:1.5px solid var(--protein)}
+  .v-dots .unlogged .cal-dot{border:1.5px solid #d8d6d0}
+  .v-dots .today .cal-dot{background:var(--accent)}
+  .v-dots .future .cal-dot,.v-dots .pre .cal-dot{visibility:hidden}
+
+  /* variant B — heat (owner-redefined 2026-07-16: two greens, one honest red;
+     not-logged counts as a miss) */
+  .v-heat .cal-cell{min-height:36px;gap:0}
+  .v-heat .cal-chip{
+    width:32px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10px;color:var(--ink-soft);background:none;
+  }
+  .v-heat .on .cal-chip{background:var(--green-tx);color:#fff;font-weight:500}
+  .v-heat .onx .cal-chip{background:var(--green-bg);color:var(--green-tx);font-weight:500}
+  .v-heat .off .cal-chip,.v-heat .unlogged .cal-chip{background:rgba(159,47,45,.45);color:#fff;font-weight:500}
+  .v-heat .today .cal-chip{border:1.5px solid var(--accent);color:var(--accent);font-weight:500}
+  .v-heat .future .cal-chip,.v-heat .pre .cal-chip{color:#cfcdc7}
+
+  /* variant C — bars */
+  .v-bars .cal-cell{gap:5px}
+  .v-bars .cal-week{position:relative;grid-column:1 / -1;display:grid;grid-template-columns:repeat(7,1fr)}
+  .v-bars .cal-eline{position:absolute;left:6%;right:6%;top:28px;border-top:1px dashed #dcdad4}
+  .v-bars .cal-track{width:8px;height:27px;border-radius:3px;background:var(--surface-2);position:relative;overflow:hidden}
+  .v-bars .future .cal-track,.v-bars .pre .cal-track{background:#f6f5f2}
+  .v-bars .pre .cal-track{visibility:hidden}
+  .v-bars .cal-fill{position:absolute;bottom:0;left:0;right:0;border-radius:3px 3px 0 0}
+  .v-bars .on .cal-fill,.v-bars .onx .cal-fill{background:var(--green-tx)}
+  .v-bars .off .cal-fill{background:var(--protein)}
+  .v-bars .today .cal-fill{background:var(--accent)}
+  .v-bars .unlogged .cal-track{background:repeating-linear-gradient(-45deg,var(--surface-2) 0 3px,rgba(159,47,45,.14) 3px 5px)}
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Adherence — calendar history</h1>
+    <p>issue #23 · three visual treatments · fake data Apr 6 → Jul 16 2026 (targets 2,200 kcal / 165 g)</p>
+  </div>
+  <div class="note">
+    The #6 strip is unchanged; it gains one quiet <b>history</b> row underneath.
+    <b>Swipe up on the strip card (or tap history)</b> to pull the calendar sheet up;
+    drag it down or tap the scrim to dismiss. ‹ › pages back to the first logged month.
+    The seg below changes <b>only the day-cell treatment</b> — same shell, gesture, and data in all three.
+  </div>
+
+  <div class="seg" role="tablist" aria-label="Calendar treatment">
+    <button data-v="dots" class="on">Dots</button>
+    <button data-v="heat">Heat</button>
+    <button data-v="bars">Bars</button>
+  </div>
+  <div class="seg-hint" id="hint"></div>
+
+  <div class="phone" id="phone">
+    <div class="plan-sec-head">
+      <span class="plan-kicker">Adherence</span>
+      <span class="plan-kicker">this week</span>
+    </div>
+    <div class="plan-card" id="stripCard">
+      <div class="adh-body">
+        <div class="adh-hero">
+          <div class="adh-num">2<small>/7</small></div>
+          <div class="adh-lbl">days on plan</div>
+          <div class="adh-legend">
+            <div class="leg-row"><span class="leg-dash"></span>2,200 kcal</div>
+            <div class="leg-row"><span class="leg-dot"></span>protein short</div>
+          </div>
+        </div>
+        <div class="adh-strip">
+          <div class="plot">
+            <div class="e-line"></div>
+            <div class="cells">
+              <div class="cell"><div class="track"><div class="fill hit" style="height:48px"></div></div><span class="pdot ok"></span><span class="dow">M</span></div>
+              <div class="cell"><div class="track"><div class="fill miss" style="height:56px"></div></div><span class="pdot short"></span><span class="dow">T</span></div>
+              <div class="cell"><div class="track"><div class="fill hit" style="height:47px"></div></div><span class="pdot ok"></span><span class="dow">W</span></div>
+              <div class="cell today"><div class="track"><div class="fill now" style="height:26px"></div></div><span class="pdot now"></span><span class="dow">T</span></div>
+              <div class="cell ahead"><div class="track"></div><span class="pdot none"></span><span class="dow">F</span></div>
+              <div class="cell ahead"><div class="track"></div><span class="pdot none"></span><span class="dow">S</span></div>
+              <div class="cell ahead"><div class="track"></div><span class="pdot none"></span><span class="dow">S</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="adh-more" id="moreBtn" aria-label="Show adherence history">
+        <svg width="11" height="6" viewBox="0 0 11 6" fill="none"><path d="M1 5L5.5 1L10 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        history
+      </button>
+    </div>
+
+    <div class="ghost">
+      <div class="plan-sec-head"><span class="plan-kicker">Meal plan</span><span class="plan-kicker">today</span></div>
+      <div class="plan-card">
+        <div class="gline w60"></div><div class="gline w80"></div><div class="gline w45"></div><div class="gline w80"></div>
+      </div>
+    </div>
+
+    <div class="sheet" id="sheet">
+      <div class="sheet-scrim" id="scrim"></div>
+      <div class="sheet-card" id="card">
+        <div class="sheet-grab"></div>
+        <div class="cal-head">
+          <span class="cal-month" id="calMonth"></span>
+          <div class="cal-nav">
+            <button id="prevBtn" aria-label="Previous month">‹</button>
+            <button id="nextBtn" aria-label="Next month">›</button>
+          </div>
+        </div>
+        <div class="cal-sum" id="calSum"></div>
+        <div class="cal-dows"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend" id="calLegend"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- deterministic fake history ---------- */
+const T_KCAL = 2200, T_PRO = 165, KCAL_TOL = 0.10, PRO_FLOOR = 0.9;
+const FIRST_LOG = "2026-04-06", TODAY = "2026-07-16";
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rng = mulberry32(23);
+
+const UNLOGGED = new Set(["2026-04-18","2026-04-19","2026-05-30","2026-06-27","2026-06-28","2026-07-05"]);
+const FORCED = { "2026-07-04": {kcal:3410, pro:118} };   /* the blowout, for Heat */
+
+const iso = d => d.toISOString().slice(0,10);
+function judge(kcal, pro){
+  const kOk = kcal >= T_KCAL*(1-KCAL_TOL) && kcal <= T_KCAL*(1+KCAL_TOL);
+  return kOk && pro >= T_PRO*PRO_FLOOR;
+}
+const history = new Map();   /* iso -> {kcal, pro, on} | "unlogged" */
+{
+  let d = new Date(FIRST_LOG + "T00:00:00Z");
+  const end = new Date(TODAY + "T00:00:00Z");
+  while (d < end) {
+    const key = iso(d);
+    if (UNLOGGED.has(key)) { history.set(key, "unlogged"); }
+    else {
+      let kcal, pro;
+      if (FORCED[key]) { ({kcal, pro} = FORCED[key]); }
+      else {
+        const r = rng();
+        if (r < 0.62)      { kcal = T_KCAL*(0.92 + rng()*0.16); pro = T_PRO*(0.92 + rng()*0.2); }
+        else if (r < 0.78) { kcal = T_KCAL*(1.11 + rng()*0.22); pro = T_PRO*(0.8 + rng()*0.3); }
+        else if (r < 0.90) { kcal = T_KCAL*(0.62 + rng()*0.26); pro = T_PRO*(0.6 + rng()*0.3); }
+        else               { kcal = T_KCAL*(0.95 + rng()*0.08); pro = T_PRO*(0.55 + rng()*0.3); }
+      }
+      kcal = Math.round(kcal); pro = Math.round(pro);
+      /* extras: the day included food that wasn't part of the meal plan */
+      history.set(key, {kcal, pro, on: judge(kcal, pro), extras: rng() < 0.35});
+    }
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+}
+
+/* ---------- calendar model ---------- */
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const first = new Date(FIRST_LOG + "T00:00:00Z"), today = new Date(TODAY + "T00:00:00Z");
+const firstMonth = first.getUTCFullYear()*12 + first.getUTCMonth();
+const lastMonth  = today.getUTCFullYear()*12 + today.getUTCMonth();
+let curMonth = lastMonth;
+let variant = "dots";
+
+function monthCells(mIndex){
+  const y = Math.floor(mIndex/12), m = mIndex%12;
+  const days = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+  const lead = (new Date(Date.UTC(y, m, 1)).getUTCDay() + 6) % 7;   /* Mon-first */
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push(null);
+  for (let day = 1; day <= days; day++) {
+    const key = `${y}-${String(m+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    const e = history.get(key);
+    let state;
+    if (key === TODAY) state = "today";
+    else if (key > TODAY) state = "future";
+    else if (key < FIRST_LOG) state = "pre";
+    else if (e === "unlogged") state = "unlogged";
+    else state = e.on ? (e.extras ? "onx" : "on") : "off";
+    cells.push({day, key, state, e: (e && e !== "unlogged") ? e : null});
+  }
+  return cells;
+}
+
+const LEGENDS = {
+  dots: `<div class="leg-row"><span class="cal-dot" style="width:8px;height:8px;border-radius:50%;background:var(--green-tx)"></span>on plan</div>
+         <div class="leg-row"><span style="width:8px;height:8px;border-radius:50%;border:1.5px solid var(--protein)"></span>off plan</div>
+         <div class="leg-row"><span style="width:8px;height:8px;border-radius:50%;border:1.5px solid #d8d6d0"></span>not logged</div>`,
+  heat: `<div class="leg-row"><span style="width:11px;height:11px;border-radius:4px;background:var(--green-tx)"></span>on plan</div>
+         <div class="leg-row"><span style="width:11px;height:11px;border-radius:4px;background:var(--green-bg)"></span>with extras</div>
+         <div class="leg-row"><span style="width:11px;height:11px;border-radius:4px;background:rgba(159,47,45,.45)"></span>miss or not logged</div>`,
+  bars: `<div class="leg-row"><span style="width:8px;height:11px;border-radius:2px;background:var(--green-tx)"></span>on plan</div>
+         <div class="leg-row"><span style="width:8px;height:11px;border-radius:2px;background:var(--protein)"></span>off plan</div>
+         <div class="leg-row"><span style="width:8px;height:11px;border-radius:2px;background:repeating-linear-gradient(-45deg,var(--surface-2) 0 3px,rgba(159,47,45,.14) 3px 5px)"></span>not logged</div>`,
+};
+const HINTS = {
+  dots: "A. Dots — the strip's pdot language, binary and calm",
+  heat: "B. Heat — plan-clean vs with-extras greens, one honest red",
+  bars: "C. Bars — the strip's kcal tracks, shrunk into a month",
+};
+
+function cellHTML(c){
+  if (c === null) return `<div class="cal-cell"></div>`;
+  const num = `<span class="cal-num">${c.day}</span>`;
+  if (variant === "dots")
+    return `<div class="cal-cell ${c.state}">${num}<span class="cal-dot"></span></div>`;
+  if (variant === "heat")
+    return `<div class="cal-cell ${c.state}"><span class="cal-chip">${c.day}</span></div>`;
+  /* bars */
+  const h = c.e ? Math.min(27, Math.round((c.e.kcal / T_KCAL) * 20)) :
+            (c.state === "today" ? 9 : 0);
+  const fill = (c.state === "on" || c.state === "off" || c.state === "today") && h > 0
+    ? `<div class="cal-fill" style="height:${h}px"></div>` : "";
+  return `<div class="cal-cell ${c.state}">${num}<div class="cal-track">${fill}</div></div>`;
+}
+
+function render(){
+  const y = Math.floor(curMonth/12), m = curMonth%12;
+  const cells = monthCells(curMonth);
+  document.getElementById("calMonth").textContent = `${MONTHS[m]} ${y}`;
+  /* not-logged days count as judged misses (owner rule 2026-07-16) */
+  const judged = cells.filter(c => c && ["on","onx","off","unlogged"].includes(c.state));
+  const on = judged.filter(c => c.state === "on" || c.state === "onx").length;
+  let streak = 0, best = 0;
+  for (const c of cells) {
+    if (!c) continue;
+    if (c.state === "on" || c.state === "onx") { streak++; best = Math.max(best, streak); }
+    else if (c.state === "off" || c.state === "unlogged") streak = 0;
+  }
+  document.getElementById("calSum").textContent =
+    judged.length ? `${on} of ${judged.length} judged days on plan, best streak ${best}` : `no judged days yet`;
+
+  const grid = document.getElementById("calGrid");
+  grid.className = "cal-grid v-" + variant;
+  if (variant === "bars") {
+    let html = "";
+    for (let i = 0; i < cells.length; i += 7) {
+      const week = cells.slice(i, i+7);
+      while (week.length < 7) week.push(null);
+      const hasBar = week.some(c => c && c.e);
+      html += `<div class="cal-week">${hasBar ? '<div class="cal-eline"></div>' : ""}${week.map(cellHTML).join("")}</div>`;
+    }
+    grid.innerHTML = html;
+  } else {
+    grid.innerHTML = cells.map(cellHTML).join("");
+  }
+  document.getElementById("calLegend").innerHTML = LEGENDS[variant];
+  document.getElementById("prevBtn").disabled = curMonth <= firstMonth;
+  document.getElementById("nextBtn").disabled = curMonth >= lastMonth;
+  document.getElementById("hint").textContent = HINTS[variant];
+}
+
+document.getElementById("prevBtn").addEventListener("click", () => { if (curMonth > firstMonth){ curMonth--; render(); } });
+document.getElementById("nextBtn").addEventListener("click", () => { if (curMonth < lastMonth){ curMonth++; render(); } });
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".seg button").forEach(x => x.classList.toggle("on", x === b));
+  variant = b.dataset.v; render();
+}));
+
+/* ---------- sheet open/close + gestures ---------- */
+const sheet = document.getElementById("sheet"), card = document.getElementById("card");
+const rubberBand = (o, dim, c = 0.55) => (o * dim * c) / (dim + c * Math.abs(o));
+
+function openSheet(){ sheet.classList.add("up");
+  requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add("open"))); }
+function closeSheet(){ sheet.classList.remove("open");
+  setTimeout(() => sheet.classList.remove("up"), 260); }
+
+document.getElementById("moreBtn").addEventListener("click", openSheet);
+document.getElementById("scrim").addEventListener("click", closeSheet);
+
+/* swipe-up on the strip card pulls the sheet up, finger-coupled.
+   Arm on the strip's pointerdown, but track move/settle on window — the strip
+   is short, a real flick leaves its bounds before the first sampled move. */
+{
+  const strip = document.getElementById("stripCard");
+  let y0 = 0, t0 = 0, armed = false, active = false;
+  strip.addEventListener("pointerdown", e => { y0 = e.clientY; t0 = e.timeStamp; armed = true; active = false; });
+  window.addEventListener("pointermove", e => {
+    if (!armed) return;
+    const dy = e.clientY - y0;
+    if (!active) {
+      if (dy < -6) { active = true; sheet.classList.add("up","dragging"); }
+      else if (dy > 12) { armed = false; return; }   /* clearly a downward scroll */
+      else return;
+    }
+    e.preventDefault();
+    const h = card.offsetHeight, pull = Math.min(-dy, h);
+    card.style.setProperty("--sheet-y", (h - pull) + "px");
+    sheet.style.setProperty("--scrim-o", (pull / h).toFixed(3));
+  }, { passive:false });
+  const settle = e => {
+    if (!armed) return;
+    armed = false;
+    if (!active) return;
+    active = false;
+    const dy = y0 - e.clientY, h = card.offsetHeight;
+    const v = dy / Math.max(1, e.timeStamp - t0);
+    sheet.classList.remove("dragging");
+    card.style.removeProperty("--sheet-y");
+    if (dy > h * 0.3 || v > 0.5) sheet.classList.add("open");
+    else closeSheet();
+  };
+  window.addEventListener("pointerup", settle);
+  window.addEventListener("pointercancel", settle);
+}
+
+/* drag the open sheet down to dismiss (as #24) */
+{
+  let y0 = 0, t0 = 0, active = false;
+  card.addEventListener("pointerdown", e => { y0 = e.clientY; t0 = e.timeStamp; active = false; });
+  card.addEventListener("pointermove", e => {
+    if (!sheet.classList.contains("open") && !active) return;
+    const dyRaw = e.clientY - y0;
+    if (!active) {
+      if (dyRaw > 4) { active = true; card.setPointerCapture(e.pointerId); sheet.classList.add("dragging"); }
+      else return;
+    }
+    e.preventDefault();
+    const h = card.offsetHeight;
+    const dy = dyRaw >= 0 ? dyRaw : -rubberBand(-dyRaw, h);
+    card.style.setProperty("--sheet-y", dy + "px");
+    sheet.style.setProperty("--scrim-o", Math.max(0, 1 - dy / h).toFixed(3));
+  }, { passive:false });
+  const settle = e => {
+    if (!active) return; active = false;
+    const dy = e.clientY - y0, h = card.offsetHeight;
+    const v = dy / Math.max(1, e.timeStamp - t0);
+    sheet.classList.remove("dragging");
+    card.style.removeProperty("--sheet-y");
+    if (dy > h * 0.35 || v > 0.5) closeSheet();
+  };
+  card.addEventListener("pointerup", settle);
+  card.addEventListener("pointercancel", settle);
+}
+
+render();
+</script>

@@ -688,6 +688,47 @@ body {
   .sheet-food .mi-caret { transition: none; }
 }
 
+/* Plan — adherence calendar sheet (issue #23; design/plan-adherence-calendar-variants.html Heat) */
+.adh-more {
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  border: 0; background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  margin-top: 12px; padding: 6px 0 2px; border-top: 1px solid var(--surface-2);
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--faint);
+}
+.adh-more svg { display: block; opacity: 0.75; }
+
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+.cal-month { font-family: var(--font-serif); font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }
+.cal-nav { display: flex; gap: 4px; }
+.cal-nav button {
+  width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 9999px; background: none;
+  font-family: var(--font-mono); font-size: 14px; color: var(--ink-soft); cursor: pointer; line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.cal-nav button:disabled { opacity: 0.32; cursor: default; }
+.cal-sum { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 12px; }
+
+.cal-dows { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
+.cal-dows span { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; color: var(--faint); text-align: center; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 7px; }
+.cal-cell { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 36px; position: relative; }
+
+/* chip state colors (owner-redefined 2026-07-16: two greens, one honest red; not-logged counts as a miss) */
+.cal-sheet .cal-chip {
+  width: 32px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft);
+}
+.cal-sheet .on .cal-chip { background: var(--green-tx); color: #fff; font-weight: 500; }
+.cal-sheet .onx .cal-chip { background: var(--green-bg); color: var(--green-tx); font-weight: 500; }
+.cal-sheet .off .cal-chip, .cal-sheet .unlogged .cal-chip { background: rgba(159, 47, 45, 0.45); color: #fff; font-weight: 500; }
+.cal-sheet .today .cal-chip { border: 1.5px solid var(--accent); color: var(--accent); font-weight: 500; }
+.cal-sheet .future .cal-chip, .cal-sheet .pre .cal-chip { color: #cfcdc7; }
+
+.cal-legend { display: flex; gap: 14px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+.cal-legend .leg-row { font-size: 9.5px; color: var(--muted); gap: 6px; }
+.cal-legend .leg-sw { display: inline-block; width: 11px; height: 11px; border-radius: 4px; flex-shrink: 0; }
+
 /* weigh-in (Sunday) */
 .weigh {
   margin-top: 22px;
@@ -1708,7 +1749,10 @@ body {
 .plan-tr-empty { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; color: var(--faint); }
 
 /* Plan — weekly adherence (issue #6; design/plan-adherence-final.html) */
-.adh-body { display: flex; align-items: flex-start; gap: 14px; }
+/* user-select: none is static, not toggled on arm/disarm — the swipe-up pull (#23)
+   listens on this element and a stuck inline style would be worse than losing
+   text-selection on a numbers-only strip. */
+.adh-body { display: flex; align-items: flex-start; gap: 14px; user-select: none; -webkit-user-select: none; }
 .adh-hero { flex-shrink: 0; padding-top: 2px; }
 .adh-num {
   font-family: var(--font-mono); font-size: 30px; line-height: 1.05;

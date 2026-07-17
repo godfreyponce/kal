@@ -71,6 +71,42 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Adherence history calendar sheet — #23 (2026-07-17) — COMMITTED & pushed to main; on-phone feel pass pending
+
+Follow-on to #6/#22/#24. Swiping up on the weekly-adherence strip (or tapping the "history" row
+under it) pulls up a bottom sheet with a month calendar of full adherence history, pageable back
+to the first logged month (2026-06-22). Owner-approved **Heat** variant from
+`design/plan-adherence-calendar-variants.html` (owner-redefined colors).
+
+- **Model** (`lib/adherence-calendar.ts`, DB-free, 8 tests): states per day — dark green "on"
+  (nutrients hit, plan food only), light green "onx" (hit, but day had non-plan extras), red
+  "off"/**"unlogged"** (a not-logged past day IS a miss, same tone), today accent-outlined (never
+  judged), future/pre faint. Per-month summary "N of M judged days on plan, best streak K";
+  both greens count as on-plan; streaks break on red. Mon-first UTC civil-date math throughout.
+- **Query** (`getAdherenceHistory`, `lib/adherence.ts`): one group-by-date aggregate over
+  `log_entries`, judged server-side, days ascending, excludes today; extras =
+  `bool_or(meal_id IS NULL)` (both insert sites audited; neon-http returns native booleans,
+  live-probed). No new index (single-user scale). Fetched in `/plan`'s existing `Promise.all`;
+  client pages months locally — no new API route.
+- **Sheet** (`app/plan/adherence-calendar.tsx` + `.cal-*` CSS): reuses the #24 `.sheet-*` shell,
+  32×30 chips r9, mono 10px numbers, serif month title, grabber, legend, ‹ › paging disabled at
+  both ends, Escape/initial-focus a11y. Gestures: **finger-coupled swipe-up pull** (arms on the
+  strip, tracks on window, mounts mid-drag via once-at-claim `flushSync` — plan's fallback not
+  needed), #24-pattern drag-to-dismiss, reduced-motion attaches zero gesture listeners. Pull
+  thresholds are named constants atop the file for owner tuning.
+- **Build fixes over the plan** (both adjudicated to the owner's design/semantics over plan text):
+  plan's test literal `summary.on: 2` corrected to 3; plan's placement of the history button
+  inside the `.adh-body` flex row (collapsed the strip to 0px) moved to a mockup-faithful sibling
+  below the row. Found the #24 sheet's scrim never tracks drag (`--scrim-o` set on the card, read
+  by the sibling scrim) — calendar's copy fixed in-ticket, #24's instance filed as **#25**.
+- Verified: 166/166 (25 files), tsc clean, build `/plan` ƒ, headless prod-build browser pass
+  (paging, semantics vs live data, coupled pull with scrim tracking, reduced motion, day-detail
+  regression, zero console errors). Down-drag dismiss headless-unverifiable (Chromium synthetic
+  touch) — owner phone pass covers it. Note: with today's live data all 10 logged days judge
+  "off", so the calendar is mostly red — strict judge, not a bug.
+- **Follow-ons filed:** #25 (#24 scrim var scoping), #26 (weighted-bubble day-button press feel +
+  relocate history affordance; owner-requested at acceptance).
+
 ## Adherence day-detail modal — native mobile sheet motion — #24 (2026-07-15) — COMMITTED & pushed to main; on-phone feel-tuning + phone-verify pending
 
 Follow-on to #22. The day-detail modal read like a desktop popover on a phone (it borrowed the

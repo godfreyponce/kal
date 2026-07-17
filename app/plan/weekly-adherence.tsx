@@ -3,11 +3,13 @@
 // Client component — the strip renders server-provided data and opens a day-detail
 // modal on tap (issue #22). Runtime helpers come from lib/adherence-view (DB-free);
 // types come from lib/adherence (type-only import, erased). Desktop keeps the :hover tooltip.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { WeekAdherence, DayCell } from "@/lib/adherence";
 import { dayVerdict, kcalWithinBand, proteinMet } from "@/lib/adherence-view";
 import type { DayFood } from "@/lib/adherence-view";
+import type { AdherenceHistory } from "@/lib/adherence-calendar";
 import { DayDetailModal } from "./day-detail-modal";
+import { AdherenceCalendar } from "./adherence-calendar";
 
 const TRACK_PX = 64;   // .track height
 const TARGET_PX = 48;  // kcal target height within the track (matches .e-line top: 16px)
@@ -103,33 +105,41 @@ function Cell({
 export function WeeklyAdherence({
   week,
   foodsByDate,
+  history,
+  today,
 }: {
   week: WeekAdherence;
   foodsByDate: Record<string, DayFood[]>;
+  history: AdherenceHistory;
+  today: string;
 }) {
   const { targets, days, onPlanCount } = week;
   const [open, setOpen] = useState<DayCell | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="adh-body" role="group" aria-label={`${onPlanCount} of 7 days on plan this week`}>
-      <div className="adh-hero">
-        <div className="adh-num">{onPlanCount}<small>/7</small></div>
-        <div className="adh-lbl">days on plan</div>
-        <div className="adh-legend">
-          <div className="leg-row"><span className="leg-dash" />{num(targets.kcal)} kcal</div>
-          <div className="leg-row"><span className="leg-dot" />{num(targets.proteinG)} g protein</div>
+    <>
+      <div ref={bodyRef} className="adh-body" role="group" aria-label={`${onPlanCount} of 7 days on plan this week`}>
+        <div className="adh-hero">
+          <div className="adh-num">{onPlanCount}<small>/7</small></div>
+          <div className="adh-lbl">days on plan</div>
+          <div className="adh-legend">
+            <div className="leg-row"><span className="leg-dash" />{num(targets.kcal)} kcal</div>
+            <div className="leg-row"><span className="leg-dot" />{num(targets.proteinG)} g protein</div>
+          </div>
         </div>
-      </div>
-      <div className="adh-strip">
-        <div className="plot">
-          <div className="e-line" />
-          <div className="cells">
-            {days.map((day) => (
-              <Cell key={day.date} day={day} targets={targets} onOpen={setOpen} />
-            ))}
+        <div className="adh-strip">
+          <div className="plot">
+            <div className="e-line" />
+            <div className="cells">
+              {days.map((day) => (
+                <Cell key={day.date} day={day} targets={targets} onOpen={setOpen} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
+      <AdherenceCalendar history={history} today={today} stripRef={bodyRef} />
       {open && (
         <DayDetailModal
           day={open}
@@ -138,6 +148,6 @@ export function WeeklyAdherence({
           onClose={() => setOpen(null)}
         />
       )}
-    </div>
+    </>
   );
 }
