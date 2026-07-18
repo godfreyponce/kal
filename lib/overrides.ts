@@ -14,6 +14,7 @@ export type OverrideLine = {
   food: {
     name: string;
     servingDesc: string;
+    servingGrams: number | null;
     kcal: number;
     proteinG: number;
     carbsG: number;
@@ -95,6 +96,7 @@ export async function getOverridesForDate(date: string): Promise<Map<number, Ove
       quantity: mealOverrides.quantity,
       name: foods.name,
       servingDesc: foods.servingDesc,
+      servingGrams: foods.servingGrams,
       kcal: foods.kcal,
       proteinG: foods.proteinG,
       carbsG: foods.carbsG,
@@ -115,6 +117,7 @@ export async function getOverridesForDate(date: string): Promise<Map<number, Ove
       food: {
         name: r.name,
         servingDesc: r.servingDesc,
+        servingGrams: r.servingGrams === null ? null : Number(r.servingGrams),
         kcal: r.kcal,
         proteinG: Number(r.proteinG),
         carbsG: Number(r.carbsG),

@@ -162,3 +162,16 @@ describe("mark-eaten with an override", () => {
     expect(map.get(meal.id)).toHaveLength(1); // separate batch — override survives
   });
 });
+
+describe("getOverridesForDate line shape", () => {
+  it("carries servingGrams so the plan editor can seed from a line", async () => {
+    const [f1] = await anyTwoFoods();
+    const meal = await firstMeal();
+    await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 1 }]);
+    const map = await getOverridesForDate(DATE);
+    const line = map.get(meal.id)![0];
+    expect(line.food.servingGrams).toEqual(
+      f1.servingGrams === null ? null : Number(f1.servingGrams),
+    );
+  });
+});
