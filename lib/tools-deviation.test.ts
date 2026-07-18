@@ -1,6 +1,6 @@
 import "../db/env";
 import { describe, it, expect, afterAll } from "vitest";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import { foods, logEntries, mealOverrides, meals } from "../db/schema";
 import { runTool } from "./tools";
@@ -14,6 +14,7 @@ afterAll(async () => {
   // Crash-safe net for the log_food test: its rows log on DATE (deleted above),
   // so the food row can always be removed even if the test failed mid-way.
   await db.delete(foods).where(eq(foods.name, "ZZDEV test bowl"));
+  await db.delete(foods).where(inArray(foods.name, ["ZZDEV undo one-off", "ZZDEV undo keeper"]));
 });
 
 async function firstFood() {
@@ -100,5 +101,57 @@ describe("log_food off-plan flags", () => {
     // Cleanup: log rows first (foods FK is restrict), then the food itself.
     await db.delete(logEntries).where(eq(logEntries.foodId, f.id));
     await db.delete(foods).where(eq(foods.id, f.id));
+  });
+});
+
+describe("log_food undo (#12)", () => {
+  it("undo deletes the unreferenced one-off food its batch created", async () => {
+    const run = await runTool("log_food", {
+      name: "ZZDEV undo one-off",
+      kcal: 500,
+      protein_g: 20,
+      carbs_g: 50,
+      fat_g: 15,
+      is_estimated: true,
+      one_off: true,
+      date: DATE,
+    });
+    expect(run.writeBatchId).toBeTruthy();
+    const created = await db.select().from(foods).where(eq(foods.name, "ZZDEV undo one-off"));
+    expect(created).toHaveLength(1);
+
+    await revertWriteBatch(run.writeBatchId!);
+
+    const after = await db.select().from(foods).where(eq(foods.name, "ZZDEV undo one-off"));
+    expect(after).toHaveLength(0);
+  });
+
+  it("undo keeps a one-off food still referenced by another batch", async () => {
+    const runA = await runTool("log_food", {
+      name: "ZZDEV undo one-off",
+      kcal: 300,
+      one_off: true,
+      date: DATE,
+    });
+    const [food] = await db.select().from(foods).where(eq(foods.name, "ZZDEV undo one-off"));
+    const runB = await runTool("log_food", { food_id: food.id, date: DATE });
+
+    await revertWriteBatch(runA.writeBatchId!);
+    // batch B's log entry still references it → restrict FK, must survive
+    expect(await db.select().from(foods).where(eq(foods.id, food.id))).toHaveLength(1);
+
+    await revertWriteBatch(runB.writeBatchId!);
+    // now unreferenced → GC'd
+    expect(await db.select().from(foods).where(eq(foods.id, food.id))).toHaveLength(0);
+  });
+
+  it("undo keeps a non-one-off food its batch created", async () => {
+    const run = await runTool("log_food", {
+      name: "ZZDEV undo keeper",
+      kcal: 200,
+      date: DATE, // one_off omitted → false
+    });
+    await revertWriteBatch(run.writeBatchId!);
+    expect(await db.select().from(foods).where(eq(foods.name, "ZZDEV undo keeper"))).toHaveLength(1);
   });
 });
