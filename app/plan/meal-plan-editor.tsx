@@ -6,20 +6,22 @@ import { useState, useTransition } from "react";
 import type { GroceryView } from "@/lib/groceries";
 import type { PlanView, RetargetResult } from "@/lib/plan";
 
-type EditItem = { foodId: number; quantity: number; foodName: string; servingDesc: string; servingGrams: number | null; unitKcal: number };
+export type EditItem = { foodId: number; quantity: number; foodName: string; servingDesc: string; servingGrams: number | null; unitKcal: number };
 
 export function MealPlanEditor({
   plan,
   groceries,
-  adjustedMealIds,
+  overridesByMeal,
 }: {
   plan: PlanView;
   groceries: GroceryView[];
-  adjustedMealIds: number[];
+  overridesByMeal: { mealId: number; items: EditItem[] }[];
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [choosingId, setChoosingId] = useState<number | null>(null);
+  const [editSource, setEditSource] = useState<"override" | "template" | null>(null);
   const [items, setItems] = useState<EditItem[]>([]);
   const [baselineMealKcal, setBaselineMealKcal] = useState(0);
   const [scope, setScope] = useState<"today" | "template">("today");
@@ -29,25 +31,33 @@ export function MealPlanEditor({
   const [armedDelete, setArmedDelete] = useState(false);
   const [addingMeal, setAddingMeal] = useState(false);
   const [newMeal, setNewMeal] = useState({ name: "", timeHint: "" });
-  const adjusted = new Set(adjustedMealIds);
+  const overrideItems = new Map(overridesByMeal.map((o) => [o.mealId, o.items]));
+  const adjusted = new Set(overrideItems.keys());
   const pendingMealKcal = items.reduce((sum, it) => sum + it.quantity * it.unitKcal, 0);
-  const totalsDirty = editingId !== null && pendingMealKcal !== baselineMealKcal;
-  const stripKcal = editingId !== null ? Math.round(plan.totals.kcal - baselineMealKcal + pendingMealKcal) : plan.totals.kcal;
+  const totalsDirty = editingId !== null && editSource !== "override" && pendingMealKcal !== baselineMealKcal;
+  const stripKcal =
+    editingId !== null && editSource !== "override"
+      ? Math.round(plan.totals.kcal - baselineMealKcal + pendingMealKcal)
+      : plan.totals.kcal;
 
-  function beginEdit(mealId: number) {
+  function beginEdit(mealId: number, source: "override" | "template" | null = null) {
     const meal = plan.meals.find((m) => m.id === mealId)!;
-    setItems(
-      meal.items.map((i) => ({
-        foodId: i.foodId,
-        quantity: i.quantity,
-        foodName: i.foodName,
-        servingDesc: i.servingDesc,
-        servingGrams: i.servingGrams,
-        unitKcal: i.unitKcal,
-      })),
-    );
-    setBaselineMealKcal(meal.items.reduce((sum, i) => sum + i.quantity * i.unitKcal, 0));
-    setScope("today");
+    const seed: EditItem[] =
+      source === "override"
+        ? overrideItems.get(mealId)!.map((i) => ({ ...i }))
+        : meal.items.map((i) => ({
+            foodId: i.foodId,
+            quantity: i.quantity,
+            foodName: i.foodName,
+            servingDesc: i.servingDesc,
+            servingGrams: i.servingGrams,
+            unitKcal: i.unitKcal,
+          }));
+    setItems(seed);
+    setBaselineMealKcal(seed.reduce((sum, i) => sum + i.quantity * i.unitKcal, 0));
+    setScope(source === "template" ? "template" : "today");
+    setEditSource(source);
+    setChoosingId(null);
     setError(null);
     setBanner(null);
     setArmedDelete(false);
@@ -170,14 +180,48 @@ export function MealPlanEditor({
                 {adjusted.has(meal.id) && <span className="plan-adjusted" aria-label="adjusted today">⇄</span>}
               </span>
               <span className="plan-meal-end">
-                <span className="plan-meal-kc">{editing ? Math.round(meal.kcal - baselineMealKcal + pendingMealKcal) : meal.kcal} kcal</span>
+                <span className="plan-meal-kc">
+                  {editing
+                    ? editSource === "override"
+                      ? Math.round(pendingMealKcal)
+                      : Math.round(meal.kcal - baselineMealKcal + pendingMealKcal)
+                    : meal.kcal} kcal
+                </span>
                 {!editing && (
-                  <button className="plan-edit-btn" onClick={() => beginEdit(meal.id)}>Edit</button>
+                  <button
+                    className="plan-edit-btn"
+                    onClick={() => {
+                      if (adjusted.has(meal.id)) {
+                        setEditingId(null);
+                        setChoosingId(meal.id);
+                      } else {
+                        beginEdit(meal.id);
+                      }
+                    }}
+                  >Edit</button>
                 )}
               </span>
             </div>
 
-            {!editing &&
+            {choosingId === meal.id && (
+              <div className="plan-choose">
+                <button onClick={() => beginEdit(meal.id, "override")}>
+                  <span className="plan-choose-big">Edit today&apos;s ⇄ version</span>
+                  <span className="plan-choose-sub">
+                    {overrideItems.get(meal.id)!.map((i) => i.foodName.toLowerCase()).join(", ")}, saves just for today
+                  </span>
+                </button>
+                <button onClick={() => beginEdit(meal.id, "template")}>
+                  <span className="plan-choose-big">Edit the everyday meal</span>
+                  <span className="plan-choose-sub">
+                    {meal.items.map((i) => i.foodName.toLowerCase()).join(", ")}, changes the template
+                  </span>
+                </button>
+                <button className="plan-choose-cancel" onClick={() => setChoosingId(null)}>cancel</button>
+              </div>
+            )}
+
+            {!editing && choosingId !== meal.id &&
               meal.items.map((i) => (
                 <div className="plan-food" key={i.id}>
                   <span className="plan-thumb">
@@ -227,18 +271,28 @@ export function MealPlanEditor({
                   not in groceries? ask kal in chat →
                 </button>
 
-                <div className="plan-scope">
-                  <span className="plan-lbl" style={{ marginBottom: 0 }}>Apply</span>
-                  <div className="plan-scope-seg">
-                    <button className={scope === "today" ? "on" : ""} onClick={() => setScope("today")}>Just today</button>
-                    <button className={scope === "template" ? "on" : ""} onClick={() => setScope("template")}>Every day</button>
+                {editSource === null ? (
+                  <>
+                    <div className="plan-scope">
+                      <span className="plan-lbl" style={{ marginBottom: 0 }}>Apply</span>
+                      <div className="plan-scope-seg">
+                        <button className={scope === "today" ? "on" : ""} onClick={() => setScope("today")}>Just today</button>
+                        <button className={scope === "template" ? "on" : ""} onClick={() => setScope("template")}>Every day</button>
+                      </div>
+                    </div>
+                    <div className="plan-scope-hint">
+                      {scope === "today"
+                        ? "just today = a ⇄ override — template untouched, back to normal tomorrow"
+                        : "every day changes the template — targets re-derive from the new plan"}
+                    </div>
+                  </>
+                ) : (
+                  <div className="plan-scope-hint">
+                    {editSource === "override"
+                      ? "editing today's ⇄ version, saves just for today, back to normal tomorrow"
+                      : "editing the everyday meal, targets re-derive from the new plan"}
                   </div>
-                </div>
-                <div className="plan-scope-hint">
-                  {scope === "today"
-                    ? "just today = a ⇄ override — template untouched, back to normal tomorrow"
-                    : "every day changes the template — targets re-derive from the new plan"}
-                </div>
+                )}
 
                 <div className="plan-actions">
                   <button className="btn-dark" onClick={save} disabled={saving}>
@@ -246,9 +300,11 @@ export function MealPlanEditor({
                   </button>
                   <button className="plan-cancel" onClick={() => setEditingId(null)}>Cancel</button>
                 </div>
-                <button className="plan-remove" onClick={removeMeal}>
-                  {armedDelete ? "really remove this meal from every day?" : "remove meal"}
-                </button>
+                {editSource !== "override" && (
+                  <button className="plan-remove" onClick={removeMeal}>
+                    {armedDelete ? "really remove this meal from every day?" : "remove meal"}
+                  </button>
+                )}
               </div>
             )}
           </div>

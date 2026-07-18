@@ -33,7 +33,17 @@ export default async function PlanPage() {
       getWeekDayFoods(today),
       getAdherenceHistory(today),
     ]);
-  const adjustedMealIds = Array.from(overrides.keys());
+  const overridesByMeal = Array.from(overrides, ([mealId, lines]) => ({
+    mealId,
+    items: lines.map((l) => ({
+      foodId: l.foodId,
+      quantity: l.quantity,
+      foodName: l.food.name,
+      servingDesc: l.food.servingDesc,
+      servingGrams: l.food.servingGrams,
+      unitKcal: l.food.kcal,
+    })),
+  }));
 
   return (
     <main className="app plan">
@@ -69,7 +79,7 @@ export default async function PlanPage() {
           <span className="plan-kicker">Meal plan</span>
           <span className="plan-kicker">{plan.meals.length} meals</span>
         </div>
-        <MealPlanEditor plan={plan} groceries={groceries} adjustedMealIds={adjustedMealIds} />
+        <MealPlanEditor plan={plan} groceries={groceries} overridesByMeal={overridesByMeal} />
       </section>
 
       <section>

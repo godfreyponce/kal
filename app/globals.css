@@ -1698,6 +1698,17 @@ body {
   padding: 9px; cursor: pointer; margin-top: 16px;
 }
 .plan-new-meal { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.plan-choose { display: flex; flex-direction: column; gap: 8px; padding: 12px 0 4px; }
+.plan-choose > button {
+  text-align: left; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 13px; cursor: pointer; font-family: var(--font-sans-stack);
+}
+.plan-choose-big { display: block; font-size: 14px; color: var(--ink); }
+.plan-choose-sub { display: block; font-family: var(--font-mono); font-size: 9px; color: var(--faint); margin-top: 2px; }
+.plan-choose > .plan-choose-cancel {
+  width: 100%; background: none; border: none; cursor: pointer; padding: 6px 0 0;
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint);
+}
 
 /* Plan — memory */
 .plan-fact { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; }
