@@ -71,6 +71,29 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Plan-screen edit chooser on ⇄ meals — #18 (2026-07-17) — COMMITTED & pushed to main; owner in-app pass of the chooser pending
+
+Editing a ⇄-adjusted meal used to seed the editor from the template, so "Save for today"
+silently discarded the existing override. Now Edit on a ⇄ meal opens a chooser (owner-picked
+direction 1D via `design-directions/issue-18-meal-editor.html`): "Edit today's ⇄ version"
+seeds from the override with the save scope fixed to today; "Edit the everyday meal" seeds
+from the template. The Apply switch is hidden for chooser-initiated edits (the chooser IS the
+scope decision); non-⇄ meals behave exactly as before. Override-branch edits freeze the PLAN
+strip (a today-only edit doesn't move the template totals), show the pending sum directly in
+the meal head, and hide "remove meal" (a template-level delete). Wiring: `getOverridesForDate`
+lines carry `servingGrams` (additive, live-DB test); `app/plan/page.tsx` passes override items
+shaped as the editor's now-exported `EditItem` (`overridesByMeal` replaces `adjustedMealIds`) —
+built server-side because overrides can hold one-off foods absent from groceries. Zero
+API/schema changes. Plan deviation (adjudicated, owner-accepted): the plan's CSS note claimed
+`.plan-choose-cancel` beats `.plan-choose > button` by source order — false ((0,1,0) vs
+(0,1,1), cancel would render as a third card); landed selector is
+`.plan-choose > .plan-choose-cancel`. Verified: tsc clean, 170/170 (25 files), build `/plan` ƒ.
+Owner accepted at gate 2 without the plan's scripted manual pass (Step 6, plan-sanctioned
+deferral) — first in-app chooser use is still owed. Cosmetic flags from final review: cancel
+link left-aligned (its twin `.plan-remove` centers; one-liner if unwanted), `key={foodId}`
+dupes possible if a chat-written override repeats a food.
+Plan: `docs/superpowers/plans/2026-07-17-issue-18.md`.
+
 ## Undo GCs the batch's one-off food — #12 (2026-07-17) — COMMITTED & pushed to main
 
 `revertWriteBatch` (`lib/undo.ts`) deleted a batch's `log_entries`/`meal_status`/`meal_overrides`

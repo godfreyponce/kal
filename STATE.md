@@ -2,9 +2,9 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-17
-next_action: "#18 — plan screen meal editor should seed from today's override when one exists (/plan-ticket 18); pool also holds #2, #1"
+next_action: "#2 — production config: enable USDA name-search + verify photo upload (/plan-ticket 2); pool also holds #1"
 blocked_on: ""
-phase: "v1 shipped; weekly-adherence (#6) + day-detail sheet (#22/#24, #25 scrim fix) + adherence history calendar (#23) built, on main, and owner phone-passed (2026-07-17); deployed-prod phone-verify pending"
+phase: "v1 shipped; weekly-adherence (#6) + day-detail sheet (#22/#24, #25 scrim fix) + adherence history calendar (#23) owner phone-passed (2026-07-17); ⇄ edit chooser (#18) on main 2026-07-17; deployed-prod phone-verify pending"
 ---
 
 # Kal — Project State
@@ -24,6 +24,8 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
   builds over Tailscale (#6/#22 on 2026-07-15; #23/#24 incl. the #25 scrim fix on 2026-07-17)
   but the deployed-prod pass is still outstanding.
 - Owner phone-verify of the 2026-07-07 Groceries "my serving" cards — still outstanding.
+- Owner in-app pass of the #18 ⇄ edit chooser (plan Step 6 deferred at gate 2) — glance at the
+  cancel link's left alignment while there.
 - Owner hygiene: delete the Rodin uploads, cancel the $6 Creator plan.
 
 ## Run / verify (do this first)
