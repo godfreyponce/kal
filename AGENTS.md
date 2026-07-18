@@ -23,12 +23,15 @@ a fresh session builds from it.
   stop. No code. The owner reads the plan (**gate 1** — cheap; nothing is built yet).
 - `/clear`
 - **`/build-ticket [#N]`** — build from the plan file, run the suite, **paste the real output**,
-  stop before committing. The owner reads the diff (**gate 2**).
-- On the owner's accept: commit, push, close the issue, `/clear`.
+  stop before landing anything on main. Multi-task plans build on a ticket branch with one commit
+  per approved task; single-task plans stay uncommitted in the working tree. The owner reads the
+  diff (**gate 2**).
+- On the owner's accept: land the code (merge the branch, or commit the working tree), then a
+  docs commit; push both together, close the issue, `/clear`.
 
 # STATE.md is written exactly once per ticket
 
-**In the accept-commit, after the owner accepts. Never mid-session.**
+**In the accept-time docs commit, after the owner accepts. Never mid-session.**
 
 Continuous updates are what makes this file drift and bloat, because a session writes it from a
 context already full of its own work, and it ends up recording things the owner never accepted.
@@ -37,9 +40,11 @@ One write, at the seam:
 - **Mid-session discoveries never touch STATE.md** → `gh issue create` immediately. The issue queue
   is the capture buffer (write anytime, cheap); STATE.md is the accepted-state snapshot (write once).
   Nothing is lost if a session dies — the plan file, the branch, and the issue all outlive it.
-- **The accept-commit carries three things together:** the code, `STATE.md` (Now cleared of the
-  finished item, `next_action` advanced to the next ticket, `last_worked_on` bumped), and the
-  feature's section in `docs/HISTORY.md`. Then close the issue.
+- **Acceptance lands as code commits + one docs commit, pushed together** (owner rule,
+  2026-07-17): the code first — the ticket branch's per-task commits merged, or a single
+  `type(scope)` commit for single-task tickets — then one docs commit carrying `STATE.md` (Now
+  cleared of the finished item, `next_action` advanced to the next ticket, `last_worked_on`
+  bumped) and the feature's section in `docs/HISTORY.md`. Then close the issue.
 - **"Now" holds unaccepted work only.** The moment the owner accepts something it moves to
   `docs/HISTORY.md`. Keep "Now" under ~6 lines. Gotchas stay in STATE.md — they're the memory that
   earns its place — but a gotcha lives there only while it would still bite an agent working today.

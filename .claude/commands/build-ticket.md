@@ -14,9 +14,12 @@ first. Building without the plan is exactly the failure this split exists to pre
 ## Build it
 
 1. Use the `superpowers:executing-plans` skill. Follow the plan task by task.
-2. Where the plan turns out to be wrong, **say so** rather than quietly improvising around it —
+2. If the plan has more than one task, create a ticket branch and commit each task once its
+   review passes (`type(scope): summary (refs #N)` per commit). Single-task plans stay
+   uncommitted in the working tree. Either way, nothing touches main before gate 2.
+3. Where the plan turns out to be wrong, **say so** rather than quietly improvising around it —
    a deviation the owner never sees is a deviation they can't catch at review.
-3. Run the suite. **Paste the real output**, not a claim about it:
+4. Run the suite. **Paste the real output**, not a claim about it:
 
 ```bash
 npx tsc --noEmit
@@ -26,21 +29,23 @@ npm test
 A commit hook will run these anyway and block you if they're red — but by then you've wasted the
 owner's time. Run them yourself first.
 
-## Then stop — before committing
+## Then stop — before landing anything on main
 
-Show the owner the diff and wait. Do not commit, do not push, do not close the issue.
+Show the owner the diff (the ticket branch, or the working tree) and wait. Do not merge or
+commit to main, do not push, do not close the issue.
 
 ## Only after the owner accepts
 
-One commit carrying three things together:
+Code commits + one docs commit, pushed together (owner rule, 2026-07-17):
 
-- the code,
-- `STATE.md` — clear the finished item out of `## Now`, advance `next_action` to the next ticket
-  (ask the owner which if it isn't obvious), bump `last_worked_on`,
-- the feature's section in `docs/HISTORY.md`.
+- **the code** — merge the ticket branch's per-task commits, or for a single-task plan commit
+  the working tree as one `type(scope): summary (refs #N)` commit,
+- **then one docs commit** — `STATE.md` (clear the finished item out of `## Now`, advance
+  `next_action` to the next ticket — ask the owner which if it isn't obvious — bump
+  `last_worked_on`) together with the feature's section in `docs/HISTORY.md`.
 
-Message: `type(scope): summary (refs #N)`. Then push, close the issue with a one-line result, and
-tell the owner to `/clear` before the next ticket.
+Then push, close the issue with a one-line result, and tell the owner to `/clear` before the
+next ticket.
 
 This is STATE.md's **only** write moment. Anything you discovered along the way that isn't this
 ticket goes to `gh issue create`, not into STATE.md.
