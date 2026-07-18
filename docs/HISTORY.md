@@ -71,6 +71,23 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Undo GCs the batch's one-off food — #12 (2026-07-17) — COMMITTED & pushed to main
+
+`revertWriteBatch` (`lib/undo.ts`) deleted a batch's `log_entries`/`meal_status`/`meal_overrides`
+but not the one-off food row the batch created via `log_food`'s new-food path, so estimated
+foods accumulated and resurfaced in `search_foods` (found by the deviation-copilot final review).
+Fix (owner-chosen over a `write_batch_id` column on `foods` — no migration, and it also sweeps
+historical orphans): a fourth, final delete GCs every `one_off = true` food with zero references
+across `log_entries`/`meal_items`/`meal_overrides`. All three FKs to `foods.id` are
+`onDelete: "restrict"`, so the three correlated `notExists` guards are load-bearing; the delete
+runs last so the batch's own just-removed entries can't pin the food. 3 regression tests in
+`lib/tools-deviation.test.ts` (GC'd / survives-while-referenced-then-GC'd / non-one-off survives).
+Verified: tsc clean, 169/169 (25 files). The historical orphan sweep already ran (the test run
+itself executed the GC against live Neon). Scoped out per owner: `search_foods` still name-matches
+surviving one-off foods. Untested (Minor from review): the `meal_items`/`meal_overrides` guard
+arms have no independent test — only the `log_entries` arm does.
+Plan: `docs/superpowers/plans/2026-07-17-issue-12.md`.
+
 ## Day-detail sheet scrim drag tracking fix — #25 (2026-07-17) — COMMITTED & pushed to main
 
 Bug filed out of #23's build: the #24 day-detail sheet wrote `--scrim-o` to `.sheet-card`, but

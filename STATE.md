@@ -2,7 +2,7 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-17
-next_action: "#12 — undo of a chat log batch leaves its created one-off food behind (/plan-ticket 12); pool also holds #18, #2, #1"
+next_action: "#18 — plan screen meal editor should seed from today's override when one exists (/plan-ticket 18); pool also holds #2, #1"
 blocked_on: ""
 phase: "v1 shipped; weekly-adherence (#6) + day-detail sheet (#22/#24, #25 scrim fix) + adherence history calendar (#23) built, on main, and owner phone-passed (2026-07-17); deployed-prod phone-verify pending"
 ---
