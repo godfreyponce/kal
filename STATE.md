@@ -1,10 +1,10 @@
 ---
 glass: kal
 status: in-progress
-last_worked_on: 2026-07-17
-next_action: "#2 — production config: enable USDA name-search + verify photo upload (/plan-ticket 2); pool also holds #1"
+last_worked_on: 2026-07-18
+next_action: "#1 — Groceries screen design rework (/plan-ticket 1); it is the last ready-for-agent issue"
 blocked_on: ""
-phase: "v1 shipped; weekly-adherence (#6) + day-detail sheet (#22/#24, #25 scrim fix) + adherence history calendar (#23) owner phone-passed (2026-07-17); ⇄ edit chooser (#18) on main 2026-07-17; deployed-prod phone-verify pending"
+phase: "v1 shipped; weekly-adherence (#6) + day-detail sheet (#22/#24, #25 scrim fix) + adherence history calendar (#23) owner phone-passed (2026-07-17); ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config (USDA search + OIDC upload) live-verified 2026-07-18; deployed-prod phone-verify pending"
 ---
 
 # Kal — Project State
@@ -22,11 +22,13 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
 
 - Owner phone-verify of **deployed** prod `/plan` — everything to date has passed on local prod
   builds over Tailscale (#6/#22 on 2026-07-15; #23/#24 incl. the #25 scrim fix on 2026-07-17)
-  but the deployed-prod pass is still outstanding.
+  but the deployed-prod pass is still outstanding. Login now takes the same password as local
+  (#2 synced it).
 - Owner phone-verify of the 2026-07-07 Groceries "my serving" cards — still outstanding.
 - Owner in-app pass of the #18 ⇄ edit chooser (plan Step 6 deferred at gate 2) — glance at the
   cancel link's left alignment while there.
-- Owner hygiene: delete the Rodin uploads, cancel the $6 Creator plan.
+- Owner hygiene: delete the Rodin uploads, cancel the $6 Creator plan; optionally dashboard-delete
+  the #2 test blob `groceries/200dd72a-1e47-4ba8-a1f5-22cdd2f19fb7.png` from kal-photos.
 
 ## Run / verify (do this first)
 
@@ -48,6 +50,8 @@ npx tsc --noEmit         # must stay clean
   `kal-private` (owner model; token env `MODEL_BLOB_READ_WRITE_TOKEN`, prod+dev — preview
   binding skipped, unused). `BLOB_READ_WRITE_TOKEN` no longer exists anywhere; the old local
   kal-photos token was lost (regenerate via dashboard if local grocery uploads are ever needed).
+- `vercel redeploy <url>` errors "Deployment belongs to a different team" unless run with
+  `--scope godfreyps-projects` (`vercel env` commands don't need it).
 - Any page reading live DB or the current day MUST `export const dynamic = "force-dynamic"`
   (Next 16 prerenders static by default; invisible in dev; build route table: `/` must be `ƒ`).
 - After editing `globals.css`, Turbopack dev serves STALE CSS — `rm -rf .next`, restart, hard-refresh.

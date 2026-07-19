@@ -6,10 +6,10 @@
 - `ANTHROPIC_API_KEY` present → **label-photo vision works in prod** (`/api/nutrition/vision`
   returns 401 unauth = route live + gated; in-app call carries the session cookie).
 - `BLOB_STORE_ID` present (Prod+Preview) → product-photo upload should work via OIDC (not yet
-  exercised live in prod).
+  exercised live in prod). *(Exercised live 2026-07-18 — see the #2 section.)*
 - **`FDC_API_KEY` is MISSING from prod** → typing a food *name* to search nutrition DB returns
   only OpenFoodFacts (USDA half silently no-ops). Add it to Prod env to enable USDA name-search.
-  Does NOT affect the label-photo flow.
+  Does NOT affect the label-photo flow. *(Closed 2026-07-18 — see the #2 section.)*
 
 **Grocery photos + store/link (2026-07-07, owner-directed):** all 9 foods have real product
 images re-hosted on Vercel Blob (`groceries/<slug>.jpg`, `allowOverwrite`) + `store` + product
@@ -70,6 +70,25 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 6. **Deferred to Phase 2:** `is_estimated` provenance flag on foods; grocery-logging section.
 
 ---
+
+## Production config: USDA name-search + photo-upload verify — #2 (2026-07-18) — DONE, live-verified; zero code changes
+
+Vercel config ticket, nothing committed at gate 2. `FDC_API_KEY` added to the kal project's
+Production env (key pre-validated directly against USDA — 285 hits for "cheerios") and prod
+redeployed; deployed `/api/nutrition?q=cheerios` now returns USDA-first hits (`sources
+["USDA"]`). OIDC product-photo upload exercised live through the real route for the first
+time: `POST /api/upload` → blob URL on kal-photos, publicly served (`200 image/png`). A
+67-byte test blob `groceries/200dd72a-1e47-4ba8-a1f5-22cdd2f19fb7.png` remains (local CLI
+can't delete it — kal-photos token lost); owner may dashboard-delete. Plan deviation:
+deployed prod's `APP_PASSWORD` (and `SESSION_SECRET`) did NOT match local `.env.local` —
+the plan's login prelude 401'd, and a session cookie sealed with the local `SESSION_SECRET`
+was rejected, so the "before" API baseline was unobtainable (premise proved instead via
+`vercel env ls`: FDC key absent from every env). Owner picked reset (option c): prod
+`APP_PASSWORD` now equals the local value (old prod value gone; sensitive vars still pull
+as `""`, so it was unrecoverable anyway). Ops notes: `vercel redeploy` needs
+`--scope godfreyps-projects`; two redeploys total (FDC key, then password), alias
+`kal-delta.vercel.app` moved each time. Verified: tsc clean, 170/170 (25 files), tree untouched.
+Plan: `docs/superpowers/plans/2026-07-18-issue-2.md`.
 
 ## Plan-screen edit chooser on ⇄ meals — #18 (2026-07-17) — COMMITTED & pushed to main; owner in-app pass of the chooser pending
 
