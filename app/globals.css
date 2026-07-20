@@ -1334,7 +1334,7 @@ body:has(main.groceries) { background: #fff; }
   color: var(--gro-caramel); text-decoration: none;
 }
 
-.gro-modes { display: flex; gap: 22px; margin: 14px 0 2px; }
+.gro-modes { display: flex; gap: 22px; margin: 16px 0 2px; }
 .gro-modes button {
   border: 0; background: none; padding: 0 0 5px; cursor: pointer; position: relative;
   font-family: var(--font-sans-stack); font-size: 11.5px; font-weight: 700;
@@ -1361,7 +1361,7 @@ body:has(main.groceries) { background: #fff; }
   font-family: var(--font-sans-stack); -webkit-tap-highlight-color: transparent;
 }
 /* white product shots melt into the canvas — no box, no border */
-.gro-ph { width: 126px; height: 110px; object-fit: contain; flex-shrink: 0; mix-blend-mode: multiply; }
+.gro-ph { width: 126px; height: 110px; object-fit: contain; flex-shrink: 0; mix-blend-mode: multiply; filter: saturate(1.04); }
 .gro-fall {
   width: 110px; height: 110px; flex-shrink: 0; margin: 0 8px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;

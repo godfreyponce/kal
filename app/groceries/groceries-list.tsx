@@ -466,13 +466,13 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
             <input aria-label="Price" inputMode="decimal" placeholder="$ price" value={form.price} onChange={(e) => set("price", e.target.value)} />
           </div>
           <div className="gr-actions">
-            <button type="submit" className="btn-dark" disabled={saving}>{saving ? "Saving…" : form.id ? "Save" : "Add"}</button>
+            <button type="submit" className="btn-dark" disabled={saving || deletingId !== null}>{saving ? "Saving…" : form.id ? "Save" : "Add"}</button>
             <button type="button" className="gr-cancel" onClick={() => { setForm(null); setError(null); setHits(null); setLookupQuery(""); setLookupMsg(null); }}>Cancel</button>
             {form.id !== null && (
               <button
                 type="button"
                 className="gr-delete"
-                disabled={deletingId !== null}
+                disabled={saving || deletingId !== null}
                 onClick={async () => { if (await remove(form.id!)) setForm(null); }}
               >
                 {deletingId !== null ? "…" : "Delete"}
