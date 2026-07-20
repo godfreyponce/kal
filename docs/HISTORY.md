@@ -71,6 +71,31 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Groceries browse face rework, V1 silent menu — #1 (2026-07-20) — COMMITTED & pushed to main
+
+The v2 card grid (never owner-approved) is gone. The browse face is now the owner-picked
+"V1 Silent Menu + protein" design (`design/groceries-rework-combined.html`, picked from the
+committed 3-round variant files): free-floating product photos on a white canvas
+(`mix-blend-mode: multiply` + `saturate(1.04)`), each row carrying only a chocolate kcal pill,
+a caramel protein pill (omitted at 0P), and an uppercase name; cream shelf bands group by
+today's meals (+ Pantry) or by category; red-brown underline mode tabs; chocolate FAB. All
+numbers stay "my serving" (`servingDisplay`). Everything else left the face: macros C/F, bar,
+cost/srv, brand, store logos, ⇄ flip, Edit/Delete — row tap opens the existing edit form
+(unchanged: lookup, label-photo vision, photo upload). Delete relocated into the form
+(`remove(): Promise<boolean>`, closes only on success; Save/Delete disable during either op).
+Motion per the feel spec: 30ms enter stagger (cap 300ms) threaded across shelves, replays on
+mode flip via key-forced remounts; press scale; reduced-motion = fade only. Orphans removed:
+`flippedIds`, `costPerServing`, `STORE_LOGOS`, old card CSS block, `public/stores/*.svg`.
+Adjudicated at final review (mockup governs the plan's snippet, per its own "copy values
+exactly" constraint): header→tabs gap 16px, photo saturate — both were plan-CSS typos.
+Verified: tsc clean, 170/170 (25 files), build `/groceries` ƒ, headless prod pass (rows/pills/
+discs/stagger/form flows, zero console errors) + owner phone pass over Tailscale HTTPS.
+Declined owner-call a11y nits from review (would deviate from mockup markup): `.gro-title` is
+a div not h1, mode tabs lack `aria-pressed`, inactive-tab contrast ~2.5:1 (mockup-inherited).
+Follow-ups filed: #27 pre-existing em dashes in form copy, #28 app-wide silent-menu adoption,
+#29 edit-form declutter.
+Plan: `docs/superpowers/plans/2026-07-19-issue-1.md`.
+
 ## Production config: USDA name-search + photo-upload verify — #2 (2026-07-18) — DONE, live-verified; zero code changes
 
 Vercel config ticket, nothing committed at gate 2. `FDC_API_KEY` added to the kal project's

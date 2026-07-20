@@ -1,0 +1,294 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal — Groceries rework, round 2: simple (3 variants · issue #1)</title>
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    /* pulled from the Chipotle reference screenshot */
+    --choc:#3f2a1a;        /* name brown */
+    --pillbg:#48291a;      /* DIGITAL ONLY pill */
+    --caramel:#a97a24;     /* GROUP link */
+    --redbrown:#ac2318;    /* MENU active underline */
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#1d1c1a; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:460px;margin:0 auto}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .note{
+    font-family:var(--mono);font-size:11px;line-height:1.7;margin:16px 0 26px;
+    border-left:2px solid rgba(244,243,240,.5);padding-left:12px;opacity:.92;
+  }
+  .note b{color:#fff;font-weight:500}
+  .col-tag{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#fff;margin:34px 0 4px;font-weight:500}
+  .col-cap{font-family:var(--mono);font-size:10.5px;line-height:1.65;opacity:.85;margin-bottom:12px}
+  .phone{
+    position:relative;border-radius:22px;padding:24px 22px 90px;overflow:hidden;background:#fff;color:var(--choc);
+    box-shadow:0 16px 44px rgba(0,0,0,.4);min-height:640px;
+  }
+  .fph{mix-blend-mode:multiply;filter:saturate(1.04)}
+  @keyframes enter{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .anim{animation:enter .34s cubic-bezier(.32,.72,.33,1) backwards}
+  button{-webkit-tap-highlight-color:transparent;font-family:var(--sans)}
+  button:active{transform:scale(.97)}
+  @media (prefers-reduced-motion: reduce){.anim{animation:none}button:active{transform:none}}
+
+  /* ---- shared row anatomy (all three variants): photo left, words right,
+         NO separators, NO card. Row height comes from the photo + air. ---- */
+  .row{display:flex;align-items:center;gap:20px;padding:20px 0;border:0;background:none;width:100%;text-align:left;cursor:pointer;color:inherit}
+  .ph{width:126px;height:110px;object-fit:contain;flex-shrink:0}
+  .fall{
+    width:110px;height:110px;flex-shrink:0;margin:0 8px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:40px;color:rgba(63,42,26,.4);
+  }
+  .t-fat{background:#f3ead7}
+  .t-veg{background:#ebefdb}
+  .nm{font-size:17px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:1.2;color:var(--choc)}
+  .pill{
+    display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--pillbg);color:#fff;border-radius:999px;padding:4px 10px;margin-bottom:7px;
+  }
+  .pill.ghost{background:none;color:var(--caramel);border:1px solid #e3cf9f;padding:3px 9px}
+
+  /* top strip: back link + section, GROUP-style */
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .top a{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);text-decoration:none}
+
+  /* mode switch borrowed from the reference's bottom nav: uppercase words,
+     active one underlined red-brown */
+  .modes{display:flex;gap:22px;margin:6px 0 2px}
+  .modes button{
+    border:0;background:none;padding:0 0 5px;cursor:pointer;position:relative;
+    font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b3a390;
+  }
+  .modes button.on{color:var(--choc)}
+  .modes button.on::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.5px;background:var(--redbrown)}
+
+  /* shelf kicker: quiet caramel line, the only structure between groups */
+  .shelf{margin-top:26px}
+  .kick{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel)}
+  .kick small{color:#c9b89b;font-weight:600;letter-spacing:.1em;margin-left:8px}
+
+  /* V1 — Silent Menu: kcal pill is the only metadata */
+  .v1 .row{padding:24px 0}
+
+  /* V2 — Whisper: one quiet line under the name */
+  .whisper{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:#b3a390;margin-top:6px}
+  .whisper b{color:#8a765c;font-weight:600}
+
+  /* V3 — Working Face: serving flip pill + kcal stay tappable on the row */
+  .srv{
+    font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+    border:1.5px solid var(--choc);border-radius:999px;padding:4px 11px;background:none;color:var(--choc);
+    margin-top:9px;transition:transform .09s;
+  }
+  .srv .st{color:#b3a390}
+  .kcal3{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:#8a765c;margin-top:8px}
+  .kcal3 b{font-weight:600;color:var(--choc)}
+
+  /* CTAs — three takes on "elevated rounded" */
+  .fab{
+    position:absolute;right:22px;bottom:24px;width:56px;height:56px;border-radius:50%;
+    background:var(--choc);color:#fff;border:0;font-size:26px;font-weight:300;line-height:1;cursor:pointer;
+    box-shadow:0 10px 24px rgba(63,42,26,.4);transition:transform .09s;
+  }
+  .cta-full{
+    position:absolute;left:22px;right:22px;bottom:24px;
+    background:var(--choc);color:#fff;border:0;border-radius:999px;padding:16px;
+    font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+    box-shadow:0 10px 26px rgba(63,42,26,.35);transition:transform .09s;
+  }
+  .cta-line{
+    position:absolute;left:22px;right:22px;bottom:24px;
+    background:#fff;color:var(--caramel);border:1.5px solid #e3cf9f;border-radius:999px;padding:14px;
+    font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+    box-shadow:0 8px 22px rgba(63,42,26,.14);transition:transform .09s;
+  }
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Groceries — rework, round 2: simple</h1>
+    <p>3 variants off the owner's Chipotle menu screenshot · issue #1</p>
+  </div>
+  <div class="note">
+    Round 1 verdict: <b>A's row structure, but simpler — like the reference.</b> So all three
+    here copy the screenshot's anatomy exactly: photo floating left, <b>bold uppercase name
+    right, no separators, no cards, white canvas</b>, colors lifted from the screenshot
+    (chocolate #3f2a1a, caramel #a97a24, red-brown active tab). What the reference doesn't
+    answer is where Kal's data goes — <b>each variant picks a different single thing to keep on
+    the row face</b>; everything else (macros, cost, edit/delete, serving flip where absent)
+    moves behind a tap on the row, which opens the existing edit form / a detail step. Mode
+    switch = the reference's underlined-tab nav. Tap servings in V3 to ⇄ flip.
+  </div>
+
+  <!-- ================= V1 ================= -->
+  <div class="col-tag">V1 — Silent Menu</div>
+  <div class="col-cap">
+    The literal translation: name only, plus a chocolate pill (the DIGITAL ONLY slot) carrying
+    kcal — and nothing else. Everything lives behind a tap. Round ＋ FAB. This is the barest
+    Groceries can get while staying informative at a glance.
+  </div>
+  <div class="phone v1">
+    <div class="top anim"><a href="#">Groceries</a><a href="#">‹ Today</a></div>
+    <div class="modes anim" style="animation-delay:.03s">
+      <button class="on">Today's meals</button>
+      <button>By category</button>
+    </div>
+
+    <div class="shelf anim" style="animation-delay:.06s">
+      <div class="kick">Lunch <small>745 kcal</small></div>
+      <button class="row anim" style="animation-delay:.09s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt="">
+        <span><span class="pill">330 cal</span><span class="nm" style="display:block">Chicken Breast</span></span>
+      </button>
+      <button class="row anim" style="animation-delay:.12s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/jasmine-rice.jpg" alt="">
+        <span><span class="pill">205 cal</span><span class="nm" style="display:block">Jasmine Rice</span></span>
+      </button>
+      <button class="row anim" style="animation-delay:.15s">
+        <span class="fall t-veg">B</span>
+        <span><span class="pill">45 cal</span><span class="nm" style="display:block">Frozen Broccoli</span></span>
+      </button>
+    </div>
+
+    <div class="shelf anim" style="animation-delay:.18s">
+      <div class="kick">Dinner <small>820 kcal</small></div>
+      <button class="row anim" style="animation-delay:.21s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/eggs.jpg" alt="">
+        <span><span class="pill">215 cal</span><span class="nm" style="display:block">Large Eggs</span></span>
+      </button>
+      <button class="row anim" style="animation-delay:.24s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/peanut-butter.jpg" alt="">
+        <span><span class="pill">190 cal</span><span class="nm" style="display:block">Peanut Butter</span></span>
+      </button>
+    </div>
+
+    <button class="fab">＋</button>
+  </div>
+
+  <!-- ================= V2 ================= -->
+  <div class="col-tag">V2 — Whisper</div>
+  <div class="col-cap">
+    Name unaccompanied, exactly like the screenshot — the pill slot is used only when a food
+    genuinely has a badge (×2 meals, pantry). One quiet mono whisper line under the name carries
+    serving + kcal. Full-width chocolate CTA.
+  </div>
+  <div class="phone v2">
+    <div class="top anim"><a href="#">Groceries</a><a href="#">‹ Today</a></div>
+    <div class="modes anim" style="animation-delay:.03s">
+      <button class="on">Today's meals</button>
+      <button>By category</button>
+    </div>
+
+    <div class="shelf anim" style="animation-delay:.06s">
+      <div class="kick">Lunch <small>745 kcal</small></div>
+      <button class="row anim" style="animation-delay:.09s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt="">
+        <span><span class="pill">×2 meals</span><span class="nm" style="display:block">Chicken Breast</span>
+          <span class="whisper" style="display:block">200 g, <b>330</b> kcal</span></span>
+      </button>
+      <button class="row anim" style="animation-delay:.12s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/jasmine-rice.jpg" alt="">
+        <span><span class="nm" style="display:block">Jasmine Rice</span>
+          <span class="whisper" style="display:block">180 g cooked, <b>205</b> kcal</span></span>
+      </button>
+      <button class="row anim" style="animation-delay:.15s">
+        <span class="fall t-veg">B</span>
+        <span><span class="nm" style="display:block">Frozen Broccoli</span>
+          <span class="whisper" style="display:block">150 g, <b>45</b> kcal</span></span>
+      </button>
+    </div>
+
+    <div class="shelf anim" style="animation-delay:.18s">
+      <div class="kick">Pantry <small>not in rotation</small></div>
+      <button class="row anim" style="animation-delay:.21s">
+        <span class="fall t-fat">O</span>
+        <span><span class="pill ghost">Pantry</span><span class="nm" style="display:block">Olive Oil</span>
+          <span class="whisper" style="display:block">1 tbsp, <b>119</b> kcal</span></span>
+      </button>
+    </div>
+
+    <button class="cta-full">＋ Add grocery</button>
+  </div>
+
+  <!-- ================= V3 ================= -->
+  <div class="col-tag">V3 — Working Face</div>
+  <div class="col-cap">
+    Same bare anatomy, but the two things you actually use daily stay on the row: the tappable
+    serving ⇄ pill (outlined, chocolate) and a kcal line. Macros/cost/edit still behind the row
+    tap. Caramel outline CTA. The most functional it can be without re-growing the old card.
+  </div>
+  <div class="phone v3">
+    <div class="top anim"><a href="#">Groceries</a><a href="#">‹ Today</a></div>
+    <div class="modes anim" style="animation-delay:.03s">
+      <button class="on">Today's meals</button>
+      <button>By category</button>
+    </div>
+
+    <div class="shelf anim" style="animation-delay:.06s">
+      <div class="kick">Lunch <small>745 kcal</small></div>
+      <div class="row anim" style="animation-delay:.09s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt="">
+        <span>
+          <span class="nm" style="display:block">Chicken Breast</span>
+          <span class="kcal3" style="display:block"><b>330</b> kcal, $1.42/srv</span>
+          <button class="srv" data-food="chk" data-alt="4 OZ <span class=st>LABEL</span>">200 G</button>
+        </span>
+      </div>
+      <div class="row anim" style="animation-delay:.12s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/jasmine-rice.jpg" alt="">
+        <span>
+          <span class="nm" style="display:block">Jasmine Rice</span>
+          <span class="kcal3" style="display:block"><b>205</b> kcal, $0.18/srv</span>
+          <button class="srv" data-alt="¼ CUP <span class=st>DRY</span>">180 G <span class="st">COOKED</span></button>
+        </span>
+      </div>
+    </div>
+
+    <div class="shelf anim" style="animation-delay:.15s">
+      <div class="kick">Dinner <small>820 kcal</small></div>
+      <div class="row anim" style="animation-delay:.18s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt="">
+        <span>
+          <span class="nm" style="display:block">Chicken Breast</span>
+          <span class="kcal3" style="display:block"><b>330</b> kcal, $1.42/srv</span>
+          <button class="srv" data-food="chk" data-alt="4 OZ <span class=st>LABEL</span>">200 G</button>
+        </span>
+      </div>
+      <div class="row anim" style="animation-delay:.21s">
+        <img class="ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/eggs.jpg" alt="">
+        <span>
+          <span class="nm" style="display:block">Large Eggs</span>
+          <span class="kcal3" style="display:block"><b>215</b> kcal, $0.62/srv</span>
+          <button class="srv" data-alt="150 G">3 EGGS</button>
+        </span>
+      </div>
+    </div>
+
+    <button class="cta-line">＋ Add grocery</button>
+  </div>
+</div>
+
+<script>
+// serving ⇄ flip; data-food syncs the same food across shelves (prod behavior)
+document.querySelectorAll("[data-alt]").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const group = btn.dataset.food
+      ? document.querySelectorAll(`[data-food="${btn.dataset.food}"]`)
+      : [btn];
+    group.forEach((b) => {
+      const cur = b.innerHTML;
+      b.innerHTML = b.dataset.alt;
+      b.dataset.alt = cur;
+    });
+  });
+});
+</script>

@@ -1,0 +1,560 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal — Groceries rework (3 variants · issue #1)</title>
+<style>
+  :root{
+    --ink:#1f2421; --accent:#d97757;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    /* shared warm direction (Chipotle): cocoa ink on cream */
+    --cocoa:#2e2418; --cocoa-soft:#5c4d3c; --cocoa-faint:#a08e78;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#b9b7b2; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:460px;margin:0 auto}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .note{
+    font-family:var(--mono);font-size:11px;line-height:1.7;margin:16px 0 26px;
+    border-left:2px solid rgba(244,243,240,.5);padding-left:12px;opacity:.92;
+  }
+  .note b{color:#fff;font-weight:500}
+  .col-tag{
+    font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#fff;
+    margin:34px 0 4px;font-weight:500;
+  }
+  .col-cap{font-family:var(--mono);font-size:10.5px;line-height:1.65;opacity:.85;margin-bottom:12px}
+  .phone{
+    position:relative;border-radius:22px;padding:22px 20px 84px;overflow:hidden;
+    box-shadow:0 16px 44px rgba(31,36,33,.24);min-height:640px;
+  }
+  /* product shots are on white — multiply melts the white into the cream canvas,
+     so photos float free with no box. This is the trick the React build needs. */
+  .fph{mix-blend-mode:multiply;filter:saturate(1.04)}
+  /* Feel Spec enter: spring-ish settle, staggered per row */
+  @keyframes enter{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .anim{animation:enter .34s cubic-bezier(.32,.72,.33,1) backwards}
+  button{-webkit-tap-highlight-color:transparent}
+  button:active{transform:scale(.97)}
+  @media (prefers-reduced-motion: reduce){
+    .anim{animation:none}
+    button:active{transform:none}
+  }
+
+  /* ============ VARIANT A — MENU BOARD ============ */
+  .va{background:#f6efe2;color:var(--cocoa)}
+  .va-head{margin-bottom:4px}
+  .va-title{font-size:30px;font-weight:800;letter-spacing:-.03em;text-transform:uppercase;line-height:1}
+  .va-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--cocoa-faint);margin-top:6px;text-transform:uppercase}
+  .va-back{position:absolute;top:26px;right:20px;font-family:var(--mono);font-size:10.5px;color:var(--cocoa-soft);text-decoration:none}
+  .va-toggle{display:flex;gap:22px;margin:20px 0 4px;border-bottom:1px solid #e2d7c3}
+  .va-toggle button{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    border:0;background:none;color:var(--cocoa-faint);padding:0 0 9px;cursor:pointer;position:relative;
+  }
+  .va-toggle button.on{color:var(--cocoa);font-weight:600}
+  .va-toggle button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--cocoa)}
+  .va-shelf{margin-top:26px}
+  .va-shelf-head{display:flex;align-items:baseline;justify-content:space-between;padding-bottom:7px;border-bottom:2px solid var(--cocoa)}
+  .va-shelf-head .nm{font-size:19px;font-weight:800;letter-spacing:-.01em;text-transform:uppercase}
+  .va-shelf-head .meta{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--cocoa-faint);text-transform:uppercase}
+  .va-row{display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid #e6dcc9;position:relative}
+  .va-row:last-child{border-bottom:0}
+  .va-ph{width:88px;height:88px;object-fit:contain;flex-shrink:0}
+  .va-fall{
+    width:88px;height:88px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:34px;color:rgba(46,36,24,.5);
+  }
+  .va-info{flex:1;min-width:0}
+  .va-src{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--cocoa-faint);display:flex;align-items:center;gap:7px}
+  .va-src img{height:11px;display:block;opacity:.8}
+  .va-src img.costco{height:9px}
+  .va-nm{font-size:16.5px;font-weight:800;letter-spacing:-.015em;text-transform:uppercase;line-height:1.12;margin:3px 0 5px}
+  .va-mac{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--cocoa-soft)}
+  .va-mac b{font-weight:600;color:var(--cocoa)}
+  .va-foot{display:flex;align-items:center;gap:7px;margin-top:8px}
+  .va-srv{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+    border:1px solid var(--cocoa);border-radius:999px;padding:3px 9px;background:none;color:var(--cocoa);
+    transition:transform .09s;
+  }
+  .va-srv .st{color:var(--cocoa-faint)}
+  .va-badge{
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
+    background:#e9dfc9;border-radius:999px;padding:4px 8px;color:var(--cocoa-soft);
+  }
+  .va-cost{font-family:var(--mono);font-size:9.5px;color:var(--cocoa-faint);margin-left:auto}
+  .va-more{
+    border:0;background:none;font-family:var(--mono);font-size:13px;color:var(--cocoa-faint);
+    cursor:pointer;padding:6px 2px;align-self:flex-start;letter-spacing:.08em;
+  }
+  .va-cta{
+    position:absolute;left:20px;right:20px;bottom:22px;
+    background:var(--cocoa);color:#f6efe2;border:0;border-radius:999px;padding:15px;
+    font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+    box-shadow:0 10px 26px rgba(46,36,24,.35);transition:transform .09s;
+  }
+
+  /* ============ VARIANT B — ESTATE ============ */
+  .vb{background:#f3ead9;color:var(--cocoa);padding:0 0 84px}
+  .vb-band{background:var(--cocoa);color:#f3ead9;padding:24px 20px 18px}
+  .vb-title{font-size:32px;font-weight:800;letter-spacing:-.03em;text-transform:uppercase;line-height:1}
+  .vb-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;opacity:.6;margin-top:7px}
+  .vb-back{position:absolute;top:26px;right:20px;font-family:var(--mono);font-size:10.5px;color:rgba(243,234,217,.75);text-decoration:none}
+  .vb-toggle{display:flex;gap:8px;margin-top:16px}
+  .vb-toggle button{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+    border:1px solid rgba(243,234,217,.35);border-radius:999px;background:none;color:rgba(243,234,217,.7);padding:5px 12px;
+  }
+  .vb-toggle button.on{background:#f3ead9;color:var(--cocoa);border-color:#f3ead9;font-weight:600}
+  .vb-shelf{padding:26px 20px 0}
+  .vb-shelf-kick{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--cocoa-faint);text-align:center}
+  .vb-shelf-kick b{color:var(--cocoa);font-weight:600}
+  .vb-item{display:flex;align-items:center;gap:16px;padding:26px 0}
+  .vb-item + .vb-item{border-top:1px solid #e3d6bd}
+  .vb-item:nth-child(odd of .vb-item){flex-direction:row-reverse}
+  .vb-ph{width:148px;height:148px;object-fit:contain;flex-shrink:0}
+  .vb-fall{
+    width:148px;height:148px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:52px;color:rgba(46,36,24,.45);
+  }
+  .vb-txt{flex:1;min-width:0}
+  .vb-num{font-family:var(--serif);font-size:12px;font-style:italic;color:var(--cocoa-faint)}
+  .vb-nm{font-size:24px;font-weight:800;letter-spacing:-.025em;text-transform:uppercase;line-height:1.02;margin:4px 0 8px}
+  .vb-kc{font-family:var(--serif);font-size:21px;font-weight:500;letter-spacing:-.01em}
+  .vb-kc small{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--cocoa-faint);text-transform:uppercase}
+  .vb-mac{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--cocoa-soft);margin-top:6px}
+  .vb-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+  .vb-srv{
+    font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+    background:var(--cocoa);color:#f3ead9;border:0;border-radius:999px;padding:5px 11px;transition:transform .09s;
+  }
+  .vb-pill{
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
+    border:1px solid #d4c5a6;border-radius:999px;padding:4px 9px;color:var(--cocoa-soft);
+  }
+  .vb-cta{
+    position:absolute;left:20px;right:20px;bottom:22px;
+    background:var(--accent);color:#fff;border:0;border-radius:999px;padding:15px;
+    font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+    box-shadow:0 10px 26px rgba(217,119,87,.4);transition:transform .09s;
+  }
+
+  /* ============ VARIANT C — SHELF GRID ============ */
+  .vc{background:#f6f2ea;color:var(--ink)}
+  .vc-title{font-size:28px;font-weight:800;letter-spacing:-.03em;text-transform:uppercase;line-height:1}
+  .vc-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:#9b9082;margin-top:6px;text-transform:uppercase}
+  .vc-back{position:absolute;top:26px;right:20px;font-family:var(--mono);font-size:10.5px;color:#7d7466;text-decoration:none}
+  .vc-toggle{display:flex;gap:3px;background:#ece5d8;border-radius:10px;padding:3px;margin:18px 0 6px}
+  .vc-toggle button{
+    flex:1;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+    border:0;background:none;color:#9b9082;padding:8px 6px;border-radius:8px;cursor:pointer;
+  }
+  .vc-toggle button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .vc-shelf{margin-top:22px}
+  .vc-shelf-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+  .vc-shelf-head .nm{font-size:15px;font-weight:800;letter-spacing:.01em;text-transform:uppercase}
+  .vc-shelf-head .meta{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:#9b9082;text-transform:uppercase}
+  .vc-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:8px}
+  .vc-tile{
+    position:relative;border:0;background:none;font:inherit;color:inherit;text-align:center;cursor:pointer;
+    padding:18px 6px 16px;transition:transform .09s;
+  }
+  .vc-ph{width:112px;height:112px;object-fit:contain;display:block;margin:0 auto}
+  .vc-fall{
+    width:112px;height:112px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:40px;color:rgba(31,36,33,.4);
+  }
+  .vc-nm{font-size:12.5px;font-weight:800;letter-spacing:0;text-transform:uppercase;line-height:1.15;margin:10px 0 4px}
+  .vc-sub{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:#8b8172}
+  .vc-sub b{color:var(--ink);font-weight:600}
+  .vc-tag{
+    position:absolute;top:10px;right:6px;font-family:var(--mono);font-size:8px;letter-spacing:.08em;
+    text-transform:uppercase;background:#ece3d0;border-radius:999px;padding:3px 7px;color:#6d604c;
+  }
+  /* tap a tile → its face swaps to the detail back (macros, cost, edit/delete) */
+  .vc-tile .backface{display:none}
+  .vc-tile.open .face{display:none}
+  .vc-tile.open .backface{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:172px;gap:7px}
+  .vc-bk-nm{font-size:12px;font-weight:800;text-transform:uppercase}
+  .vc-bk-row{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:#6d604c}
+  .vc-bk-row b{color:var(--ink)}
+  .vc-bk-actions{display:flex;gap:14px;margin-top:6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}
+  .vc-bk-actions span{border-bottom:1px solid #c9bda6;padding-bottom:1px;color:#6d604c}
+  .vc-cta{
+    position:absolute;left:20px;right:20px;bottom:22px;
+    background:var(--accent);color:#fff;border:0;border-radius:999px;padding:15px;
+    font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+    box-shadow:0 10px 26px rgba(217,119,87,.35);transition:transform .09s;
+  }
+
+  /* category fallback tints (photo-less foods) — shared across variants */
+  .t-fat{background:#efe4cd}
+  .t-veg{background:#e6ead4}
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Groceries — design rework</h1>
+    <p>3 variants · issue #1 · direction: Chipotle iOS food treatment (owner, 2026-07-15)</p>
+  </div>
+  <div class="note">
+    Shared direction across all three: <b>free-floating food photography</b> (no card
+    containers — white product shots melt into the cream via <b>mix-blend-mode:&nbsp;multiply</b>),
+    generous whitespace, <b>bold uppercase editorial type</b>, warm brown/cream palette, small
+    pill badges, elevated rounded CTA. Serving pills are <b>tappable ⇄ flips</b> (chicken sits on
+    two shelves — flipping one flips both, same as prod). Photo-less foods (olive oil, broccoli)
+    show the fallback treatment: category-tinted disc + serif initial. The add/edit form and
+    lookup flow are unchanged this round — they inherit the winner's palette only. Motion per
+    <b>docs/design/motion-and-feel.md</b>: staggered spring settle on load, scale(.97) press.
+  </div>
+
+  <!-- ================= VARIANT A ================= -->
+  <div class="col-tag">Variant A — Menu Board</div>
+  <div class="col-cap">
+    The current one-row-per-item list translated into Chipotle's menu language: photos float
+    free at left, hairline rules instead of card borders, heavy uppercase names, cocoa-on-cream.
+    Densest of the three; closest to what shipped, so the safest migration.
+  </div>
+  <div class="phone va">
+    <a class="va-back" href="#">‹ TODAY</a>
+    <div class="va-head anim">
+      <div class="va-title">Groceries</div>
+      <div class="va-kicker">Your source of truth</div>
+    </div>
+    <div class="va-toggle anim" style="animation-delay:.03s">
+      <button class="on">Today's meals</button>
+      <button>By category</button>
+    </div>
+
+    <div class="va-shelf anim" style="animation-delay:.06s">
+      <div class="va-shelf-head"><span class="nm">Lunch</span><span class="meta">3 items · 745 kcal</span></div>
+      <div class="va-row anim" style="animation-delay:.09s">
+        <img class="va-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt="">
+        <div class="va-info">
+          <div class="va-src">Kirkland <img class="costco" src="logos/costco.svg" alt="Costco"></div>
+          <div class="va-nm">Chicken Breast</div>
+          <div class="va-mac"><b>330</b> kcal · 62P · 8F</div>
+          <div class="va-foot">
+            <button class="va-srv" data-food="chicken" data-alt="4 OZ <span class=st>LABEL</span>">200 G</button>
+            <span class="va-badge">×2 meals</span>
+            <span class="va-cost">$1.42/srv</span>
+          </div>
+        </div>
+        <button class="va-more">···</button>
+      </div>
+      <div class="va-row anim" style="animation-delay:.12s">
+        <img class="va-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/jasmine-rice.jpg" alt="">
+        <div class="va-info">
+          <div class="va-src">Mahatma <img src="logos/walmart.svg" alt="Walmart"></div>
+          <div class="va-nm">Jasmine Rice</div>
+          <div class="va-mac"><b>205</b> kcal · 4P · 45C</div>
+          <div class="va-foot">
+            <button class="va-srv" data-alt="¼ CUP <span class=st>DRY</span>">180 G <span class="st">COOKED</span></button>
+            <span class="va-cost">$0.18/srv</span>
+          </div>
+        </div>
+        <button class="va-more">···</button>
+      </div>
+      <div class="va-row anim" style="animation-delay:.15s">
+        <div class="va-fall t-veg">B</div>
+        <div class="va-info">
+          <div class="va-src">Birds Eye <img src="logos/walmart.svg" alt="Walmart"></div>
+          <div class="va-nm">Frozen Broccoli Florets</div>
+          <div class="va-mac"><b>45</b> kcal · 4P · 8C</div>
+          <div class="va-foot">
+            <button class="va-srv">150 G</button>
+            <span class="va-cost">$0.31/srv</span>
+          </div>
+        </div>
+        <button class="va-more">···</button>
+      </div>
+    </div>
+
+    <div class="va-shelf anim" style="animation-delay:.18s">
+      <div class="va-shelf-head"><span class="nm">Dinner</span><span class="meta">3 items · 820 kcal</span></div>
+      <div class="va-row anim" style="animation-delay:.21s">
+        <img class="va-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt="">
+        <div class="va-info">
+          <div class="va-src">Kirkland <img class="costco" src="logos/costco.svg" alt="Costco"></div>
+          <div class="va-nm">Chicken Breast</div>
+          <div class="va-mac"><b>330</b> kcal · 62P · 8F</div>
+          <div class="va-foot">
+            <button class="va-srv" data-food="chicken" data-alt="4 OZ <span class=st>LABEL</span>">200 G</button>
+            <span class="va-badge">×2 meals</span>
+            <span class="va-cost">$1.42/srv</span>
+          </div>
+        </div>
+        <button class="va-more">···</button>
+      </div>
+      <div class="va-row anim" style="animation-delay:.24s">
+        <img class="va-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/eggs.jpg" alt="">
+        <div class="va-info">
+          <div class="va-src">Great Value <img src="logos/walmart.svg" alt="Walmart"></div>
+          <div class="va-nm">Large Eggs</div>
+          <div class="va-mac"><b>215</b> kcal · 19P · 15F</div>
+          <div class="va-foot">
+            <button class="va-srv" data-alt="150 G">3 EGGS</button>
+            <span class="va-cost">$0.62/srv</span>
+          </div>
+        </div>
+        <button class="va-more">···</button>
+      </div>
+      <div class="va-row anim" style="animation-delay:.27s">
+        <img class="va-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/peanut-butter.jpg" alt="">
+        <div class="va-info">
+          <div class="va-src">Jif <img src="logos/walmart.svg" alt="Walmart"></div>
+          <div class="va-nm">Creamy Peanut Butter</div>
+          <div class="va-mac"><b>190</b> kcal · 7P · 8C · 16F</div>
+          <div class="va-foot">
+            <button class="va-srv" data-alt="32 G">2 TBSP</button>
+            <span class="va-cost">$0.14/srv</span>
+          </div>
+        </div>
+        <button class="va-more">···</button>
+      </div>
+    </div>
+
+    <div class="va-shelf anim" style="animation-delay:.3s">
+      <div class="va-shelf-head"><span class="nm">Pantry</span><span class="meta">not in today's rotation</span></div>
+      <div class="va-row">
+        <div class="va-fall t-fat">O</div>
+        <div class="va-info">
+          <div class="va-src">Kirkland <img class="costco" src="logos/costco.svg" alt="Costco"></div>
+          <div class="va-nm">Extra Virgin Olive Oil</div>
+          <div class="va-mac"><b>119</b> kcal · 14F</div>
+          <div class="va-foot">
+            <button class="va-srv" data-alt="14 G">1 TBSP</button>
+            <span class="va-cost">$0.09/srv</span>
+          </div>
+        </div>
+        <button class="va-more">···</button>
+      </div>
+    </div>
+
+    <button class="va-cta">＋ Add grocery</button>
+  </div>
+
+  <!-- ================= VARIANT B ================= -->
+  <div class="col-tag">Variant B — Estate</div>
+  <div class="col-cap">
+    The direction pushed all the way: every food gets a full editorial band — a 148px hero
+    photo alternating sides, a 24px uppercase name, serif kcal, spaced-out macro row. Fewest
+    items per viewport (≈2), so it trades browsing speed for presence. React to whether the
+    ceremony feels right for a list you scroll daily.
+  </div>
+  <div class="phone vb">
+    <a class="vb-back" href="#">‹ TODAY</a>
+    <div class="vb-band anim">
+      <div class="vb-title">Groceries</div>
+      <div class="vb-kicker">Your source of truth</div>
+      <div class="vb-toggle">
+        <button class="on">Today's meals</button>
+        <button>By category</button>
+      </div>
+    </div>
+
+    <div class="vb-shelf">
+      <div class="vb-shelf-kick anim" style="animation-delay:.05s"><b>Lunch</b> — 3 items · 745 kcal</div>
+      <div class="vb-item anim" style="animation-delay:.08s">
+        <img class="vb-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt="">
+        <div class="vb-txt">
+          <div class="vb-num">01 · Kirkland · Costco</div>
+          <div class="vb-nm">Chicken<br>Breast</div>
+          <div class="vb-kc">330 <small>kcal</small></div>
+          <div class="vb-mac">62 P · 0 C · 8 F</div>
+          <div class="vb-pills">
+            <button class="vb-srv" data-food="chicken-b" data-alt="4 OZ LABEL ⇄">200 G ⇄</button>
+            <span class="vb-pill">×2 meals</span>
+            <span class="vb-pill">$1.42/srv</span>
+          </div>
+        </div>
+      </div>
+      <div class="vb-item anim" style="animation-delay:.12s">
+        <img class="vb-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/jasmine-rice.jpg" alt="">
+        <div class="vb-txt">
+          <div class="vb-num">02 · Mahatma · Walmart</div>
+          <div class="vb-nm">Jasmine<br>Rice</div>
+          <div class="vb-kc">205 <small>kcal</small></div>
+          <div class="vb-mac">4 P · 45 C · 0 F</div>
+          <div class="vb-pills">
+            <button class="vb-srv" data-alt="¼ CUP DRY ⇄">180 G COOKED ⇄</button>
+            <span class="vb-pill">$0.18/srv</span>
+          </div>
+        </div>
+      </div>
+      <div class="vb-item anim" style="animation-delay:.16s">
+        <div class="vb-fall t-veg">B</div>
+        <div class="vb-txt">
+          <div class="vb-num">03 · Birds Eye · Walmart</div>
+          <div class="vb-nm">Frozen<br>Broccoli</div>
+          <div class="vb-kc">45 <small>kcal</small></div>
+          <div class="vb-mac">4 P · 8 C · 0 F</div>
+          <div class="vb-pills">
+            <button class="vb-srv">150 G</button>
+            <span class="vb-pill">$0.31/srv</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="vb-shelf">
+      <div class="vb-shelf-kick anim" style="animation-delay:.2s"><b>Dinner</b> — 3 items · 820 kcal</div>
+      <div class="vb-item anim" style="animation-delay:.24s">
+        <img class="vb-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/eggs.jpg" alt="">
+        <div class="vb-txt">
+          <div class="vb-num">04 · Great Value · Walmart</div>
+          <div class="vb-nm">Large<br>Eggs</div>
+          <div class="vb-kc">215 <small>kcal</small></div>
+          <div class="vb-mac">19 P · 1 C · 15 F</div>
+          <div class="vb-pills">
+            <button class="vb-srv" data-alt="150 G ⇄">3 EGGS ⇄</button>
+            <span class="vb-pill">$0.62/srv</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="vb-cta">＋ Add grocery</button>
+  </div>
+
+  <!-- ================= VARIANT C ================= -->
+  <div class="col-tag">Variant C — Shelf Grid</div>
+  <div class="col-cap">
+    A two-column shop shelf: floating photos with the name and serving beneath, nothing else on
+    the face. Tap a food and the tile flips to its detail back — macros, cost, edit/delete
+    (peanut butter is pre-flipped here). Keeps Kal's cooler canvas + terracotta, so it's the
+    least brown of the three. Most items per viewport.
+  </div>
+  <div class="phone vc">
+    <a class="vc-back" href="#">‹ TODAY</a>
+    <div class="anim">
+      <div class="vc-title">Groceries</div>
+      <div class="vc-kicker">Your source of truth</div>
+    </div>
+    <div class="vc-toggle anim" style="animation-delay:.03s">
+      <button class="on">Today's meals</button>
+      <button>By category</button>
+    </div>
+
+    <div class="vc-shelf anim" style="animation-delay:.06s">
+      <div class="vc-shelf-head"><span class="nm">Lunch</span><span class="meta">3 items · 745 kcal</span></div>
+      <div class="vc-grid">
+        <button class="vc-tile anim" style="animation-delay:.09s" onclick="this.classList.toggle('open')">
+          <span class="vc-tag">×2</span>
+          <div class="face">
+            <img class="vc-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/chicken-breast.jpg" alt="">
+            <div class="vc-nm">Chicken Breast</div>
+            <div class="vc-sub">200 g · <b>330</b> kcal</div>
+          </div>
+          <div class="backface">
+            <div class="vc-bk-nm">Chicken Breast</div>
+            <div class="vc-bk-row"><b>62</b>P · <b>0</b>C · <b>8</b>F</div>
+            <div class="vc-bk-row">Kirkland · Costco</div>
+            <div class="vc-bk-row">$1.42/srv · 4 oz label</div>
+            <div class="vc-bk-actions"><span>Edit</span><span>Delete</span></div>
+          </div>
+        </button>
+        <button class="vc-tile anim" style="animation-delay:.12s" onclick="this.classList.toggle('open')">
+          <div class="face">
+            <img class="vc-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/jasmine-rice.jpg" alt="">
+            <div class="vc-nm">Jasmine Rice</div>
+            <div class="vc-sub">180 g · <b>205</b> kcal</div>
+          </div>
+          <div class="backface">
+            <div class="vc-bk-nm">Jasmine Rice</div>
+            <div class="vc-bk-row"><b>4</b>P · <b>45</b>C · <b>0</b>C</div>
+            <div class="vc-bk-row">Mahatma · Walmart</div>
+            <div class="vc-bk-row">$0.18/srv · ¼ cup dry</div>
+            <div class="vc-bk-actions"><span>Edit</span><span>Delete</span></div>
+          </div>
+        </button>
+        <button class="vc-tile anim" style="animation-delay:.15s" onclick="this.classList.toggle('open')">
+          <div class="face">
+            <div class="vc-fall t-veg">B</div>
+            <div class="vc-nm">Frozen Broccoli</div>
+            <div class="vc-sub">150 g · <b>45</b> kcal</div>
+          </div>
+          <div class="backface">
+            <div class="vc-bk-nm">Frozen Broccoli</div>
+            <div class="vc-bk-row"><b>4</b>P · <b>8</b>C · <b>0</b>F</div>
+            <div class="vc-bk-row">Birds Eye · Walmart</div>
+            <div class="vc-bk-row">$0.31/srv</div>
+            <div class="vc-bk-actions"><span>Edit</span><span>Delete</span></div>
+          </div>
+        </button>
+        <button class="vc-tile anim open" style="animation-delay:.18s" onclick="this.classList.toggle('open')">
+          <div class="face">
+            <img class="vc-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/peanut-butter.jpg" alt="">
+            <div class="vc-nm">Peanut Butter</div>
+            <div class="vc-sub">2 tbsp · <b>190</b> kcal</div>
+          </div>
+          <div class="backface">
+            <div class="vc-bk-nm">Peanut Butter</div>
+            <div class="vc-bk-row"><b>7</b>P · <b>8</b>C · <b>16</b>F</div>
+            <div class="vc-bk-row">Jif · Walmart</div>
+            <div class="vc-bk-row">$0.14/srv · 32 g</div>
+            <div class="vc-bk-actions"><span>Edit</span><span>Delete</span></div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="vc-shelf anim" style="animation-delay:.21s">
+      <div class="vc-shelf-head"><span class="nm">Dinner</span><span class="meta">2 items · 820 kcal</span></div>
+      <div class="vc-grid">
+        <button class="vc-tile anim" style="animation-delay:.24s" onclick="this.classList.toggle('open')">
+          <div class="face">
+            <img class="vc-ph fph" src="https://i1fimjhmmybeesam.public.blob.vercel-storage.com/groceries/eggs.jpg" alt="">
+            <div class="vc-nm">Large Eggs</div>
+            <div class="vc-sub">3 eggs · <b>215</b> kcal</div>
+          </div>
+          <div class="backface">
+            <div class="vc-bk-nm">Large Eggs</div>
+            <div class="vc-bk-row"><b>19</b>P · <b>1</b>C · <b>15</b>F</div>
+            <div class="vc-bk-row">Great Value · Walmart</div>
+            <div class="vc-bk-row">$0.62/srv · 150 g</div>
+            <div class="vc-bk-actions"><span>Edit</span><span>Delete</span></div>
+          </div>
+        </button>
+        <button class="vc-tile anim" style="animation-delay:.27s" onclick="this.classList.toggle('open')">
+          <div class="face">
+            <div class="vc-fall t-fat">O</div>
+            <div class="vc-nm">Olive Oil</div>
+            <div class="vc-sub">1 tbsp · <b>119</b> kcal</div>
+          </div>
+          <div class="backface">
+            <div class="vc-bk-nm">Olive Oil</div>
+            <div class="vc-bk-row"><b>0</b>P · <b>0</b>C · <b>14</b>F</div>
+            <div class="vc-bk-row">Kirkland · Costco</div>
+            <div class="vc-bk-row">$0.09/srv · 14 g</div>
+            <div class="vc-bk-actions"><span>Edit</span><span>Delete</span></div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <button class="vc-cta">＋ Add grocery</button>
+  </div>
+</div>
+
+<script>
+// Serving ⇄ flip: tap swaps base/alt label. data-food syncs the same food across
+// shelves (chicken on Lunch + Dinner flips together, matching prod behavior).
+document.querySelectorAll("[data-alt]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const group = btn.dataset.food
+      ? document.querySelectorAll(`[data-food="${btn.dataset.food}"]`)
+      : [btn];
+    group.forEach((b) => {
+      const cur = b.innerHTML;
+      b.innerHTML = b.dataset.alt;
+      b.dataset.alt = cur;
+    });
+  });
+});
+</script>
