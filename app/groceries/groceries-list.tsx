@@ -162,17 +162,18 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
     }
   }
 
-  async function remove(id: number) {
-    if (deletingId !== null) return;
+  async function remove(id: number): Promise<boolean> {
+    if (deletingId !== null) return false;
     setDeletingId(id);
     setError(null);
     try {
       const res = await fetch(`/api/groceries/${id}`, { method: "DELETE" });
       if (!res.ok) {
         setError((await res.json().catch(() => ({}))).error ?? "Delete failed");
-        return;
+        return false;
       }
       startTransition(() => router.refresh());
+      return true;
     } finally {
       setDeletingId(null);
     }
@@ -461,6 +462,16 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
           <div className="gr-actions">
             <button type="submit" className="btn-dark" disabled={saving}>{saving ? "Saving…" : form.id ? "Save" : "Add"}</button>
             <button type="button" className="gr-cancel" onClick={() => { setForm(null); setError(null); setHits(null); setLookupQuery(""); setLookupMsg(null); }}>Cancel</button>
+            {form.id !== null && (
+              <button
+                type="button"
+                className="gr-delete"
+                disabled={deletingId !== null}
+                onClick={async () => { if (await remove(form.id!)) setForm(null); }}
+              >
+                {deletingId !== null ? "…" : "Delete"}
+              </button>
+            )}
           </div>
         </form>
       ) : (
