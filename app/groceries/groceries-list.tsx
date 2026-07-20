@@ -291,14 +291,19 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
 
   // Plain render helpers (not <Card/> components) so they don't remount — and
   // flicker the product <img> — on every parent re-render.
-  const renderRow = (g: GroceryGroupItem, key: string) => {
+  const renderRow = (g: GroceryGroupItem, key: string, idx: number) => {
     const cat = normCat(g.category);
     const disp = servingDisplay(g);
     const macros = disp.baseMacros;
     const protein = Math.round(macros.proteinG);
     return (
       <li key={key}>
-        <button type="button" className="gro-row" onClick={() => { setError(null); setForm(toForm(g)); }}>
+        <button
+          type="button"
+          className="gro-row"
+          style={{ "--gro-d": `${Math.min(idx * 30, 300)}ms` } as React.CSSProperties}
+          onClick={() => { setError(null); setForm(toForm(g)); }}
+        >
           {g.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img className="gro-ph" src={g.imageUrl} alt="" />
@@ -317,12 +322,12 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
     );
   };
 
-  const renderShelf = (key: string, title: string, meta: string, items: GroceryGroupItem[]) => {
+  const renderShelf = (key: string, title: string, meta: string, items: GroceryGroupItem[], startIdx: number) => {
     if (items.length === 0) return null;
     return (
-      <div className="gro-shelf" key={key}>
+      <div className="gro-shelf" key={key} style={{ "--gro-d": `${Math.min(startIdx * 30, 300)}ms` } as React.CSSProperties}>
         <div className="gro-kick">{title} <small>{meta}</small></div>
-        <ul className="gro-list">{items.map((g) => renderRow(g, `${key}-${g.id}`))}</ul>
+        <ul className="gro-list">{items.map((g, i) => renderRow(g, `${key}-${g.id}`, startIdx + i))}</ul>
       </div>
     );
   };
@@ -331,24 +336,25 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
 
   const plural = (n: number) => `${n} item${n === 1 ? "" : "s"}`;
 
-  const mealShelves = (
-    <>
-      {meals.map((m) => {
-        const items = groceries.filter((g) => g.mealIds.includes(m.id));
-        return renderShelf(`meal-${m.id}`, m.name, `${m.plannedKcal} kcal`, items);
-      })}
-      {renderShelf("pantry", "Pantry", "not in rotation", groceries.filter((g) => g.mealIds.length === 0))}
-    </>
-  );
+  const mealShelfNodes: React.ReactNode[] = [];
+  let mealIdx = 0;
+  for (const m of meals) {
+    const items = groceries.filter((g) => g.mealIds.includes(m.id));
+    mealShelfNodes.push(renderShelf(`meal-${m.id}`, m.name, `${m.plannedKcal} kcal`, items, mealIdx));
+    mealIdx += items.length;
+  }
+  const pantryItems = groceries.filter((g) => g.mealIds.length === 0);
+  mealShelfNodes.push(renderShelf("pantry", "Pantry", "not in rotation", pantryItems, mealIdx));
+  const mealShelves = <>{mealShelfNodes}</>;
 
-  const catShelves = (
-    <>
-      {CATEGORIES.map((c) => {
-        const items = groceries.filter((g) => normCat(g.category) === c);
-        return renderShelf(`cat-${c}`, CAT_LABEL[c], plural(items.length), items);
-      })}
-    </>
-  );
+  const catShelfNodes: React.ReactNode[] = [];
+  let catIdx = 0;
+  for (const c of CATEGORIES) {
+    const items = groceries.filter((g) => normCat(g.category) === c);
+    catShelfNodes.push(renderShelf(`cat-${c}`, CAT_LABEL[c], plural(items.length), items, catIdx));
+    catIdx += items.length;
+  }
+  const catShelves = <>{catShelfNodes}</>;
 
   return (
     <div className="gr">

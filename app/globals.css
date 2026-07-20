@@ -1395,6 +1395,23 @@ body:has(main.groceries) { background: #fff; }
   font-size: 26px; font-weight: 300; line-height: 1; cursor: pointer;
   box-shadow: 0 10px 24px rgba(63, 42, 26, 0.4);
 }
+
+@keyframes gro-enter {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+.gro-shelf, .gro-row, .gro-modes, .gro-fab {
+  animation: gro-enter 0.34s cubic-bezier(0.32, 0.72, 0.33, 1) backwards;
+  animation-delay: var(--gro-d, 0s);
+}
+.gro-row:active, .gro-fab:active, .gro-modes button:active { transform: scale(0.97); }
+.gro-row, .gro-fab, .gro-modes button { transition: transform 0.09s; }
+@media (prefers-reduced-motion: reduce) {
+  .gro-shelf, .gro-row, .gro-modes, .gro-fab { animation: gro-enter 0.15s ease-out backwards; transform: none !important; }
+  @keyframes gro-enter { from { opacity: 0; } to { opacity: 1; } }
+  .gro-row:active, .gro-fab:active, .gro-modes button:active { transform: none; }
+}
+
 .gr-error {
   font-family: var(--font-mono);
   font-size: 12px;
