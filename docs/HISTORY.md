@@ -71,6 +71,27 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Adherence day-cell bubble press + history grabber pill — #26 (2026-07-20) — COMMITTED & pushed to main; phone pass pending
+
+Two feel refinements to the /plan adherence card. (1) Press-and-hold on a weekly-strip day cell
+now sinks with weight — `scale(0.94) translateY(1px)` on a 0.45s decel curve
+(`cubic-bezier(0.16, 0.9, 0.3, 1)`) — and spring-settles with overshoot on release (0.3s,
+`cubic-bezier(0.34, 1.56, 0.64, 1)`). Pure CSS on `.cell:active:not(:disabled)`: no JS, no
+listeners, so tap-opens-day-detail and the #23 swipe-up pull are untouched by construction;
+disabled (ahead) cells stay flat; reduced-motion drops all transform/transition. Calendar-sheet
+chips deliberately excluded (non-interactive divs — but see #30, which makes them pressable).
+(2) The full-width `.adh-more` "history" row under the strip is replaced by the owner-picked
+variant C grabber pill (`design/plan-history-placement-variants.html`): a 32x4 pill button
+(`.adh-grab`), `aria-label="Show adherence history"` and `openSheet` unchanged, zero `.adh-more`
+residue. Verified: tsc clean, 170/170 (25 files), build `/plan` ƒ, headless prod pass 20/20
+(press transform confirmed via real mouse press AND CDP-forced `:active`; grabber geometry,
+sheet open/Esc-close, reduced-motion, zero console errors). Accepted at gate 2 without the phone
+pass — feel + grabber hit target (~12px, under 24px WCAG; sole history entry under
+reduced-motion) still owner-judged on phone; escalation levers recorded in STATE Now.
+Follow-ups filed at acceptance: #30 calendar streak visual + per-day bubble/popup, #31
+day-detail sheet swipe-off dismiss (drop the X).
+Plan: `docs/superpowers/plans/2026-07-20-issue-26.md`.
+
 ## Groceries browse face rework, V1 silent menu — #1 (2026-07-20) — COMMITTED & pushed to main
 
 The v2 card grid (never owner-approved) is gone. The browse face is now the owner-picked

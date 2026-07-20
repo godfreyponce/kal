@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan — history affordance placement (issue #26)</title>
+<style>
+  :root {
+    --canvas: #f7f6f3;
+    --surface: #fff;
+    --surface-2: #f0efeb;
+    --ink: #1f2421;
+    --ink-soft: #2f3437;
+    --muted: #787774;
+    --faint: #9b9a96;
+    --border: #e6e4df;
+    --protein: #9f2f2d;
+    --green-tx: #346538;
+    --accent: #d97757;
+    --font-sans-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #b9b7b2; color: var(--ink);
+    font-family: var(--font-sans-stack); line-height: 1.6;
+    -webkit-font-smoothing: antialiased; padding: 32px 20px 64px;
+  }
+  .page-head { max-width: 1320px; margin: 0 auto 10px; color: #f4f3f0; }
+  .page-head h1 { font-family: var(--font-serif); font-weight: 500; font-size: 24px; letter-spacing: -0.02em; }
+  .page-head p { font-family: var(--font-mono); font-size: 11.5px; opacity: 0.85; margin-top: 4px; }
+  .note {
+    max-width: 1320px; margin: 0 auto 26px; color: #f4f3f0;
+    font-family: var(--font-mono); font-size: 11px; line-height: 1.7;
+    border-left: 2px solid rgba(244, 243, 240, 0.5); padding-left: 12px; opacity: 0.9;
+  }
+  .note b { color: #fff; font-weight: 500; }
+  .row {
+    display: flex; flex-wrap: wrap; gap: 36px; justify-content: center;
+    align-items: flex-start; max-width: 1320px; margin: 0 auto;
+  }
+  .variant { width: 396px; max-width: 100%; }
+  .vlabel {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #f4f3f0; margin-bottom: 4px;
+  }
+  .vdesc {
+    font-family: var(--font-mono); font-size: 11px; color: #eceae6;
+    opacity: 0.85; margin-bottom: 12px; min-height: 4.6em;
+  }
+  .vdesc b { color: #fff; font-weight: 500; }
+
+  .screen {
+    background: var(--canvas); border-radius: 20px; padding: 24px 22px 28px;
+    box-shadow: 0 14px 40px rgba(31, 36, 33, 0.18);
+  }
+  .plan-sec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .plan-kicker {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint);
+  }
+  .plan-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 13px 14px;
+  }
+  .screen section + section { margin-top: 22px; }
+  .ghost { opacity: 0.4; pointer-events: none; }
+  .ghost .plan-card {
+    color: var(--faint); font-family: var(--font-mono); font-size: 11px;
+    text-align: center; padding: 18px 14px;
+  }
+
+  /* ---- adherence card internals (copied from plan-adherence-final.html / live globals.css) ---- */
+  .adh-body { display: flex; align-items: flex-start; gap: 14px; user-select: none; -webkit-user-select: none; }
+  .adh-hero { flex-shrink: 0; padding-top: 2px; }
+  .adh-num {
+    font-family: var(--font-mono); font-size: 30px; line-height: 1.05;
+    color: var(--ink); letter-spacing: -0.02em;
+  }
+  .adh-num small { font-size: 17px; color: var(--faint); }
+  .adh-lbl {
+    font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--muted); margin-top: 1px; max-width: 80px; line-height: 1.35;
+  }
+  .adh-legend { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+  .leg-row {
+    display: flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono); font-size: 9px; color: var(--faint);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .leg-dash { display: inline-block; width: 13px; flex-shrink: 0; border-top: 1.5px dashed rgba(31,36,33,0.5); }
+  .leg-dot {
+    display: inline-block; width: 7px; height: 7px; flex-shrink: 0; margin: 0 3px;
+    border-radius: 9999px; background: var(--green-tx);
+  }
+  .adh-strip { flex: 1; min-width: 0; }
+  .plot { position: relative; }
+  .plot .cells { position: relative; z-index: 1; }
+  .e-line {
+    position: absolute; z-index: 2; left: 0; right: 0; top: 16px; height: 0;
+    border-top: 1.5px dashed rgba(31, 36, 33, 0.45);
+  }
+  .cells { display: flex; justify-content: space-between; gap: 4px; }
+  .cell {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    position: relative; cursor: pointer;
+    border: 0; background: none; font: inherit; padding: 4px 0 0; margin: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cell:disabled { cursor: default; }
+  .track { width: 15px; height: 64px; border-radius: 4px; position: relative; overflow: hidden; background: var(--surface-2); }
+  .track.ahead { background: #f6f5f2; }
+  .track.void::after {
+    content: ""; position: absolute; inset: 0;
+    background: repeating-linear-gradient(135deg, rgba(159,47,45,0.30) 0 1.5px, transparent 1.5px 5px);
+  }
+  .fill { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 4px 4px 0 0; }
+  .fill.hit  { background: var(--green-tx); }
+  .fill.miss { background: var(--protein); }
+  .fill.now  { background: var(--accent); }
+  .tex-miss { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.34) 0 1.5px, transparent 1.5px 4px); }
+  .dow { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.04em; color: var(--faint); }
+  .cell.today .dow { color: var(--accent); font-weight: 500; }
+  .cell.ahead .dow { color: #c9c7c2; }
+  .pdot { width: 7px; height: 7px; border-radius: 9999px; flex-shrink: 0; }
+  .pdot.ok    { background: var(--green-tx); }
+  .pdot.short { border: 1.5px solid var(--protein); }
+  .pdot.now   { border: 1.5px dashed var(--accent); }
+  .pdot.hide  { visibility: hidden; }
+  .now-tag {
+    position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent); white-space: nowrap;
+  }
+
+  /* ---- current placement (shown greyed for reference) ---- */
+  .adh-more {
+    display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+    border: 0; background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    margin-top: 12px; padding: 6px 0 2px; border-top: 1px solid var(--surface-2);
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint);
+  }
+  .adh-more svg { display: block; opacity: 0.75; }
+
+  /* ---- Variant A: section-head kicker ---- */
+  .adh-kicker-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint); padding: 4px 0 4px 12px;
+  }
+  .adh-kicker-btn svg { display: block; opacity: 0.75; }
+
+  /* ---- Variant B: hero footnote ---- */
+  .adh-hero-more {
+    display: inline-flex; align-items: center; gap: 5px;
+    border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    margin-top: 10px; padding: 3px 0;
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint);
+  }
+  .adh-hero-more svg { display: block; opacity: 0.75; }
+
+  /* ---- Variant C: slim grabber pill ---- */
+  .adh-grab {
+    display: flex; align-items: center; justify-content: center; width: 100%;
+    border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    margin-top: 10px; padding: 7px 0 1px;
+  }
+  .adh-grab span {
+    display: block; width: 32px; height: 4px; border-radius: 9999px; background: var(--border);
+  }
+
+  /* ---- press-feel preview (issue #26 part 1; not a placement variant) ----
+     press: sinks with weight (long decel curve, starts instantly);
+     release: springs back with a slight overshoot. */
+  .feel .cell { transition: transform 0.30s cubic-bezier(0.34, 1.56, 0.64, 1); touch-action: manipulation; -webkit-touch-callout: none; }
+  .feel .cell:active:not(:disabled) {
+    transform: scale(0.94) translateY(1px);
+    transition: transform 0.45s cubic-bezier(0.16, 0.9, 0.3, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .feel .cell, .feel .cell:active { transition: none; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>History affordance placement (issue #26)</h1>
+  <p>same card, same fake week (3/7, target 2,200 kcal / 180 g protein) — only the history affordance moves</p>
+</div>
+<div class="note">
+  <b>Today the affordance is a full-width "history" row under the strip</b> (shown greyed in the last card for reference).
+  The swipe-up pull on the strip stays in ALL variants — the affordance is the discoverable tap path, the gesture is the fast path.<br>
+  <b>Bottom card previews the day-button bubble press</b> (part 1 of the ticket): press and hold any bar — it sinks with weight, springs back on release. Best felt on the phone.
+</div>
+
+<div class="row">
+
+  <!-- ============ Variant A: section-head kicker ============ -->
+  <div class="variant">
+    <div class="vlabel">A · head kicker</div>
+    <div class="vdesc"><b>The section head's right kicker becomes the affordance.</b> "this week" is replaced by a tappable "history". Card interior goes fully clean. Tradeoff: loses the "this week" label, and the tap target lives outside the card.</div>
+    <div class="screen">
+      <section>
+        <div class="plan-sec-head">
+          <span class="plan-kicker">Adherence</span>
+          <button class="adh-kicker-btn" type="button">
+            <svg width="11" height="6" viewBox="0 0 11 6" fill="none"><path d="M1 5L5.5 1L10 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            history
+          </button>
+        </div>
+        <div class="plan-card">
+          <div class="adh-body">
+            <div class="adh-hero">
+              <div class="adh-num">3<small>/7</small></div>
+              <div class="adh-lbl">days on plan</div>
+              <div class="adh-legend">
+                <div class="leg-row"><span class="leg-dash"></span>2,200 kcal</div>
+                <div class="leg-row"><span class="leg-dot"></span>180 g protein</div>
+              </div>
+            </div>
+            <div class="adh-strip">
+              <div class="plot">
+                <div class="e-line"></div>
+                <div class="cells">
+                  <button class="cell" type="button"><div class="track"><div class="fill hit" style="height:49px"></div></div><span class="pdot ok"></span><span class="dow">M</span></button>
+                  <button class="cell" type="button"><div class="track"><div class="fill miss tex-miss" style="height:31px"></div></div><span class="pdot short"></span><span class="dow">T</span></button>
+                  <button class="cell" type="button"><div class="track"><div class="fill hit" style="height:46px"></div></div><span class="pdot ok"></span><span class="dow">W</span></button>
+                  <button class="cell" type="button"><div class="track void"></div><span class="pdot short"></span><span class="dow">T</span></button>
+                  <button class="cell today" type="button"><span class="now-tag">now</span><div class="track"><div class="fill now" style="height:27px"></div></div><span class="pdot now"></span><span class="dow">F</span></button>
+                  <button class="cell ahead" type="button" disabled><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></button>
+                  <button class="cell ahead" type="button" disabled><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="ghost">
+        <div class="plan-sec-head"><span class="plan-kicker">Meal plan</span><span class="plan-kicker">4 meals</span></div>
+        <div class="plan-card">meal rows</div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============ Variant B: hero footnote ============ -->
+  <div class="variant">
+    <div class="vlabel">B · hero footnote</div>
+    <div class="vdesc"><b>A small "history" link under the legend</b>, in the hero column's leftover space. No extra card height at all — it fills dead space the hero column already owns. Tradeoff: smallest tap target of the three.</div>
+    <div class="screen">
+      <section>
+        <div class="plan-sec-head"><span class="plan-kicker">Adherence</span><span class="plan-kicker">this week</span></div>
+        <div class="plan-card">
+          <div class="adh-body">
+            <div class="adh-hero">
+              <div class="adh-num">3<small>/7</small></div>
+              <div class="adh-lbl">days on plan</div>
+              <div class="adh-legend">
+                <div class="leg-row"><span class="leg-dash"></span>2,200 kcal</div>
+                <div class="leg-row"><span class="leg-dot"></span>180 g protein</div>
+              </div>
+              <button class="adh-hero-more" type="button">
+                <svg width="10" height="6" viewBox="0 0 11 6" fill="none"><path d="M1 5L5.5 1L10 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                history
+              </button>
+            </div>
+            <div class="adh-strip">
+              <div class="plot">
+                <div class="e-line"></div>
+                <div class="cells">
+                  <button class="cell" type="button"><div class="track"><div class="fill hit" style="height:49px"></div></div><span class="pdot ok"></span><span class="dow">M</span></button>
+                  <button class="cell" type="button"><div class="track"><div class="fill miss tex-miss" style="height:31px"></div></div><span class="pdot short"></span><span class="dow">T</span></button>
+                  <button class="cell" type="button"><div class="track"><div class="fill hit" style="height:46px"></div></div><span class="pdot ok"></span><span class="dow">W</span></button>
+                  <button class="cell" type="button"><div class="track void"></div><span class="pdot short"></span><span class="dow">T</span></button>
+                  <button class="cell today" type="button"><span class="now-tag">now</span><div class="track"><div class="fill now" style="height:27px"></div></div><span class="pdot now"></span><span class="dow">F</span></button>
+                  <button class="cell ahead" type="button" disabled><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></button>
+                  <button class="cell ahead" type="button" disabled><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="ghost">
+        <div class="plan-sec-head"><span class="plan-kicker">Meal plan</span><span class="plan-kicker">4 meals</span></div>
+        <div class="plan-card">meal rows</div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============ Variant C: slim grabber pill ============ -->
+  <div class="variant">
+    <div class="vlabel">C · grabber pill</div>
+    <div class="vdesc"><b>The row shrinks to a wordless sheet-style grabber</b> at the card's bottom edge, echoing the grab bar inside the sheet it opens. Quietest and matches the swipe-up gesture. Tradeoff: no label, least discoverable.</div>
+    <div class="screen">
+      <section>
+        <div class="plan-sec-head"><span class="plan-kicker">Adherence</span><span class="plan-kicker">this week</span></div>
+        <div class="plan-card">
+          <div class="adh-body">
+            <div class="adh-hero">
+              <div class="adh-num">3<small>/7</small></div>
+              <div class="adh-lbl">days on plan</div>
+              <div class="adh-legend">
+                <div class="leg-row"><span class="leg-dash"></span>2,200 kcal</div>
+                <div class="leg-row"><span class="leg-dot"></span>180 g protein</div>
+              </div>
+            </div>
+            <div class="adh-strip">
+              <div class="plot">
+                <div class="e-line"></div>
+                <div class="cells">
+                  <button class="cell" type="button"><div class="track"><div class="fill hit" style="height:49px"></div></div><span class="pdot ok"></span><span class="dow">M</span></button>
+                  <button class="cell" type="button"><div class="track"><div class="fill miss tex-miss" style="height:31px"></div></div><span class="pdot short"></span><span class="dow">T</span></button>
+                  <button class="cell" type="button"><div class="track"><div class="fill hit" style="height:46px"></div></div><span class="pdot ok"></span><span class="dow">W</span></button>
+                  <button class="cell" type="button"><div class="track void"></div><span class="pdot short"></span><span class="dow">T</span></button>
+                  <button class="cell today" type="button"><span class="now-tag">now</span><div class="track"><div class="fill now" style="height:27px"></div></div><span class="pdot now"></span><span class="dow">F</span></button>
+                  <button class="cell ahead" type="button" disabled><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></button>
+                  <button class="cell ahead" type="button" disabled><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="adh-grab" type="button" aria-label="Show adherence history"><span></span></button>
+        </div>
+      </section>
+      <section class="ghost">
+        <div class="plan-sec-head"><span class="plan-kicker">Meal plan</span><span class="plan-kicker">4 meals</span></div>
+        <div class="plan-card">meal rows</div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============ current placement, for reference + press-feel preview ============ -->
+  <div class="variant">
+    <div class="vlabel">reference · current row + bubble press preview</div>
+    <div class="vdesc"><b>Top: today's full-width row, unchanged, for comparison.</b> This card is also live for part 1 of the ticket: <b>press and hold any day bar</b> to feel the weighted sink, release for the spring settle. Judge the feel on the phone, not the trackpad.</div>
+    <div class="screen">
+      <section>
+        <div class="plan-sec-head"><span class="plan-kicker">Adherence</span><span class="plan-kicker">this week</span></div>
+        <div class="plan-card">
+          <div class="adh-body feel">
+            <div class="adh-hero">
+              <div class="adh-num">3<small>/7</small></div>
+              <div class="adh-lbl">days on plan</div>
+              <div class="adh-legend">
+                <div class="leg-row"><span class="leg-dash"></span>2,200 kcal</div>
+                <div class="leg-row"><span class="leg-dot"></span>180 g protein</div>
+              </div>
+            </div>
+            <div class="adh-strip">
+              <div class="plot">
+                <div class="e-line"></div>
+                <div class="cells">
+                  <button class="cell" type="button"><div class="track"><div class="fill hit" style="height:49px"></div></div><span class="pdot ok"></span><span class="dow">M</span></button>
+                  <button class="cell" type="button"><div class="track"><div class="fill miss tex-miss" style="height:31px"></div></div><span class="pdot short"></span><span class="dow">T</span></button>
+                  <button class="cell" type="button"><div class="track"><div class="fill hit" style="height:46px"></div></div><span class="pdot ok"></span><span class="dow">W</span></button>
+                  <button class="cell" type="button"><div class="track void"></div><span class="pdot short"></span><span class="dow">T</span></button>
+                  <button class="cell today" type="button"><span class="now-tag">now</span><div class="track"><div class="fill now" style="height:27px"></div></div><span class="pdot now"></span><span class="dow">F</span></button>
+                  <button class="cell ahead" type="button" disabled><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></button>
+                  <button class="cell ahead" type="button" disabled><div class="track ahead"></div><span class="pdot hide"></span><span class="dow">S</span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="adh-more" type="button">
+            <svg width="11" height="6" viewBox="0 0 11 6" fill="none"><path d="M1 5L5.5 1L10 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            history
+          </button>
+        </div>
+      </section>
+      <section class="ghost">
+        <div class="plan-sec-head"><span class="plan-kicker">Meal plan</span><span class="plan-kicker">4 meals</span></div>
+        <div class="plan-card">meal rows</div>
+      </section>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // iOS Safari only fires :active on touch when the page has a touch listener.
+  document.addEventListener("touchstart", function () {}, { passive: true });
+</script>
+</body>
+</html>

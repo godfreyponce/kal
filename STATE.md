@@ -2,9 +2,9 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-20
-next_action: "#26 — day-button bubble press feel + history placement (/plan-ticket 26); then #27 em-dash copy sweep (both owner green-lit 2026-07-20)"
+next_action: "#27 — em-dash copy sweep (/plan-ticket 27; owner green-lit 2026-07-20)"
 blocked_on: ""
-phase: "v1 shipped; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
+phase: "v1 shipped; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
 ---
 
 # Kal — Project State
@@ -26,6 +26,11 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
   (#2 synced it).
 - Owner in-app pass of the #18 ⇄ edit chooser (plan Step 6 deferred at gate 2) — glance at the
   cancel link's left alignment while there.
+- Owner phone pass of #26 (accepted at gate 2 without it): bubble press feel on the day cells,
+  and the history grabber's ~12px hit target (under reduced-motion the pill is the ONLY way into
+  history — the pull gesture is off). Levers if either disappoints, in order: 26px pill padding
+  (margin-top 3px / padding 14px 0 8px, pill optically unmoved), `touch-action: manipulation` on
+  `.cell`, then the plan's JS `.pressing` contingency (docs/superpowers/plans/2026-07-20-issue-26.md).
 - Owner hygiene: delete the Rodin uploads, cancel the $6 Creator plan; optionally dashboard-delete
   the #2 test blob `groceries/200dd72a-1e47-4ba8-a1f5-22cdd2f19fb7.png` from kal-photos.
 
