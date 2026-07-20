@@ -32,19 +32,6 @@ function normCat(c: string | null): Cat {
   return "other";
 }
 
-// Known store logos; anything else renders as plain text.
-const STORE_LOGOS: Record<string, { src: string; cls: string }> = {
-  walmart: { src: "/stores/walmart.svg", cls: "" },
-  costco: { src: "/stores/costco.svg", cls: " costco" },
-};
-
-// $ for the DISPLAYED serving (my serving), not the storage basis.
-function costPerServing(g: GroceryGroupItem): string | null {
-  return g.price != null && g.purchaseWeightG != null && g.servingGrams
-    ? ((g.price / (g.purchaseWeightG / g.servingGrams)) * g.displayQty).toFixed(2)
-    : null;
-}
-
 type FormState = {
   id: number | null;
   name: string;
@@ -114,17 +101,7 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
   const [visioning, setVisioning] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [lookupMsg, setLookupMsg] = useState<string | null>(null);
-  const [flippedIds, setFlippedIds] = useState<Set<number>>(new Set());
   const [, startTransition] = useTransition();
-
-  // Same food on two shelves (chicken: Lunch + Dinner) flips in both — same id.
-  const toggleFlip = (id: number) =>
-    setFlippedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => (f ? { ...f, [k]: v } : f));
@@ -312,85 +289,39 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
   }
 
   // Plain render helpers (not <Card/> components) so they don't remount — and
-  // flicker the product <img> — on every parent re-render (toggle/delete).
-  const renderCard = (g: GroceryGroupItem, key: string) => {
+  // flicker the product <img> — on every parent re-render.
+  const renderRow = (g: GroceryGroupItem, key: string) => {
     const cat = normCat(g.category);
-    const cost = costPerServing(g);
     const disp = servingDisplay(g);
-    const flipped = flippedIds.has(g.id) && disp.flip !== null;
-    const label = flipped ? disp.flip! : disp.base;
-    const macros = flipped ? disp.flip!.macros : disp.baseMacros;
-    const logo = g.store ? STORE_LOGOS[g.store.toLowerCase().trim()] : undefined;
-    // Only macros present (>0) get a bar segment AND a number; both use flex = grams
-    // so each number sits under its own segment and tracks its width.
-    const segs = ([["mp", "P", macros.proteinG], ["mc", "C", macros.carbsG], ["mf", "F", macros.fatG]] as const).filter(([, , v]) => v > 0);
+    const macros = disp.baseMacros;
+    const protein = Math.round(macros.proteinG);
     return (
-      <li className="gcard" key={key}>
-        <div className={`gcard-photo${g.imageUrl ? "" : ` gcat-${cat}`}`}>
+      <li key={key}>
+        <button type="button" className="gro-row" onClick={() => { setError(null); setForm(toForm(g)); }}>
           {g.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={g.imageUrl} alt="" />
+            <img className="gro-ph" src={g.imageUrl} alt="" />
           ) : (
-            <span>{g.name.charAt(0).toUpperCase()}</span>
+            <span className={`gro-fall gro-t-${cat}`}>{g.name.charAt(0).toUpperCase()}</span>
           )}
-        </div>
-        <div className="gcard-body">
-          <div className="gcard-nm">{disp.title}</div>
-          <div className="gcard-src">
-            {g.brand && <span>{g.brand}</span>}
-            {logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img className={`gcard-store${logo.cls}`} src={logo.src} alt={g.store!} />
-            ) : g.store ? (
-              <span>{g.store}</span>
-            ) : null}
-            <button
-              type="button"
-              className={`gcard-srv${disp.flip ? "" : " static"}`}
-              onClick={disp.flip ? () => toggleFlip(g.id) : undefined}
-            >
-              {label.amount}
-              {label.suffix && <> <span className="state">{label.suffix}</span></>}
-            </button>
-          </div>
-          <div className="gcard-kc">{macros.kcal}<span>kcal</span></div>
-          <div className="gcard-bar">
-            {segs.length ? (
-              segs.map(([cls, , v]) => <i key={cls} className={cls} style={{ flex: v }} />)
-            ) : (
-              <i className="empty" style={{ flex: 1 }} />
-            )}
-          </div>
-          <div className="gcard-macnums">
-            {segs.map(([cls, letter, v]) => (
-              <span key={cls} className={cls} style={{ flex: v }}>{v}{letter}</span>
-            ))}
-          </div>
-          <div className="gcard-foot">
-            <span className="gcard-cost">{cost ? `$${cost}/srv` : ""}</span>
-            <span className="gcard-actions">
-              <button onClick={() => { setError(null); setForm(toForm(g)); }}>Edit</button>
-              <button disabled={deletingId === g.id} onClick={() => remove(g.id)}>
-                {deletingId === g.id ? "…" : "Delete"}
-              </button>
+          <span className="gro-txt">
+            <span className="gro-pills">
+              <span className="gro-pill">{macros.kcal} cal</span>
+              {protein > 0 && <span className="gro-pill pro">{protein}P</span>}
             </span>
-          </div>
-        </div>
+            <span className="gro-nm">{disp.title}</span>
+          </span>
+        </button>
       </li>
     );
   };
 
-  const renderShelf = (key: string, title: string, metaParts: string[], items: GroceryGroupItem[], catClass?: string) => {
+  const renderShelf = (key: string, title: string, meta: string, items: GroceryGroupItem[]) => {
     if (items.length === 0) return null;
     return (
-      <div className={`gr-shelf${catClass ? ` cat ${catClass}` : ""}`} key={key}>
-        <div className="gr-shelf-head">
-          <span className="nm">{title}</span>
-          <span className="meta">{metaParts.map((p, i) => <span key={i}>{p}</span>)}</span>
-        </div>
-        <ul className="gcard-grid">
-          {items.map((g) => renderCard(g, `${key}-${g.id}`))}
-        </ul>
+      <div className="gro-shelf" key={key}>
+        <div className="gro-kick">{title} <small>{meta}</small></div>
+        <ul className="gro-list">{items.map((g) => renderRow(g, `${key}-${g.id}`))}</ul>
       </div>
     );
   };
@@ -403,9 +334,9 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
     <>
       {meals.map((m) => {
         const items = groceries.filter((g) => g.mealIds.includes(m.id));
-        return renderShelf(`meal-${m.id}`, m.name, [plural(items.length), `${m.plannedKcal} kcal`], items);
+        return renderShelf(`meal-${m.id}`, m.name, `${m.plannedKcal} kcal`, items);
       })}
-      {renderShelf("pantry", "Pantry", ["not in today's rotation"], groceries.filter((g) => g.mealIds.length === 0))}
+      {renderShelf("pantry", "Pantry", "not in rotation", groceries.filter((g) => g.mealIds.length === 0))}
     </>
   );
 
@@ -413,7 +344,7 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
     <>
       {CATEGORIES.map((c) => {
         const items = groceries.filter((g) => normCat(g.category) === c);
-        return renderShelf(`cat-${c}`, CAT_LABEL[c], [plural(items.length)], items, c);
+        return renderShelf(`cat-${c}`, CAT_LABEL[c], plural(items.length), items);
       })}
     </>
   );
@@ -423,7 +354,7 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
       {error && <div className="gr-error">{error}</div>}
 
       {!form && (
-        <div className="gr-toggle">
+        <div className="gro-modes">
           <button className={mode === "meal" ? "on" : ""} onClick={() => setMode("meal")}>Today&apos;s meals</button>
           <button className={mode === "cat" ? "on" : ""} onClick={() => setMode("cat")}>By category</button>
         </div>
@@ -533,7 +464,7 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
           </div>
         </form>
       ) : (
-        <button type="button" className="gr-add" onClick={() => setForm({ ...EMPTY })}>+ Add grocery</button>
+        <button type="button" className="gro-fab" aria-label="Add grocery" onClick={() => setForm({ ...EMPTY })}>＋</button>
       )}
 
       {!form && (mode === "meal" ? mealShelves : catShelves)}

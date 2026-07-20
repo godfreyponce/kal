@@ -9,14 +9,13 @@ export default async function GroceriesPage() {
   const groups = await getGroceryGroups();
   return (
     <main className="app groceries">
-      <div className="head-row">
+      <div className="gro-top">
         <div>
-          <h1 className="head-title">Groceries</h1>
-          <div className="head-date">YOUR SOURCE OF TRUTH</div>
+          <div className="gro-title">Groceries</div>
+          <div className="gro-kicker">Your source of truth</div>
         </div>
-        <Link href="/" className="chat-link">‹ Today</Link>
+        <Link href="/" className="gro-back">‹ Today</Link>
       </div>
-      <div className="rule" />
       <GroceriesList groups={groups} />
     </main>
   );
