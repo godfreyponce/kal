@@ -274,11 +274,8 @@ export function AdherenceCalendar({
 
   return (
     <>
-      <button className="adh-more" onClick={openSheet} aria-label="Show adherence history">
-        <svg width="11" height="6" viewBox="0 0 11 6" fill="none">
-          <path d="M1 5L5.5 1L10 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        history
+      <button className="adh-grab" onClick={openSheet} aria-label="Show adherence history">
+        <span aria-hidden="true" />
       </button>
       {open && (
         <div className={`sheet cal-sheet${shown ? " open" : ""}${dragging ? " dragging" : ""}`}>
