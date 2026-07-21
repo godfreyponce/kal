@@ -1,0 +1,160 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal, Today silent-menu combined, round 1 pick V2 (issue #28)</title>
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --choc:#3f2a1a; --pillbg:#48291a; --caramel:#a97a24; --redbrown:#ac2318;
+    --cream-band:#f6efe2; --cream-canvas:#f7f6f3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#1d1c1a; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:900px;margin:0 auto}
+  .page-head h1{font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .stage{display:flex;gap:36px;justify-content:center;align-items:flex-start;flex-wrap:wrap;margin-top:30px}
+  .col{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .col-cap{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+  .annot{width:392px;font-family:var(--mono);font-size:11px;line-height:1.7;opacity:.85}
+  .annot b{color:#fff;font-weight:500}
+
+  .phone{
+    position:relative;width:392px;border-radius:22px;padding:24px 22px 34px;overflow:hidden;
+    background:var(--cream-canvas);color:var(--choc);box-shadow:0 16px 44px rgba(0,0,0,.4);min-height:640px;
+  }
+  @keyframes enter{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .anim{animation:enter .34s cubic-bezier(.32,.72,.33,1) backwards}
+  @media (prefers-reduced-motion: reduce){.anim{animation:none}}
+
+  .sm .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+  .sm .ttl{font-size:22px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:1;color:var(--choc)}
+  .sm .tkick{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel);margin-top:5px}
+  .sm .nav{display:flex;gap:14px}
+  .sm .nav a{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);text-decoration:none}
+  .sm .pill{
+    display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--pillbg);color:#fff;border-radius:999px;padding:4px 10px;
+  }
+  .sm .ring-block{display:flex;flex-direction:column;align-items:center;padding:18px 0 6px}
+  .sm .ring-wrap{position:relative}
+  .sm .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .sm .ring-center b{font-size:33px;font-weight:800;letter-spacing:.01em;color:var(--choc);line-height:1}
+  .sm .ring-center small{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel);margin-top:6px}
+  .sm .ring-foot{margin-top:12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--choc)}
+  .sm .ring-foot span{color:var(--caramel)}
+  .sm .macros{margin-top:16px}
+  .sm .mrow{display:grid;grid-template-columns:74px 1fr auto;align-items:center;gap:14px;padding:9px 0}
+  .sm .ml b{font-size:18px;font-weight:800;color:var(--choc);display:block;line-height:1}
+  .sm .ml small{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--caramel);display:block;margin-top:5px}
+  .sm .seg{display:flex;gap:5px}
+  .sm .seg i{flex:1;height:9px;border-radius:3px;background:#eee5d2}
+  .sm .mtarget{font-size:10px;font-weight:700;letter-spacing:.06em;color:#b3a390}
+  .sm .kick{
+    margin-top:22px;background:#f1e7d3;border-radius:10px;padding:9px 12px;
+    font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--choc);
+  }
+  .sm .checklist{list-style:none}
+  .sm .checklist li{display:flex;align-items:center;gap:13px;padding:14px 2px}
+  .sm .box{
+    width:23px;height:23px;border-radius:7px;border:1.5px solid #dccfb8;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;background:#fff;
+  }
+  .sm .box.done{background:var(--cream-band);border-color:var(--cream-band)}
+  .sm .box.done svg{stroke:var(--choc)}
+  .sm .box.now{border-color:var(--redbrown);box-shadow:0 0 0 3px rgba(172,35,24,.12)}
+  .sm .ct{flex:1}
+  .sm .ct .n{font-size:14px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;color:var(--choc)}
+  .sm .ct .n.done{color:#b3a390}
+  .sm .ct small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#b3a390;margin-top:2px}
+  .sm li .pill.faded{background:#cbbfae}
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Today, silent-menu combined</h1>
+    <p>issue #28 round 1, owner pick V2 (cream canvas) with tweaks: no eaten-count pill, no tap hint</p>
+  </div>
+
+  <div class="stage">
+    <div class="col">
+      <div class="col-cap">Combined, silent menu on cream</div>
+      <div class="phone sm">
+        <div class="top anim">
+          <div>
+            <div class="ttl">Today</div>
+            <div class="tkick">Thursday Jun 18</div>
+          </div>
+          <div class="nav"><a href="#">Plan</a><a href="#">Groceries</a><a href="#">Chat ›</a></div>
+        </div>
+
+        <div class="ring-block anim" style="animation-delay:.05s">
+          <div class="ring-wrap">
+            <svg width="172" height="172" viewBox="0 0 172 172">
+              <circle cx="86" cy="86" r="74" fill="none" stroke="#eee5d2" stroke-width="11"/>
+              <circle cx="86" cy="86" r="74" fill="none" stroke="#3f2a1a" stroke-width="11"
+                      stroke-linecap="round" stroke-dasharray="464.96"
+                      stroke-dashoffset="222.4" transform="rotate(-90 86 86)"/>
+            </svg>
+            <div class="ring-center"><b>1,703</b><small>kcal left</small></div>
+          </div>
+          <div class="ring-foot">1,857 of 3,560 eaten <span>52%</span></div>
+        </div>
+
+        <div class="macros anim" style="animation-delay:.1s">
+          <div class="mrow">
+            <div class="ml"><b>95g</b><small>Protein</small></div>
+            <div class="seg"><i style="background:var(--redbrown)"></i><i style="background:var(--redbrown)"></i><i style="background:var(--redbrown)"></i><i style="background:var(--redbrown)"></i><i style="background:var(--redbrown)"></i><i></i><i></i><i></i><i></i></div>
+            <div class="mtarget">/ 212</div>
+          </div>
+          <div class="mrow">
+            <div class="ml"><b>203g</b><small>Carbs</small></div>
+            <div class="seg"><i style="background:var(--caramel)"></i><i style="background:var(--caramel)"></i><i style="background:var(--caramel)"></i><i style="background:var(--caramel)"></i><i style="background:var(--caramel)"></i><i></i><i></i><i></i><i></i></div>
+            <div class="mtarget">/ 421</div>
+          </div>
+          <div class="mrow">
+            <div class="ml"><b>62g</b><small>Fat</small></div>
+            <div class="seg"><i style="background:var(--pillbg)"></i><i style="background:var(--pillbg)"></i><i style="background:var(--pillbg)"></i><i style="background:var(--pillbg)"></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="mtarget">/ 124</div>
+          </div>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.15s">Meals</div>
+        <ul class="checklist">
+          <li class="anim" style="animation-delay:.18s">
+            <div class="box done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>
+            <div class="ct"><span class="n done">Breakfast</span></div>
+            <span class="pill faded">815 cal</span>
+          </li>
+          <li class="anim" style="animation-delay:.21s">
+            <div class="box done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>
+            <div class="ct"><span class="n done">Lunch</span></div>
+            <span class="pill faded">1,042 cal</span>
+          </li>
+          <li class="anim" style="animation-delay:.24s">
+            <div class="box now"></div>
+            <div class="ct"><span class="n">Snack</span><small>afternoon</small></div>
+            <span class="pill">355 cal</span>
+          </li>
+          <li class="anim" style="animation-delay:.27s">
+            <div class="box"></div>
+            <div class="ct"><span class="n">Dinner</span><small>post-soccer 11pm</small></div>
+            <span class="pill">1,042 cal</span>
+          </li>
+          <li class="anim" style="animation-delay:.3s">
+            <div class="box"></div>
+            <div class="ct"><span class="n">Peanuts</span><small>graze</small></div>
+            <span class="pill">248 cal</span>
+          </li>
+        </ul>
+      </div>
+      <p class="annot"><b>V2 with the owner's two removals.</b> The eaten-count pill under the nav
+      is gone (the ring and faded rows already tell the story) and the Meals kick band drops the
+      tap hint, leaving the single word. Everything else is V2 as drawn: full silent-menu
+      treatment on the current cream canvas, so Groceries stays the one white room.</p>
+    </div>
+  </div>
+</div>
