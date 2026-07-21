@@ -1,0 +1,330 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal, Chat in the silent-menu language, 3 variants (issue #28)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --choc:#3f2a1a; --pillbg:#48291a; --caramel:#a97a24; --redbrown:#ac2318;
+    --cream-band:#f6efe2; --cream-band-deep:#f1e7d3; --cream-canvas:#f7f6f3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#1d1c1a; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:1360px;margin:0 auto}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .note{
+    font-family:var(--mono);font-size:11px;line-height:1.7;margin:16px 0 30px;max-width:760px;
+    border-left:2px solid rgba(244,243,240,.5);padding-left:12px;opacity:.92;
+  }
+  .note b{color:#fff;font-weight:500}
+  .stage{display:flex;gap:36px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+  .col{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .col-cap{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+  .annot{width:392px;font-family:var(--mono);font-size:11px;line-height:1.7;opacity:.85}
+  .annot b{color:#fff;font-weight:500}
+
+  .phone{
+    position:relative;width:392px;border-radius:22px;overflow:hidden;
+    background:var(--cream-canvas);color:var(--choc);box-shadow:0 16px 44px rgba(0,0,0,.4);
+    min-height:680px;display:flex;flex-direction:column;
+  }
+  @keyframes enter{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .anim{animation:enter .34s cubic-bezier(.32,.72,.33,1) backwards}
+  @media (prefers-reduced-motion: reduce){.anim{animation:none}}
+
+  .thread{flex:1;padding:18px 18px 8px;display:flex;flex-direction:column;gap:13px}
+  .composer{padding:12px 14px 18px;display:flex;align-items:center;gap:10px}
+  .cbox{flex:1;display:flex;align-items:center;gap:10px;border-radius:12px;padding:9px 8px 9px 14px}
+  .cbox span{flex:1;font-size:14px;color:#b3a390}
+  .sendbtn{width:34px;height:34px;flex-shrink:0;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff}
+  .plus{width:34px;height:34px;flex-shrink:0;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:17px}
+
+  /* ===== V1 — full silent menu ===== */
+  .v1 .head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 18px 12px}
+  .v1 .head .home{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);text-decoration:none;margin-top:4px}
+  .v1 .head .mid{text-align:center}
+  .v1 .head .ttl{font-size:20px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+  .v1 .head .sub{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel);margin-top:5px}
+  .v1 .head .newbtn{
+    font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--pillbg);color:#fff;border-radius:999px;padding:6px 12px;border:none;
+  }
+  .v1 .meta{
+    display:flex;justify-content:space-between;background:var(--cream-band-deep);
+    padding:7px 18px;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .v1 .meta .m{color:var(--caramel)}
+  .v1 .meta .t{color:#b3a390}
+  .v1 .bu{align-self:flex-end;max-width:80%;background:var(--pillbg);color:#fff;padding:10px 14px;border-radius:16px 16px 4px 16px;font-size:14px}
+  .v1 .ba{align-self:flex-start;max-width:84%;background:var(--cream-band);color:var(--choc);padding:10px 14px;border-radius:16px 16px 16px 4px;font-size:14px}
+  .v1 .tool{align-self:flex-start;max-width:90%;background:var(--cream-band);border-radius:12px;padding:11px 14px 12px}
+  .v1 .tool .chip{
+    display:inline-flex;align-items:center;gap:5px;font-size:8.5px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;background:var(--pillbg);color:#fff;border-radius:999px;padding:3px 9px;
+  }
+  .v1 .tool .chip i{width:5px;height:5px;border-radius:999px;background:var(--caramel)}
+  .v1 .tool .t{font-size:13.5px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;margin-top:8px}
+  .v1 .tool .d{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);margin-top:4px}
+  .v1 .tool .foot{display:flex;justify-content:flex-end;margin-top:9px}
+  .v1 .tool .undo{
+    font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    background:#fff;color:var(--choc);border:none;border-radius:999px;padding:5px 11px;
+  }
+  .v1 .rstrip{align-self:flex-start;width:92%}
+  .v1 .rstrip .kicker{
+    background:var(--cream-band);border-radius:8px;padding:6px 10px;margin-bottom:8px;
+    font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  }
+  .v1 .rstrip .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .v1 .rstrip .stat{background:#fff;border-radius:10px;padding:10px 6px;text-align:center}
+  .v1 .rstrip .stat b{font-size:16px;font-weight:800;display:block;line-height:1.1}
+  .v1 .rstrip .stat small{font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel)}
+  .v1 .cbox{background:#fff}
+  .v1 .plus{background:#fff;color:var(--caramel);border:1.5px solid #e2d9c9}
+  .v1 .sendbtn{background:var(--redbrown)}
+
+  /* ===== V2 — quiet thread ===== */
+  .v2 .head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 18px 12px}
+  .v2 .head .home{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);text-decoration:none;margin-top:4px}
+  .v2 .head .mid{text-align:center}
+  .v2 .head .ttl{font-size:20px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+  .v2 .head .sub{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel);margin-top:5px}
+  .v2 .head .newbtn{
+    font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--pillbg);color:#fff;border-radius:999px;padding:6px 12px;border:none;
+  }
+  .v2 .meta{
+    display:flex;justify-content:space-between;background:var(--cream-band-deep);
+    padding:7px 18px;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .v2 .meta .m{color:var(--caramel)}
+  .v2 .meta .t{color:#b3a390}
+  .v2 .bu{align-self:flex-end;max-width:80%;background:#fff;color:var(--choc);padding:10px 14px;border-radius:16px 16px 4px 16px;font-size:14px;border:1px solid #eee5d2}
+  .v2 .ba{align-self:flex-start;max-width:84%;color:var(--choc);padding:2px 2px;font-size:14px}
+  .v2 .tool{align-self:flex-start;max-width:90%;background:var(--cream-band);border-radius:12px;padding:11px 14px 12px}
+  .v2 .tool .chip{
+    display:inline-flex;align-items:center;gap:5px;font-size:8.5px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;background:var(--pillbg);color:#fff;border-radius:999px;padding:3px 9px;
+  }
+  .v2 .tool .chip i{width:5px;height:5px;border-radius:999px;background:var(--caramel)}
+  .v2 .tool .t{font-size:13.5px;font-weight:500;color:var(--choc);margin-top:8px}
+  .v2 .tool .d{font-family:var(--mono);font-size:11px;color:var(--caramel);margin-top:3px}
+  .v2 .tool .foot{display:flex;justify-content:flex-end;margin-top:9px}
+  .v2 .tool .undo{
+    font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    background:#fff;color:var(--choc);border:none;border-radius:999px;padding:5px 11px;
+  }
+  .v2 .rstrip{align-self:flex-start;width:92%}
+  .v2 .rstrip .kicker{
+    background:var(--cream-band);border-radius:8px;padding:6px 10px;margin-bottom:8px;
+    font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  }
+  .v2 .rstrip .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .v2 .rstrip .stat{background:#fff;border-radius:10px;padding:10px 6px;text-align:center}
+  .v2 .rstrip .stat b{font-family:var(--mono);font-size:15px;font-weight:500;display:block;line-height:1.2}
+  .v2 .rstrip .stat small{font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel)}
+  .v2 .cbox{background:#fff}
+  .v2 .plus{background:#fff;color:var(--caramel);border:1.5px solid #e2d9c9}
+  .v2 .sendbtn{background:var(--pillbg)}
+
+  /* ===== V3 — editorial hybrid ===== */
+  .v3 .head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 18px 12px;border-bottom:1px solid #efe8db}
+  .v3 .head .home{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--caramel);text-decoration:none;margin-top:4px}
+  .v3 .head .mid{text-align:center}
+  .v3 .head .ttl{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:-0.02em;line-height:1}
+  .v3 .head .sub{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#b3a390;margin-top:4px}
+  .v3 .head .newbtn{
+    font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--choc);border:1px solid #e2d9c9;border-radius:7px;padding:6px 10px;background:#fff;
+  }
+  .v3 .meta{
+    display:flex;justify-content:space-between;border-bottom:1px solid #efe8db;background:var(--cream-band);
+    padding:7px 18px;font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  }
+  .v3 .meta .m{color:var(--caramel)}
+  .v3 .meta .t{color:#b3a390}
+  .v3 .bu{align-self:flex-end;max-width:80%;background:var(--choc);color:#fff;padding:10px 14px;border-radius:16px 16px 4px 16px;font-size:14px}
+  .v3 .ba{align-self:flex-start;max-width:84%;background:var(--cream-band);color:var(--choc);padding:10px 14px;border-radius:16px 16px 16px 4px;font-size:14px}
+  .v3 .tool{align-self:flex-start;max-width:90%;background:var(--cream-band);border-radius:12px;padding:11px 14px 12px}
+  .v3 .tool .chip{
+    display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;letter-spacing:.07em;
+    text-transform:uppercase;background:#fff;color:var(--caramel);border-radius:999px;padding:3px 8px;
+  }
+  .v3 .tool .chip i{width:5px;height:5px;border-radius:999px;background:currentColor}
+  .v3 .tool .t{font-size:13.5px;font-weight:500;color:var(--choc);margin-top:7px}
+  .v3 .tool .d{font-family:var(--mono);font-size:11px;color:var(--caramel);margin-top:3px}
+  .v3 .tool .foot{display:flex;justify-content:flex-end;margin-top:9px}
+  .v3 .tool .undo{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--choc);
+    background:#fff;border:1px solid #e2d9c9;border-radius:7px;padding:5px 11px;
+  }
+  .v3 .rstrip{align-self:flex-start;width:92%}
+  .v3 .rstrip .kicker{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);margin:2px 0 7px 2px}
+  .v3 .rstrip .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .v3 .rstrip .stat{background:#fff;border-radius:10px;padding:10px 6px;text-align:center}
+  .v3 .rstrip .stat b{font-family:var(--mono);font-size:16px;font-weight:500;display:block;line-height:1.1}
+  .v3 .rstrip .stat small{font-family:var(--mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:#b3a390}
+  .v3 .cbox{background:#fff;border:1px solid #e2d9c9}
+  .v3 .plus{background:#fff;color:var(--caramel);border:1px solid #e2d9c9}
+  .v3 .sendbtn{background:var(--redbrown)}
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Chat in the silent-menu language</h1>
+    <p>3 variants, issue #28 round 3 of 4, cream canvas per round 1. Generic mock thread, no real data.</p>
+  </div>
+  <div class="note">
+    Same mock exchange in all three: a food-logging message, the tool card, the reply, and the
+    remaining-today stat strip. <b>V1 goes full silent menu</b>: chocolate user bubbles, cream AI
+    bubbles, uppercase tool cards, red-brown send. <b>V2 keeps the thread quiet</b>: the header and
+    furniture adopt the language but bubbles lose the heavy fills so long conversations don't shout,
+    AI text sits bare on the canvas. <b>V3 is the editorial hybrid</b>: serif Kal header and mono
+    meta survive, palette swaps to chocolate and caramel. All three keep the enter stagger with the
+    reduced-motion off-switch.
+  </div>
+
+  <div class="stage">
+
+    <!-- ===== V1: full silent menu ===== -->
+    <div class="col">
+      <div class="col-cap">V1 — Full silent menu</div>
+      <div class="phone v1">
+        <div class="head anim">
+          <a class="home" href="#">‹ Today</a>
+          <div class="mid">
+            <div class="ttl">Kal</div>
+            <div class="sub">Ephemeral, not saved</div>
+          </div>
+          <button class="newbtn">+ New</button>
+        </div>
+        <div class="meta anim" style="animation-delay:.04s"><span class="m">claude-sonnet-5</span><span class="t">12,408 tok</span></div>
+        <div class="thread">
+          <div class="bu anim" style="animation-delay:.08s">Just had the chicken and rice, a bit more rice than usual</div>
+          <div class="tool anim" style="animation-delay:.12s">
+            <span class="chip"><i></i>Logged</span>
+            <div class="t">Lunch marked eaten</div>
+            <div class="d">1,042 kcal, 68g protein</div>
+            <div class="foot"><button class="undo">Undo</button></div>
+          </div>
+          <div class="ba anim" style="animation-delay:.16s">Logged. The extra rice is maybe 60 kcal, nothing to sweat. Dinner still covers the rest of today.</div>
+          <div class="rstrip anim" style="animation-delay:.2s">
+            <div class="kicker">Remaining today</div>
+            <div class="grid">
+              <div class="stat"><b>1,703</b><small>kcal</small></div>
+              <div class="stat"><b>117</b><small>prot</small></div>
+              <div class="stat"><b>218</b><small>carb</small></div>
+              <div class="stat"><b>62</b><small>fat</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="composer anim" style="animation-delay:.24s">
+          <div class="plus">+</div>
+          <div class="cbox"><span>Message Kal…</span></div>
+          <div class="sendbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+        </div>
+      </div>
+      <p class="annot"><b>The whole room goes silent menu.</b> Uppercase KAL header with caramel
+      kicker, pill + New, cream meta band, chocolate user bubbles, cream AI bubbles, tool cards as
+      cream bands with a chocolate Logged pill and caramel uppercase detail, white stat cells with
+      sans-800 numbers, red-brown send square.</p>
+    </div>
+
+    <!-- ===== V2: quiet thread ===== -->
+    <div class="col">
+      <div class="col-cap">V2 — Quiet thread</div>
+      <div class="phone v2">
+        <div class="head anim">
+          <a class="home" href="#">‹ Today</a>
+          <div class="mid">
+            <div class="ttl">Kal</div>
+            <div class="sub">Ephemeral, not saved</div>
+          </div>
+          <button class="newbtn">+ New</button>
+        </div>
+        <div class="meta anim" style="animation-delay:.04s"><span class="m">claude-sonnet-5</span><span class="t">12,408 tok</span></div>
+        <div class="thread">
+          <div class="bu anim" style="animation-delay:.08s">Just had the chicken and rice, a bit more rice than usual</div>
+          <div class="tool anim" style="animation-delay:.12s">
+            <span class="chip"><i></i>Logged</span>
+            <div class="t">Lunch marked eaten</div>
+            <div class="d">1,042 kcal, 68g protein</div>
+            <div class="foot"><button class="undo">Undo</button></div>
+          </div>
+          <div class="ba anim" style="animation-delay:.16s">Logged. The extra rice is maybe 60 kcal, nothing to sweat. Dinner still covers the rest of today.</div>
+          <div class="rstrip anim" style="animation-delay:.2s">
+            <div class="kicker">Remaining today</div>
+            <div class="grid">
+              <div class="stat"><b>1,703</b><small>kcal</small></div>
+              <div class="stat"><b>117</b><small>prot</small></div>
+              <div class="stat"><b>218</b><small>carb</small></div>
+              <div class="stat"><b>62</b><small>fat</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="composer anim" style="animation-delay:.24s">
+          <div class="plus">+</div>
+          <div class="cbox"><span>Message Kal…</span></div>
+          <div class="sendbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+        </div>
+      </div>
+      <p class="annot"><b>Furniture shouts, thread whispers.</b> Same header, meta band, tool cards,
+      stat strip and composer as V1, but the bubbles calm down: user messages are white with
+      chocolate ink and a hairline border, AI replies sit bare on the cream canvas with no fill at
+      all, mono survives in tool detail and stat numbers. Built for long conversations.</p>
+    </div>
+
+    <!-- ===== V3: editorial hybrid ===== -->
+    <div class="col">
+      <div class="col-cap">V3 — Editorial hybrid</div>
+      <div class="phone v3">
+        <div class="head anim">
+          <a class="home" href="#">‹ Today</a>
+          <div class="mid">
+            <div class="ttl">Kal</div>
+            <div class="sub">Ephemeral, not saved</div>
+          </div>
+          <button class="newbtn">+ New</button>
+        </div>
+        <div class="meta anim" style="animation-delay:.04s"><span class="m">claude-sonnet-5</span><span class="t">12,408 tok</span></div>
+        <div class="thread">
+          <div class="bu anim" style="animation-delay:.08s">Just had the chicken and rice, a bit more rice than usual</div>
+          <div class="tool anim" style="animation-delay:.12s">
+            <span class="chip"><i></i>Logged</span>
+            <div class="t">Lunch marked eaten</div>
+            <div class="d">1,042 kcal, 68g protein</div>
+            <div class="foot"><button class="undo">Undo</button></div>
+          </div>
+          <div class="ba anim" style="animation-delay:.16s">Logged. The extra rice is maybe 60 kcal, nothing to sweat. Dinner still covers the rest of today.</div>
+          <div class="rstrip anim" style="animation-delay:.2s">
+            <div class="kicker">Remaining today</div>
+            <div class="grid">
+              <div class="stat"><b>1,703</b><small>kcal</small></div>
+              <div class="stat"><b>117</b><small>prot</small></div>
+              <div class="stat"><b>218</b><small>carb</small></div>
+              <div class="stat"><b>62</b><small>fat</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="composer anim" style="animation-delay:.24s">
+          <div class="plus">+</div>
+          <div class="cbox"><span>Message Kal…</span></div>
+          <div class="sendbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+        </div>
+      </div>
+      <p class="annot"><b>Palette swap only.</b> Serif Kal header, mono meta and hairline borders
+      survive from today's chat, ink becomes chocolate, the model name and accents go caramel
+      instead of terracotta, user bubbles fill chocolate, tool cards warm to cream with a white
+      mono chip, red-brown send. The current chat wearing the Groceries palette.</p>
+    </div>
+
+  </div>
+</div>

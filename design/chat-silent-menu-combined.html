@@ -1,0 +1,138 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal, Chat silent-menu combined, round 3 pick V1 (issue #28)</title>
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --choc:#3f2a1a; --pillbg:#48291a; --caramel:#a97a24; --redbrown:#ac2318;
+    --cream-band:#f6efe2; --cream-band-deep:#f1e7d3; --cream-canvas:#f7f6f3;
+    --cc-pink:#fc89ac; --tok-green:#346538;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#1d1c1a; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:900px;margin:0 auto}
+  .page-head h1{font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .stage{display:flex;gap:36px;justify-content:center;align-items:flex-start;flex-wrap:wrap;margin-top:30px}
+  .col{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .col-cap{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+  .annot{width:392px;font-family:var(--mono);font-size:11px;line-height:1.7;opacity:.85}
+  .annot b{color:#fff;font-weight:500}
+
+  .phone{
+    position:relative;width:392px;border-radius:22px;overflow:hidden;
+    background:var(--cream-canvas);color:var(--choc);box-shadow:0 16px 44px rgba(0,0,0,.4);
+    min-height:680px;display:flex;flex-direction:column;
+  }
+  @keyframes enter{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .anim{animation:enter .34s cubic-bezier(.32,.72,.33,1) backwards}
+  @media (prefers-reduced-motion: reduce){.anim{animation:none}}
+
+  .head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 18px 12px}
+  .head .home{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);text-decoration:none;margin-top:4px}
+  .head .mid{text-align:center}
+  .head .ttl{font-size:20px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+  .head .sub{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel);margin-top:5px}
+  .head .newbtn{
+    font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--pillbg);color:#fff;border-radius:999px;padding:6px 12px;border:none;
+  }
+  .meta{
+    display:flex;justify-content:space-between;background:var(--cream-band-deep);
+    padding:7px 18px;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .meta .m{color:var(--cc-pink)}
+  .meta .right{display:inline-flex;gap:10px}
+  .meta .c{color:#b3a390}
+  .meta .t{color:var(--tok-green)}
+  .thread{flex:1;padding:18px 18px 8px;display:flex;flex-direction:column;gap:13px}
+  .bu{align-self:flex-end;max-width:80%;background:var(--pillbg);color:#fff;padding:10px 14px;border-radius:16px 16px 4px 16px;font-size:14px}
+  .ba{align-self:flex-start;max-width:84%;background:var(--cream-band);color:var(--choc);padding:10px 14px;border-radius:16px 16px 16px 4px;font-size:14px}
+  .tool{align-self:flex-start;max-width:90%;background:var(--cream-band);border-radius:12px;padding:11px 14px 12px}
+  .tool .chip{
+    display:inline-flex;align-items:center;gap:5px;font-size:8.5px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;background:var(--pillbg);color:#fff;border-radius:999px;padding:3px 9px;
+  }
+  .tool .chip i{width:5px;height:5px;border-radius:999px;background:var(--caramel)}
+  .tool .t{font-size:13.5px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;margin-top:8px}
+  .tool .d{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);margin-top:4px}
+  .tool .foot{display:flex;justify-content:flex-end;margin-top:9px}
+  .tool .undo{
+    font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    background:#fff;color:var(--choc);border:none;border-radius:999px;padding:5px 11px;
+  }
+  .rstrip{align-self:flex-start;width:92%}
+  .rstrip .kicker{
+    background:var(--cream-band);border-radius:8px;padding:6px 10px;margin-bottom:8px;
+    font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  }
+  .rstrip .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .rstrip .stat{background:#fff;border-radius:10px;padding:10px 6px;text-align:center}
+  .rstrip .stat b{font-size:16px;font-weight:800;display:block;line-height:1.1}
+  .rstrip .stat small{font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel)}
+  .composer{padding:12px 14px 18px;display:flex;align-items:center;gap:10px}
+  .plus{width:34px;height:34px;flex-shrink:0;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:17px;background:#fff;color:var(--caramel);border:1.5px solid #e2d9c9}
+  .cbox{flex:1;display:flex;align-items:center;gap:10px;border-radius:12px;padding:9px 8px 9px 14px;background:#fff}
+  .cbox span{flex:1;font-size:14px;color:#b3a390}
+  .sendbtn{width:34px;height:34px;flex-shrink:0;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--redbrown)}
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Chat, silent-menu combined</h1>
+    <p>issue #28 round 3, owner pick V1 with tweaks: pink model name, green token count, cost shown</p>
+  </div>
+
+  <div class="stage">
+    <div class="col">
+      <div class="col-cap">Combined, full silent menu on cream</div>
+      <div class="phone">
+        <div class="head anim">
+          <a class="home" href="#">‹ Today</a>
+          <div class="mid">
+            <div class="ttl">Kal</div>
+            <div class="sub">Ephemeral, not saved</div>
+          </div>
+          <button class="newbtn">+ New</button>
+        </div>
+        <div class="meta anim" style="animation-delay:.04s">
+          <span class="m">claude-sonnet-5</span>
+          <span class="right"><span class="c">$0.0284</span><span class="t">12,408 tok</span></span>
+        </div>
+        <div class="thread">
+          <div class="bu anim" style="animation-delay:.08s">Just had the chicken and rice, a bit more rice than usual</div>
+          <div class="tool anim" style="animation-delay:.12s">
+            <span class="chip"><i></i>Logged</span>
+            <div class="t">Lunch marked eaten</div>
+            <div class="d">1,042 kcal, 68g protein</div>
+            <div class="foot"><button class="undo">Undo</button></div>
+          </div>
+          <div class="ba anim" style="animation-delay:.16s">Logged. The extra rice is maybe 60 kcal, nothing to sweat. Dinner still covers the rest of today.</div>
+          <div class="rstrip anim" style="animation-delay:.2s">
+            <div class="kicker">Remaining today</div>
+            <div class="grid">
+              <div class="stat"><b>1,703</b><small>kcal</small></div>
+              <div class="stat"><b>117</b><small>prot</small></div>
+              <div class="stat"><b>218</b><small>carb</small></div>
+              <div class="stat"><b>62</b><small>fat</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="composer anim" style="animation-delay:.24s">
+          <div class="plus">+</div>
+          <div class="cbox"><span>Message Kal…</span></div>
+          <div class="sendbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+        </div>
+      </div>
+      <p class="annot"><b>V1 with the owner's three meta-strip tweaks.</b> Model name in Claude-config
+      pink #fc89ac (the clawd_body value; the theme's lighter #ffb6c1 washed out on cream), token
+      count in the app's green #346538, and the dollar cost restored between them in the muted brown,
+      matching the real strip's model / cost / tokens order. Everything else is V1 as drawn: chocolate
+      user bubbles, cream AI bubbles, uppercase cream tool card, white stat cells, red-brown send.</p>
+    </div>
+  </div>
+</div>
