@@ -30,7 +30,7 @@ export function WeightTrend({ entries, goalWeightLb }: { entries: WeighInView[];
   if (entries.length === 0) {
     return (
       <div className="plan-trend">
-        <div className="plan-tr-empty">no weigh-ins yet — log one in chat</div>
+        <div className="plan-tr-empty">no weigh-ins yet, log one in chat</div>
       </div>
     );
   }

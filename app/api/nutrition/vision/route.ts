@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
   try {
     const result = await readLabelImage(imageBase64, mediaType as Allowed);
-    if (!result) return Response.json({ error: "Couldn't read the label — try a clearer photo." }, { status: 422 });
+    if (!result) return Response.json({ error: "Couldn't read the label, try a clearer photo." }, { status: 422 });
     return Response.json(result);
   } catch {
     return Response.json({ error: "Label read failed." }, { status: 500 });

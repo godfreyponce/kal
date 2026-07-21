@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Kal — Fitness log",
+    name: "Kal, Fitness log",
     short_name: "Kal",
     description: "Personal fitness chat and daily macro log.",
     start_url: "/",

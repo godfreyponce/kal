@@ -100,7 +100,7 @@ export function MealPlanEditor({
       setEditingId((cur) => (cur === mealId ? null : cur));
       startTransition(() => router.refresh());
     } catch {
-      setError("network error — try again");
+      setError("network error, try again");
     } finally {
       setSaving(false);
     }
@@ -124,7 +124,7 @@ export function MealPlanEditor({
       setEditingId((cur) => (cur === mealId ? null : cur));
       startTransition(() => router.refresh());
     } catch {
-      setError("network error — try again");
+      setError("network error, try again");
     }
   }
 
@@ -145,7 +145,7 @@ export function MealPlanEditor({
       setNewMeal({ name: "", timeHint: "" });
       startTransition(() => router.refresh());
     } catch {
-      setError("network error — try again");
+      setError("network error, try again");
     }
   }
 
@@ -282,8 +282,8 @@ export function MealPlanEditor({
                     </div>
                     <div className="plan-scope-hint">
                       {scope === "today"
-                        ? "just today = a ⇄ override — template untouched, back to normal tomorrow"
-                        : "every day changes the template — targets re-derive from the new plan"}
+                        ? "just today = a ⇄ override, template untouched, back to normal tomorrow"
+                        : "every day changes the template, targets re-derive from the new plan"}
                     </div>
                   </>
                 ) : (

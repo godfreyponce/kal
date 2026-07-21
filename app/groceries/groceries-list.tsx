@@ -189,9 +189,9 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
       const res = await fetch(`/api/nutrition?q=${encodeURIComponent(q)}`);
       const data: NutritionHit[] = res.ok ? await res.json() : [];
       setHits(data);
-      if (data.length === 0) setLookupMsg("No nutrition data found — enter it manually below.");
+      if (data.length === 0) setLookupMsg("No nutrition data found, enter it manually below.");
     } catch {
-      setLookupMsg("Lookup failed — enter it manually below.");
+      setLookupMsg("Lookup failed, enter it manually below.");
     } finally {
       setLooking(false);
     }
@@ -281,7 +281,7 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
         return;
       }
       applyLabel(await res.json());
-      setLookupMsg("Filled from the label photo — check the values and save.");
+      setLookupMsg("Filled from the label photo, check the values and save.");
     } catch {
       setLookupMsg("Couldn't read the photo.");
     } finally {
@@ -373,7 +373,7 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
             <div className="gr-lookup-row">
               <input
                 aria-label="Look up nutrition"
-                placeholder="Look up nutrition — name or barcode"
+                placeholder="Look up nutrition by name or barcode"
                 value={lookupQuery}
                 onChange={(e) => setLookupQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); lookup(); } }}

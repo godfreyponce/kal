@@ -73,7 +73,7 @@ export function Chat({ model }: { model: string }) {
     } catch {
       setItems((p) => [
         ...p,
-        { id: nid(), kind: "ai", text: "Couldn't read that photo — try a different one.", error: true },
+        { id: nid(), kind: "ai", text: "Couldn't read that photo, try a different one.", error: true },
       ]);
     }
   }

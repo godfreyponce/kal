@@ -501,7 +501,7 @@ export default function FigureCanvas({
   return (
     <>
       {failed ? (
-        <div className="plan-fig-fallback">3d unavailable — needs webgl</div>
+        <div className="plan-fig-fallback">3d unavailable, needs webgl</div>
       ) : (
         <div ref={wrapRef} className="plan-fig-canvas" />
       )}

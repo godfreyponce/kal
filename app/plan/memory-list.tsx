@@ -38,7 +38,7 @@ export function MemoryList({ facts }: { facts: MemoryFactView[] }) {
       showUndo([fact.content]);
       startTransition(() => router.refresh());
     } catch {
-      setError("network error — try again");
+      setError("network error, try again");
     }
   }
 
@@ -65,7 +65,7 @@ export function MemoryList({ facts }: { facts: MemoryFactView[] }) {
       startTransition(() => router.refresh());
     } catch {
       showUndo(remaining);
-      setError("network error — try again");
+      setError("network error, try again");
     } finally {
       undoing.current = false;
     }
@@ -89,7 +89,7 @@ export function MemoryList({ facts }: { facts: MemoryFactView[] }) {
       setAdding(false);
       startTransition(() => router.refresh());
     } catch {
-      setError("network error — try again");
+      setError("network error, try again");
     }
   }
 
@@ -104,7 +104,7 @@ export function MemoryList({ facts }: { facts: MemoryFactView[] }) {
         if (res.ok) deleted.push(fact.content);
       }
     } catch {
-      setError(`network error — cleared ${deleted.length} of ${facts.length} facts`);
+      setError(`network error, cleared ${deleted.length} of ${facts.length} facts`);
     } finally {
       setClearing(false);
     }

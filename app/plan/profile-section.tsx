@@ -100,14 +100,14 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
       setSaved(true);
       startTransition(() => router.refresh());
     } catch {
-      setError("network error — try again");
+      setError("network error, try again");
     }
   }
 
   function saveHead() {
     const age = Number(form.age);
     if (Number.isNaN(age)) {
-      setError("check the number fields — something isn't a number");
+      setError("check the number fields, something isn't a number");
       return;
     }
     setSavingRegion("head");
@@ -118,7 +118,7 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
     const weightLb = Number(form.weightLb);
     const goalWeightLb = form.goalWeightLb === "" ? null : Number(form.goalWeightLb);
     if (Number.isNaN(weightLb) || (goalWeightLb !== null && Number.isNaN(goalWeightLb))) {
-      setError("check the number fields — something isn't a number");
+      setError("check the number fields, something isn't a number");
       return;
     }
     setSavingRegion("chest");
@@ -129,7 +129,7 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
     const heightCm = Number(form.heightCm);
     const bodyFatPct = form.bodyFatPct === "" ? null : Number(form.bodyFatPct);
     if (Number.isNaN(heightCm) || (bodyFatPct !== null && Number.isNaN(bodyFatPct))) {
-      setError("check the number fields — something isn't a number");
+      setError("check the number fields, something isn't a number");
       return;
     }
     setSavingRegion("waist");
@@ -161,10 +161,10 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
     {
       region: "waist",
       kicker: "BODY FAT",
-      value: profile.bodyFatPct === null ? "—" : `${profile.bodyFatPct} %`,
+      value: profile.bodyFatPct === null ? "n/a" : `${profile.bodyFatPct} %`,
       top: 198,
     },
-    { region: "legs", kicker: "ACTIVITY", value: profile.activityLevel ?? "—", top: 280 },
+    { region: "legs", kicker: "ACTIVITY", value: profile.activityLevel ?? "n/a", top: 280 },
   ];
 
   return (
@@ -180,7 +180,7 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
       </div>
       {noteOpen && (
         <div className="plan-fig-mkme-note">
-          send a few photos (front-facing, arms slightly out) — an image-to-3d pass turns them into your model.
+          send a few photos (front-facing, arms slightly out), an image-to-3d pass turns them into your model.
           stored privately on blob storage, never in the public repo. the mannequin stands in until then.
         </div>
       )}
@@ -231,7 +231,7 @@ export function ProfileSection({ profile, weighIns }: { profile: ProfileView; we
           </div>
           <WeightTrend entries={weighIns} goalWeightLb={profile.goalWeightLb} />
           <div className="plan-ed-hint">
-            every weigh-in you log lands here — no deadline on the goal, the line just keeps heading there
+            every weigh-in you log lands here, no deadline on the goal, the line just keeps heading there
           </div>
           <button className="btn-dark plan-ed-save" onClick={saveChest} disabled={cardPending("chest")}>
             {saveLabel("chest")}

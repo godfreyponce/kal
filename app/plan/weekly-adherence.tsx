@@ -55,7 +55,7 @@ function Cell({
       <button type="button" className="cell today" onClick={() => onOpen(day)}>
         <span className="now-tag">now</span>
         <div className="tip">
-          <b>{label} · today</b><br />
+          <b>{label}, today</b><br />
           kcal <span className="k-now">{num(c.kcal)}</span> of {num(targets.kcal)}<br />
           protein <span className="k-now">{num(c.proteinG)}</span> of {num(targets.proteinG)} g<br />
           <span className="verdict v-wip">{left >= 0 ? `${num(left)} kcal left` : `${num(-left)} over target`}</span>

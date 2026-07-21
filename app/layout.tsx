@@ -16,7 +16,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kal — Today",
+  title: "Kal, Today",
   description: "Personal fitness log",
   icons: { icon: "/icon.svg" },
   appleWebApp: { capable: true, title: "Kal", statusBarStyle: "default" },

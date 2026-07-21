@@ -157,7 +157,7 @@ export function MealPopup({
           disabled={busy}
           onClick={onToggle}
         >
-          {eaten ? "Eaten ✓ — tap to undo" : "Mark eaten"}
+          {eaten ? "Eaten ✓, tap to undo" : "Mark eaten"}
         </button>
       </div>
     </div>
