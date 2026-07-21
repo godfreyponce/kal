@@ -71,6 +71,25 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Silent-menu design language rollout, umbrella — #28 (2026-07-21) — CLOSED; design-only, code lands under #32-#36
+
+Four owner-gated mockup rounds rolled the Groceries silent-menu language (#1) across the app.
+#28 itself shipped no source code — four `docs(design)` commits (variants + combined file per
+round) and five spawned tickets. **Canvas decision (round 1, inherited by everything): cream
+stays app-wide; white remains Groceries-only.** Picks: Today V2 (full silent menu on cream,
+minus the eaten-count pill and the "tap to mark eaten" hint) → #32; Login V1 (card dissolves,
+kicker reads "You shall not pass", error centered under the password box) → #33; Chat V1 (full
+silent menu; meta strip: model name in Claude-config pink #fc89ac, cost shown, token count in
+--green-tx #346538) → #34; Plan V2 (cream bands + pills but data viz keeps its green/red/
+terracotta meaning; Adherence section swaps above Profile) → #35. The owner's "Meal plan and
+Memory closed by default" ask was spun off as behavior ticket #36. Specs are the four
+`design/*-silent-menu-combined.html` files. #32 owns the `--gro-*` → `--sm-*` token promotion
+and the shared `.mpop-*`/`.sheet-*` modal spillover call; #35 must coordinate with #30/#31/#36
+(same screen, all open at drawing time). Note: the plan's "quick replies" for Chat's `.rstrip`
+was a mislabel — it is the remaining-today stat strip. #29 (groceries edit form) is now
+unblocked by the round-1 pick. None of the spawned tickets are `ready-for-agent` — owner labels.
+Plan: `docs/superpowers/plans/2026-07-21-issue-28.md` (round tracker filled in).
+
 ## Em-dash / middle-dot copy sweep — #27 (2026-07-21) — COMMITTED & pushed to main
 
 Owner copy rule (no em dashes or middle dots in UI copy) applied across `app/`: 29 string
