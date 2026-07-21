@@ -1,0 +1,394 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal, Plan in the silent-menu language, 3 variants (issue #28)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --choc:#3f2a1a; --pillbg:#48291a; --caramel:#a97a24; --redbrown:#ac2318;
+    --cream-band:#f6efe2; --cream-band-deep:#f1e7d3; --cream-canvas:#f7f6f3;
+    --green:#346538; --terra:#d97757; --oldred:#9f2f2d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#1d1c1a; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:1360px;margin:0 auto}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .note{
+    font-family:var(--mono);font-size:11px;line-height:1.7;margin:16px 0 30px;max-width:780px;
+    border-left:2px solid rgba(244,243,240,.5);padding-left:12px;opacity:.92;
+  }
+  .note b{color:#fff;font-weight:500}
+  .stage{display:flex;gap:36px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+  .col{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .col-cap{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+  .annot{width:392px;font-family:var(--mono);font-size:11px;line-height:1.7;opacity:.85}
+  .annot b{color:#fff;font-weight:500}
+
+  .phone{
+    position:relative;width:392px;border-radius:22px;padding:22px 20px 30px;overflow:hidden;
+    background:var(--cream-canvas);color:var(--choc);box-shadow:0 16px 44px rgba(0,0,0,.4);
+  }
+  @keyframes enter{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .anim{animation:enter .34s cubic-bezier(.32,.72,.33,1) backwards}
+  @media (prefers-reduced-motion: reduce){.anim{animation:none}}
+
+  /* shared scaffolding */
+  .fig{
+    height:110px;border-radius:14px;margin-top:8px;background:#eceae3;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .fig svg{opacity:.5}
+  .fig .cap{position:absolute;bottom:8px;right:10px;font-family:var(--mono);font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;color:#8a8578}
+  .adh{display:flex;gap:14px;align-items:flex-start;margin-top:10px}
+  .adh .hero b{font-size:28px;line-height:1.05;display:block}
+  .adh .hero small{display:block;max-width:80px;line-height:1.35;margin-top:2px}
+  .cells{flex:1;display:flex;gap:5px;align-items:flex-end}
+  .cellc{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+  .track{width:15px;height:64px;border-radius:4px;position:relative;overflow:hidden}
+  .fill{position:absolute;bottom:0;left:0;right:0;border-radius:4px 4px 0 0}
+  .dow{font-size:8.5px}
+  .pdot{width:7px;height:7px;border-radius:999px}
+  .meal-head{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-bottom:7px}
+  .food{display:flex;align-items:center;gap:12px;padding:9px 0}
+  .food .thumb{width:38px;height:38px;border-radius:10px;background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);color:#b3a390}
+  .food .mid{flex:1}
+  .fact{padding:10px 0}
+
+  /* ===== V1 — full silent menu ===== */
+  .v1 .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .v1 .ttl{font-size:22px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+  .v1 .tkick{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel);margin-top:5px}
+  .v1 .back{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);text-decoration:none;margin-top:4px}
+  .v1 .kick{
+    display:flex;align-items:baseline;justify-content:space-between;margin-top:18px;
+    background:var(--cream-band-deep);border-radius:10px;padding:9px 12px;
+    font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  }
+  .v1 .kick small{color:var(--caramel);font-size:9px;font-weight:700;letter-spacing:.1em}
+  .v1 .adh .hero b{font-weight:800}
+  .v1 .adh .hero small{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel)}
+  .v1 .track{background:#efe8db}
+  .v1 .f-hit{background:var(--caramel)}
+  .v1 .f-miss{background:var(--redbrown)}
+  .v1 .f-now{background:var(--choc)}
+  .v1 .dow{font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#b3a390}
+  .v1 .cellc.today .dow{color:var(--choc)}
+  .v1 .pdot.ok{background:var(--caramel)}
+  .v1 .pdot.short{border:1.5px solid var(--redbrown)}
+  .v1 .pdot.now{border:1.5px dashed var(--choc)}
+  .v1 .totals{
+    display:flex;justify-content:space-between;margin-top:10px;background:#fff;border-radius:9px;
+    padding:8px 11px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--caramel);
+  }
+  .v1 .totals b{color:var(--choc)}
+  .v1 .meal-head{border-bottom:1.5px solid #e7dcc7}
+  .v1 .meal-nm{font-size:15px;font-weight:800;letter-spacing:.01em;text-transform:uppercase}
+  .v1 .meal-pills{display:flex;gap:5px}
+  .v1 .pill{
+    font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    border-radius:999px;padding:4px 10px;color:#fff;
+  }
+  .v1 .pill.kc{background:var(--pillbg)}
+  .v1 .pill.pr{background:var(--caramel)}
+  .v1 .food .nm{font-size:14px;color:var(--choc)}
+  .v1 .food .meta{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b3a390}
+  .v1 .food .amt{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--caramel);text-align:right}
+  .v1 .fact .tx{font-size:14px}
+  .v1 .fact .meta{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);margin-top:3px}
+
+  /* ===== V2 — banded sections only ===== */
+  .v2 .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .v2 .ttl{font-size:22px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+  .v2 .tkick{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel);margin-top:5px}
+  .v2 .back{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);text-decoration:none;margin-top:4px}
+  .v2 .kick{
+    display:flex;align-items:baseline;justify-content:space-between;margin-top:18px;
+    background:var(--cream-band-deep);border-radius:10px;padding:9px 12px;
+    font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  }
+  .v2 .kick small{color:var(--caramel);font-size:9px;font-weight:700;letter-spacing:.1em}
+  .v2 .adh .hero b{font-family:var(--mono);font-weight:500;letter-spacing:-0.02em}
+  .v2 .adh .hero small{font-family:var(--mono);font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;color:#8a7a66}
+  .v2 .track{background:#eceae3}
+  .v2 .f-hit{background:var(--green)}
+  .v2 .f-miss{background:var(--oldred)}
+  .v2 .f-now{background:var(--terra)}
+  .v2 .dow{font-family:var(--mono);letter-spacing:.04em;color:#b3a390}
+  .v2 .cellc.today .dow{color:var(--terra);font-weight:500}
+  .v2 .pdot.ok{background:var(--green)}
+  .v2 .pdot.short{border:1.5px solid var(--oldred)}
+  .v2 .pdot.now{border:1.5px dashed var(--terra)}
+  .v2 .totals{
+    display:flex;justify-content:space-between;margin-top:10px;background:#fff;border-radius:9px;
+    padding:8px 11px;font-family:var(--mono);font-size:10.5px;color:#6d5c48;
+  }
+  .v2 .totals b{color:var(--choc);font-weight:500}
+  .v2 .meal-head{border-bottom:1px solid #e0d6c4}
+  .v2 .meal-nm{font-family:var(--serif);font-size:18px;font-weight:500;letter-spacing:-0.01em}
+  .v2 .meal-pills{display:flex;gap:5px}
+  .v2 .pill{
+    font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    border-radius:999px;padding:4px 10px;color:#fff;
+  }
+  .v2 .pill.kc{background:var(--pillbg)}
+  .v2 .pill.pr{background:var(--caramel)}
+  .v2 .food .nm{font-size:14.5px;color:var(--choc)}
+  .v2 .food .meta{font-family:var(--mono);font-size:10px;color:#b3a390}
+  .v2 .food .amt{font-family:var(--mono);font-size:11px;color:#8a7a66;text-align:right}
+  .v2 .fact .tx{font-family:var(--serif);font-size:15px}
+  .v2 .fact .meta{font-family:var(--mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#b3a390;margin-top:3px}
+
+  /* ===== V3 — editorial hybrid ===== */
+  .v3 .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .v3 .ttl{font-family:var(--serif);font-weight:500;font-size:24px;letter-spacing:-0.02em;line-height:1}
+  .v3 .tkick{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);margin-top:4px}
+  .v3 .back{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--caramel);text-decoration:none;margin-top:4px}
+  .v3 .kick{
+    display:flex;align-items:baseline;justify-content:space-between;margin-top:18px;
+    background:var(--cream-band-deep);border-radius:10px;padding:8px 12px;
+  }
+  .v3 .kick .k{font-family:var(--serif);font-size:15px;font-weight:500;letter-spacing:-0.01em}
+  .v3 .kick small{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--caramel)}
+  .v3 .adh .hero b{font-family:var(--mono);font-weight:500;letter-spacing:-0.02em}
+  .v3 .adh .hero small{font-family:var(--mono);font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;color:#8a7a66}
+  .v3 .track{background:#efe8db}
+  .v3 .f-hit{background:var(--caramel)}
+  .v3 .f-miss{background:var(--redbrown)}
+  .v3 .f-now{background:var(--choc)}
+  .v3 .dow{font-family:var(--mono);letter-spacing:.04em;color:#b3a390}
+  .v3 .cellc.today .dow{color:var(--choc);font-weight:500}
+  .v3 .pdot.ok{background:var(--caramel)}
+  .v3 .pdot.short{border:1.5px solid var(--redbrown)}
+  .v3 .pdot.now{border:1.5px dashed var(--choc)}
+  .v3 .totals{
+    display:flex;justify-content:space-between;margin-top:10px;background:#fff;border-radius:9px;
+    padding:8px 11px;font-family:var(--mono);font-size:10.5px;color:#6d5c48;
+  }
+  .v3 .totals b{color:var(--choc);font-weight:500}
+  .v3 .meal-head{border-bottom:1px solid #e0d6c4}
+  .v3 .meal-nm{font-family:var(--serif);font-size:18px;font-weight:500;letter-spacing:-0.01em}
+  .v3 .meal-kc{font-family:var(--mono);font-size:11px;color:var(--caramel)}
+  .v3 .food .nm{font-size:14.5px;color:var(--choc)}
+  .v3 .food .meta{font-family:var(--mono);font-size:10px;color:#b3a390}
+  .v3 .food .amt{font-family:var(--mono);font-size:11px;color:#8a7a66;text-align:right}
+  .v3 .fact .tx{font-family:var(--serif);font-size:15px}
+  .v3 .fact .meta{font-family:var(--mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#b3a390;margin-top:3px}
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Plan in the silent-menu language</h1>
+    <p>3 variants, issue #28 round 4 of 4, cream canvas per round 1. #30 and #31 were open and unbuilt at drawing time, so these show today's Plan, not their redesigns. WebGL figure is out of scope (placeholder shown).</p>
+  </div>
+  <div class="note">
+    A condensed scroll of the Plan screen: header, profile figure, this week's adherence, meal plan,
+    memory. <b>V1 goes full silent menu</b>: cream section bands, uppercase meal names with kcal and
+    protein pills, and the adherence cells recolored into the palette (hit caramel, miss red-brown,
+    today chocolate). <b>V2 restyles the furniture but leaves the data viz alone</b>: same bands and
+    pills, adherence and trend keep today's green/red/terracotta coding. <b>V3 is the editorial
+    hybrid</b>: serif titles survive inside the cream bands, palette swaps, data viz recolored like
+    V1. All keep the enter stagger with the reduced-motion off-switch.
+  </div>
+
+  <div class="stage">
+
+    <!-- ===== V1: full silent menu ===== -->
+    <div class="col">
+      <div class="col-cap">V1 — Full silent menu</div>
+      <div class="phone v1">
+        <div class="top anim">
+          <div>
+            <div class="ttl">Plan</div>
+            <div class="tkick">Profile, meals, memory</div>
+          </div>
+          <a class="back" href="#">‹ Today</a>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.05s">Profile <small>edit</small></div>
+        <div class="fig anim" style="animation-delay:.08s">
+          <svg width="40" height="80" viewBox="0 0 40 80" fill="none" stroke="#8a8578" stroke-width="2"><circle cx="20" cy="12" r="8"/><path d="M20 20v28M20 30l-12 8M20 30l12 8M20 48l-9 24M20 48l9 24"/></svg>
+          <span class="cap">3D figure, unchanged</span>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.11s">Adherence <small>this week</small></div>
+        <div class="adh anim" style="animation-delay:.14s">
+          <div class="hero"><b>5<span style="color:#b3a390;font-size:17px">/7</span></b><small>days on plan</small></div>
+          <div class="cells">
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:52px"></div></div><span class="pdot ok"></span><span class="dow">M</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:46px"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-miss" style="height:30px"></div></div><span class="pdot short"></span><span class="dow">W</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:50px"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+            <div class="cellc today"><div class="track"><div class="fill f-now" style="height:34px"></div></div><span class="pdot now"></span><span class="dow">F</span></div>
+            <div class="cellc"><div class="track" style="background:#f3f0e9"></div><span class="pdot" style="visibility:hidden"></span><span class="dow" style="color:#d4cdc0">S</span></div>
+            <div class="cellc"><div class="track" style="background:#f3f0e9"></div><span class="pdot" style="visibility:hidden"></span><span class="dow" style="color:#d4cdc0">S</span></div>
+          </div>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.17s">Meal plan <small>5 meals</small></div>
+        <div class="totals anim" style="animation-delay:.2s"><span><b>3,560</b> kcal</span><span><b>212</b> prot</span><span><b>421</b> carb</span><span><b>124</b> fat</span></div>
+        <div class="anim" style="animation-delay:.23s">
+          <div class="meal-head">
+            <span class="meal-nm">Breakfast</span>
+            <span class="meal-pills"><span class="pill kc">815 cal</span><span class="pill pr">42g</span></span>
+          </div>
+          <div class="food">
+            <div class="thumb">O</div>
+            <div class="mid"><span class="nm">Oats</span><br><span class="meta">389 kcal / 100g</span></div>
+            <div class="amt">120g<br><span style="color:#b3a390">467 kcal</span></div>
+          </div>
+          <div class="food" style="border-top:1px solid #efe8db">
+            <div class="thumb">M</div>
+            <div class="mid"><span class="nm">Whole milk</span><br><span class="meta">61 kcal / 100ml</span></div>
+            <div class="amt">400ml<br><span style="color:#b3a390">244 kcal</span></div>
+          </div>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.26s">Memory <small>4 facts</small></div>
+        <div class="fact anim" style="animation-delay:.29s">
+          <div class="tx">Prefers rice over pasta on training days</div>
+          <div class="meta">Added by chat</div>
+        </div>
+      </div>
+      <p class="annot"><b>The whole screen speaks the language.</b> Uppercase PLAN with caramel
+      kicker, cream kick bands replace the mono section kickers, uppercase meal names carry
+      chocolate kcal and caramel protein pills, food metadata goes caramel uppercase, and the
+      adherence strip is recolored: caramel hit bars, red-brown miss, chocolate for today. The
+      trend line and figure chrome would follow the same palette.</p>
+    </div>
+
+    <!-- ===== V2: banded sections only ===== -->
+    <div class="col">
+      <div class="col-cap">V2 — Banded sections, quiet data</div>
+      <div class="phone v2">
+        <div class="top anim">
+          <div>
+            <div class="ttl">Plan</div>
+            <div class="tkick">Profile, meals, memory</div>
+          </div>
+          <a class="back" href="#">‹ Today</a>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.05s">Profile <small>edit</small></div>
+        <div class="fig anim" style="animation-delay:.08s">
+          <svg width="40" height="80" viewBox="0 0 40 80" fill="none" stroke="#8a8578" stroke-width="2"><circle cx="20" cy="12" r="8"/><path d="M20 20v28M20 30l-12 8M20 30l12 8M20 48l-9 24M20 48l9 24"/></svg>
+          <span class="cap">3D figure, unchanged</span>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.11s">Adherence <small>this week</small></div>
+        <div class="adh anim" style="animation-delay:.14s">
+          <div class="hero"><b>5<span style="color:#b3a390;font-size:17px">/7</span></b><small>days on plan</small></div>
+          <div class="cells">
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:52px"></div></div><span class="pdot ok"></span><span class="dow">M</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:46px"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-miss" style="height:30px"></div></div><span class="pdot short"></span><span class="dow">W</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:50px"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+            <div class="cellc today"><div class="track"><div class="fill f-now" style="height:34px"></div></div><span class="pdot now"></span><span class="dow">F</span></div>
+            <div class="cellc"><div class="track" style="background:#f3f1ec"></div><span class="pdot" style="visibility:hidden"></span><span class="dow" style="color:#d4cdc0">S</span></div>
+            <div class="cellc"><div class="track" style="background:#f3f1ec"></div><span class="pdot" style="visibility:hidden"></span><span class="dow" style="color:#d4cdc0">S</span></div>
+          </div>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.17s">Meal plan <small>5 meals</small></div>
+        <div class="totals anim" style="animation-delay:.2s"><span><b>3,560</b> kcal</span><span><b>212</b> prot</span><span><b>421</b> carb</span><span><b>124</b> fat</span></div>
+        <div class="anim" style="animation-delay:.23s">
+          <div class="meal-head">
+            <span class="meal-nm">Breakfast</span>
+            <span class="meal-pills"><span class="pill kc">815 cal</span><span class="pill pr">42g</span></span>
+          </div>
+          <div class="food">
+            <div class="thumb">O</div>
+            <div class="mid"><span class="nm">Oats</span><br><span class="meta">389 kcal / 100g</span></div>
+            <div class="amt">120g<br><span style="color:#b3a390">467 kcal</span></div>
+          </div>
+          <div class="food" style="border-top:1px solid #efe8db">
+            <div class="thumb">M</div>
+            <div class="mid"><span class="nm">Whole milk</span><br><span class="meta">61 kcal / 100ml</span></div>
+            <div class="amt">400ml<br><span style="color:#b3a390">244 kcal</span></div>
+          </div>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.26s">Memory <small>4 facts</small></div>
+        <div class="fact anim" style="animation-delay:.29s">
+          <div class="tx">Prefers rice over pasta on training days</div>
+          <div class="meta">Added by chat</div>
+        </div>
+      </div>
+      <p class="annot"><b>Bands and pills without touching the data.</b> Same header, cream kick
+      bands and meal pills as V1, but serif meal names and mono numbers stay, and the data viz
+      keeps its current coding: green hits, muted red misses, terracotta for today, so the dense
+      screen doesn't turn into a menu board and the adherence colors keep their meaning.</p>
+    </div>
+
+    <!-- ===== V3: editorial hybrid ===== -->
+    <div class="col">
+      <div class="col-cap">V3 — Editorial hybrid</div>
+      <div class="phone v3">
+        <div class="top anim">
+          <div>
+            <div class="ttl">Plan</div>
+            <div class="tkick">Profile, meals, memory</div>
+          </div>
+          <a class="back" href="#">‹ Today</a>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.05s"><span class="k">Profile</span> <small>edit</small></div>
+        <div class="fig anim" style="animation-delay:.08s">
+          <svg width="40" height="80" viewBox="0 0 40 80" fill="none" stroke="#8a8578" stroke-width="2"><circle cx="20" cy="12" r="8"/><path d="M20 20v28M20 30l-12 8M20 30l12 8M20 48l-9 24M20 48l9 24"/></svg>
+          <span class="cap">3D figure, unchanged</span>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.11s"><span class="k">Adherence</span> <small>this week</small></div>
+        <div class="adh anim" style="animation-delay:.14s">
+          <div class="hero"><b>5<span style="color:#b3a390;font-size:17px">/7</span></b><small>days on plan</small></div>
+          <div class="cells">
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:52px"></div></div><span class="pdot ok"></span><span class="dow">M</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:46px"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-miss" style="height:30px"></div></div><span class="pdot short"></span><span class="dow">W</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:50px"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+            <div class="cellc today"><div class="track"><div class="fill f-now" style="height:34px"></div></div><span class="pdot now"></span><span class="dow">F</span></div>
+            <div class="cellc"><div class="track" style="background:#f3f0e9"></div><span class="pdot" style="visibility:hidden"></span><span class="dow" style="color:#d4cdc0">S</span></div>
+            <div class="cellc"><div class="track" style="background:#f3f0e9"></div><span class="pdot" style="visibility:hidden"></span><span class="dow" style="color:#d4cdc0">S</span></div>
+          </div>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.17s"><span class="k">Meal plan</span> <small>5 meals</small></div>
+        <div class="totals anim" style="animation-delay:.2s"><span><b>3,560</b> kcal</span><span><b>212</b> prot</span><span><b>421</b> carb</span><span><b>124</b> fat</span></div>
+        <div class="anim" style="animation-delay:.23s">
+          <div class="meal-head">
+            <span class="meal-nm">Breakfast</span>
+            <span class="meal-kc">815 kcal, 42g protein</span>
+          </div>
+          <div class="food">
+            <div class="thumb">O</div>
+            <div class="mid"><span class="nm">Oats</span><br><span class="meta">389 kcal / 100g</span></div>
+            <div class="amt">120g<br><span style="color:#b3a390">467 kcal</span></div>
+          </div>
+          <div class="food" style="border-top:1px solid #efe8db">
+            <div class="thumb">M</div>
+            <div class="mid"><span class="nm">Whole milk</span><br><span class="meta">61 kcal / 100ml</span></div>
+            <div class="amt">400ml<br><span style="color:#b3a390">244 kcal</span></div>
+          </div>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.26s"><span class="k">Memory</span> <small>4 facts</small></div>
+        <div class="fact anim" style="animation-delay:.29s">
+          <div class="tx">Prefers rice over pasta on training days</div>
+          <div class="meta">Added by chat</div>
+        </div>
+      </div>
+      <p class="annot"><b>Serif keeps the byline, palette does the warming.</b> Serif Plan title and
+      serif section names sit inside the cream bands, mono numbers survive everywhere, no pills
+      (meal macros stay a mono line), but the full palette lands: caramel accents, red-brown miss
+      bars, chocolate today. The middle path between V1 and today's screen.</p>
+    </div>
+
+  </div>
+</div>

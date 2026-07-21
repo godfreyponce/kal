@@ -1,0 +1,126 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal, Plan silent-menu combined, round 4 pick V2 (issue #28)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --choc:#3f2a1a; --pillbg:#48291a; --caramel:#a97a24; --redbrown:#ac2318;
+    --cream-band:#f6efe2; --cream-band-deep:#f1e7d3; --cream-canvas:#f7f6f3;
+    --green:#346538; --terra:#d97757; --oldred:#9f2f2d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#1d1c1a; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:900px;margin:0 auto}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .stage{display:flex;gap:36px;justify-content:center;align-items:flex-start;flex-wrap:wrap;margin-top:30px}
+  .col{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .col-cap{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+  .annot{width:392px;font-family:var(--mono);font-size:11px;line-height:1.7;opacity:.85}
+  .annot b{color:#fff;font-weight:500}
+
+  .phone{
+    position:relative;width:392px;border-radius:22px;padding:22px 20px 30px;overflow:hidden;
+    background:var(--cream-canvas);color:var(--choc);box-shadow:0 16px 44px rgba(0,0,0,.4);
+  }
+  @keyframes enter{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .anim{animation:enter .34s cubic-bezier(.32,.72,.33,1) backwards}
+  @media (prefers-reduced-motion: reduce){.anim{animation:none}}
+
+  .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .ttl{font-size:22px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+  .tkick{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel);margin-top:5px}
+  .back{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--caramel);text-decoration:none;margin-top:4px}
+  .kick{
+    display:flex;align-items:baseline;justify-content:space-between;margin-top:18px;
+    background:var(--cream-band-deep);border-radius:10px;padding:9px 12px;
+    font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  }
+  .kick small{color:var(--caramel);font-size:9px;font-weight:700;letter-spacing:.1em}
+  .kick .chev{color:var(--caramel);font-size:10px;margin-left:8px}
+  .kick .end{display:inline-flex;align-items:baseline;gap:8px}
+
+  .adh{display:flex;gap:14px;align-items:flex-start;margin-top:10px}
+  .adh .hero b{font-family:var(--mono);font-weight:500;font-size:28px;line-height:1.05;letter-spacing:-0.02em;display:block}
+  .adh .hero small{display:block;max-width:80px;line-height:1.35;margin-top:2px;font-family:var(--mono);font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;color:#8a7a66}
+  .cells{flex:1;display:flex;gap:5px;align-items:flex-end}
+  .cellc{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+  .track{width:15px;height:64px;border-radius:4px;position:relative;overflow:hidden;background:#eceae3}
+  .fill{position:absolute;bottom:0;left:0;right:0;border-radius:4px 4px 0 0}
+  .f-hit{background:var(--green)}
+  .f-miss{background:var(--oldred)}
+  .f-now{background:var(--terra)}
+  .dow{font-family:var(--mono);font-size:8.5px;letter-spacing:.04em;color:#b3a390}
+  .cellc.today .dow{color:var(--terra);font-weight:500}
+  .pdot{width:7px;height:7px;border-radius:999px}
+  .pdot.ok{background:var(--green)}
+  .pdot.short{border:1.5px solid var(--oldred)}
+  .pdot.now{border:1.5px dashed var(--terra)}
+
+  .fig{
+    height:110px;border-radius:14px;margin-top:10px;background:#eceae3;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .fig svg{opacity:.5}
+  .fig .cap{position:absolute;bottom:8px;right:10px;font-family:var(--mono);font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;color:#8a8578}
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Plan, silent-menu combined</h1>
+    <p>issue #28 round 4, owner pick V2 with tweaks: Adherence swaps to the top above Profile; Meal plan and Memory closed by default (collapse behavior filed as its own ticket)</p>
+  </div>
+
+  <div class="stage">
+    <div class="col">
+      <div class="col-cap">Combined, banded sections, quiet data</div>
+      <div class="phone">
+        <div class="top anim">
+          <div>
+            <div class="ttl">Plan</div>
+            <div class="tkick">Profile, meals, memory</div>
+          </div>
+          <a class="back" href="#">‹ Today</a>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.05s">Adherence <small>this week</small></div>
+        <div class="adh anim" style="animation-delay:.08s">
+          <div class="hero"><b>5<span style="color:#b3a390;font-size:17px">/7</span></b><small>days on plan</small></div>
+          <div class="cells">
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:52px"></div></div><span class="pdot ok"></span><span class="dow">M</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:46px"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-miss" style="height:30px"></div></div><span class="pdot short"></span><span class="dow">W</span></div>
+            <div class="cellc"><div class="track"><div class="fill f-hit" style="height:50px"></div></div><span class="pdot ok"></span><span class="dow">T</span></div>
+            <div class="cellc today"><div class="track"><div class="fill f-now" style="height:34px"></div></div><span class="pdot now"></span><span class="dow">F</span></div>
+            <div class="cellc"><div class="track" style="background:#f3f1ec"></div><span class="pdot" style="visibility:hidden"></span><span class="dow" style="color:#d4cdc0">S</span></div>
+            <div class="cellc"><div class="track" style="background:#f3f1ec"></div><span class="pdot" style="visibility:hidden"></span><span class="dow" style="color:#d4cdc0">S</span></div>
+          </div>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.11s">Profile <small>edit</small></div>
+        <div class="fig anim" style="animation-delay:.14s">
+          <svg width="40" height="80" viewBox="0 0 40 80" fill="none" stroke="#8a8578" stroke-width="2"><circle cx="20" cy="12" r="8"/><path d="M20 20v28M20 30l-12 8M20 30l12 8M20 48l-9 24M20 48l9 24"/></svg>
+          <span class="cap">3D figure, unchanged</span>
+        </div>
+
+        <div class="kick anim" style="animation-delay:.17s">Meal plan <span class="end"><small>5 meals</small><span class="chev">▾</span></span></div>
+
+        <div class="kick anim" style="animation-delay:.2s">Memory <span class="end"><small>4 facts</small><span class="chev">▾</span></span></div>
+      </div>
+      <p class="annot"><b>V2 with the owner's reorder and closed-by-default sections.</b> Adherence
+      moves to the top of the scroll, swapping places with Profile. Meal plan and Memory rest as
+      closed cream bands, counts and a chevron on the band, contents hidden until tapped (the
+      collapse behavior itself is a separate ticket from the restyle). Everything else is V2 as
+      drawn: cream bands, chocolate ink, serif meal names and mono numbers inside the sections
+      when open, and the data viz keeps its green/red/terracotta meaning.</p>
+    </div>
+  </div>
+</div>
