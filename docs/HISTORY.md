@@ -71,6 +71,17 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Em-dash / middle-dot copy sweep — #27 (2026-07-21) — COMMITTED & pushed to main
+
+Owner copy rule (no em dashes or middle dots in UI copy) applied across `app/`: 29 string
+occurrences in 12 files replaced with commas or a plain rewording — copy-only, no markup/logic/
+CSS changes. Notables: the two null-value `"—"` glyphs in `profile-section.tsx` became `"n/a"`;
+the groceries lookup placeholder reworded to "Look up nutrition by name or barcode"; the ⇄
+glyph in `meal-plan-editor.tsx` stays. Code comments (incl. every hit in `globals.css`) and
+`lib/` prompt/tool text untouched per the ticket's Done-when. Verified: grep for —/· in `app/`
+outside comments empty; diff touched no comment lines; tsc clean; 170/170 (25 files).
+Plan: `docs/superpowers/plans/2026-07-20-issue-27.md`.
+
 ## Adherence day-cell bubble press + history grabber pill — #26 (2026-07-20) — COMMITTED & pushed to main; phone pass pending
 
 Two feel refinements to the /plan adherence card. (1) Press-and-hold on a weekly-strip day cell
