@@ -36,7 +36,7 @@ export function WeighIn({
   }
 
   return (
-    <div className="weigh">
+    <div className="weigh anim" style={{ animationDelay: "0.12s" }}>
       <div className="wl">
         <div className="kicker">Weekly weigh-in</div>
         <b>

@@ -56,16 +56,14 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
 
   return (
     <>
-      <div className="meals-head">
-        <div className="kicker">Meals</div>
-      </div>
+      <div className="meals-band anim" style={{ animationDelay: "0.15s" }}>Meals</div>
       <ul className="checklist">
-        {meals.map((m) => {
+        {meals.map((m, i) => {
           const status = statusOf(m);
           const eaten = status === "eaten";
           const now = !eaten && m.isNow;
           return (
-            <li key={m.id}>
+            <li key={m.id} className="anim" style={{ animationDelay: `${0.18 + i * 0.03}s` }}>
               <button
                 type="button"
                 className={`box${eaten ? " done" : now ? " now" : ""}`}
@@ -87,11 +85,10 @@ export function MealList({ meals, date }: { meals: TodayMeal[]; date: string }) 
                   <span className={`n${eaten ? " done" : ""}`}>{m.name}</span>
                   {!eaten && m.timeHint && <small>{m.timeHint}</small>}
                 </span>
-                <span className="ck">
+                <span className={`ck${eaten ? " faded" : ""}`}>
                   {m.adjusted && <span className="adjmark" aria-hidden="true">⇄</span>}
-                  {n(m.plannedKcal)}
+                  {n(m.plannedKcal)} cal
                 </span>
-                <span className="mchev">›</span>
               </button>
             </li>
           );

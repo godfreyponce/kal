@@ -61,7 +61,7 @@ function MacroRow({
 
 export default async function TodayPage() {
   const date = todayInAppTz();
-  const { summary, meals, eatenCount, latestWeighIn, weighInDue } = await getTodayView(date);
+  const { summary, meals, latestWeighIn, weighInDue } = await getTodayView(date);
   const { targets, consumed, remaining } = summary;
 
   const kcalPct = Math.max(0, Math.min(1, consumed.kcal / targets.kcal));
@@ -70,27 +70,21 @@ export default async function TodayPage() {
   return (
     <main className="app">
       <RefreshOnFocus />
-      <div className="head-row">
+      <div className="head-row anim">
         <div>
           <h1 className="head-title">Today</h1>
           <div className="head-date">{headerDate(date)}</div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-          <div style={{ display: "flex", gap: 8 }}>
-            <SignOut />
-            <Link href="/plan" className="chat-link">Plan</Link>
-            <Link href="/groceries" className="chat-link">Groceries</Link>
-            <Link href="/chat" className="chat-link">Chat →</Link>
-          </div>
-          <span className={`meals-count${eatenCount === 0 ? " none" : ""}`}>
-            {eatenCount > 0 && <span className="dot" />}
-            {eatenCount} / {meals.length} eaten
-          </span>
+        <div className="top-nav">
+          <SignOut />
+          <Link href="/plan" className="top-link">Plan</Link>
+          <Link href="/groceries" className="top-link">Groceries</Link>
+          <Link href="/chat" className="top-link">Chat ›</Link>
         </div>
       </div>
 
       {/* calorie ring */}
-      <div className="ring-block">
+      <div className="ring-block anim" style={{ animationDelay: "0.05s" }}>
         <div className="ring-wrap">
           <svg width="172" height="172" viewBox="0 0 172 172">
             <circle cx="86" cy="86" r={RING_R} fill="none" stroke="var(--ring-track)" strokeWidth="11" />
@@ -99,7 +93,7 @@ export default async function TodayPage() {
               cy="86"
               r={RING_R}
               fill="none"
-              stroke="var(--ink)"
+              stroke="var(--sm-choc)"
               strokeWidth="11"
               strokeLinecap="round"
               strokeDasharray={RING_C}
@@ -117,17 +111,13 @@ export default async function TodayPage() {
         </div>
       </div>
 
-      <div className="rule" />
-
-      <div className="macros">
-        <MacroRow label="Protein" remaining={remaining.proteinG} consumed={consumed.proteinG} target={targets.proteinG} color="var(--protein)" />
-        <MacroRow label="Carbs" remaining={remaining.carbsG} consumed={consumed.carbsG} target={targets.carbsG} color="var(--carbs)" />
-        <MacroRow label="Fat" remaining={remaining.fatG} consumed={consumed.fatG} target={targets.fatG} color="var(--fat)" />
+      <div className="macros anim" style={{ animationDelay: "0.1s" }}>
+        <MacroRow label="Protein" remaining={remaining.proteinG} consumed={consumed.proteinG} target={targets.proteinG} color="var(--sm-red)" />
+        <MacroRow label="Carbs" remaining={remaining.carbsG} consumed={consumed.carbsG} target={targets.carbsG} color="var(--sm-caramel)" />
+        <MacroRow label="Fat" remaining={remaining.fatG} consumed={consumed.fatG} target={targets.fatG} color="var(--sm-pill)" />
       </div>
 
       {weighInDue && <WeighIn date={date} latestWeighIn={latestWeighIn} />}
-
-      <div className="rule" />
 
       <MealList key={date} meals={meals} date={date} />
     </main>

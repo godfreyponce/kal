@@ -69,50 +69,55 @@ body {
   margin: 22px 0;
 }
 
+/* enter stagger (silent menu, #32) — reduced motion turns it fully off */
+@keyframes enter {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.anim { animation: enter 0.34s cubic-bezier(0.32, 0.72, 0.33, 1) backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .anim { animation: none; }
+}
+
 /* header */
 .head-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 4px;
 }
 .head-title {
-  font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 26px;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--sm-choc);
 }
 .head-date {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--faint);
-  letter-spacing: 0.06em;
-  margin-top: 4px;
-}
-.meals-count {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.07em;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  border-radius: 9999px;
-  padding: 5px 11px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--green-bg);
-  color: var(--green-tx);
-  white-space: nowrap;
+  color: var(--sm-caramel);
+  margin-top: 5px;
 }
-.meals-count.none {
-  background: var(--surface-2);
-  color: var(--muted);
+.top-nav {
+  display: flex;
+  gap: 12px; /* mockup is 14px with 3 links; 12px fits the 4th (Sign out) on a 375px phone */
 }
-.meals-count .dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 9999px;
-  background: currentColor;
+.top-link {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sm-caramel);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 /* ring */
@@ -120,7 +125,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 0 18px;
+  padding: 18px 0 6px;
 }
 .ring-wrap {
   position: relative;
@@ -134,65 +139,64 @@ body {
   justify-content: center;
 }
 .ring-center b {
-  font-family: var(--font-mono);
-  font-size: 36px;
-  font-weight: 500;
-  color: var(--ink);
+  font-size: 33px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--sm-choc);
   line-height: 1;
-  letter-spacing: -0.01em;
 }
 .ring-center small {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--faint);
-  margin-top: 7px;
+  color: var(--sm-caramel);
+  margin-top: 6px;
 }
 .ring-foot {
-  margin-top: 15px;
-  font-size: 12.5px;
-  color: var(--muted);
+  margin-top: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sm-choc);
 }
 .ring-foot b {
-  font-family: var(--font-mono);
-  color: var(--ink-soft);
-  font-weight: 500;
+  font-weight: 700;
+  color: inherit;
 }
 .ring-foot .rf-pct {
-  margin-left: 10px;
-  font-family: var(--font-mono);
-  color: var(--faint);
+  margin-left: 6px;
+  color: var(--sm-caramel);
 }
 
 /* segmented macro rows */
 .macros {
+  margin-top: 16px;
   margin-bottom: 4px;
 }
 .mrow {
   display: grid;
-  grid-template-columns: 78px 1fr auto;
+  grid-template-columns: 74px 1fr auto;
   align-items: center;
-  gap: 16px;
-  padding: 8px 0 18px;
+  gap: 14px;
+  padding: 9px 0;
 }
 .mrow .ml b {
-  font-family: var(--font-mono);
-  font-size: 19px;
-  font-weight: 500;
-  color: var(--ink);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--sm-choc);
   display: block;
   line-height: 1;
-  letter-spacing: -0.01em;
 }
 .mrow .ml small {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.1em;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--faint);
+  color: var(--sm-caramel);
   display: block;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 .seg {
   display: flex;
@@ -205,18 +209,24 @@ body {
   background: var(--seg-empty);
 }
 .mrow .mtarget {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--faint);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #b3a390;
   white-space: nowrap;
 }
 
 /* meals checklist */
-.meals-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 2px;
+.meals-band {
+  margin-top: 22px;
+  background: #f1e7d3; /* deliberately darker than --sm-band: #f6efe2 vanishes on the cream canvas */
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sm-choc);
 }
 .checklist {
   list-style: none;
@@ -227,17 +237,13 @@ body {
   display: flex;
   align-items: center;
   gap: 13px;
-  padding: 13px 0;
-  border-bottom: 1px solid var(--border);
-}
-.checklist li:last-child {
-  border-bottom: none;
+  padding: 14px 2px;
 }
 .box {
-  width: 24px;
-  height: 24px;
+  width: 23px;
+  height: 23px;
   border-radius: 7px;
-  border: 1px solid var(--border);
+  border: 1.5px solid #dccfb8;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -251,38 +257,57 @@ body {
   cursor: default;
 }
 .box.done {
-  background: var(--green-bg);
-  border-color: var(--green-bg);
+  background: var(--sm-band);
+  border-color: var(--sm-band);
 }
 .box.done svg {
-  stroke: var(--green-tx);
+  stroke: var(--sm-choc);
 }
 .box.now {
-  border-color: var(--blue-tx);
-  box-shadow: 0 0 0 3px var(--blue-bg);
+  border-color: var(--sm-red);
+  box-shadow: 0 0 0 3px rgba(172, 35, 24, 0.12);
 }
 .ct {
   flex: 1;
   min-width: 0;
 }
 .ct .n {
-  font-size: 14.5px;
-  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--sm-choc);
 }
 .ct .n.done {
-  color: var(--faint);
+  color: #b3a390;
 }
 .ct small {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--faint);
-  margin-top: 1px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #b3a390;
+  margin-top: 2px;
 }
 .ck {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--faint);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--sm-pill);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+.ck.faded {
+  background: #cbbfae;
+}
+.ck .adjmark {
+  color: var(--sm-band); /* terracotta is illegible on the chocolate pill; popup keeps terracotta */
+  font-size: 10px;
+  vertical-align: 0;
 }
 /* deviation copilot: marks a meal re-portioned for today (owner-picked
    treatment C — a terracotta swap glyph before the kcal figure) */
@@ -307,10 +332,6 @@ body {
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-}
-.mchev {
-  color: var(--faint);
-  font-size: 13px;
 }
 
 /* meal-detail popup (variant B card, B3 per-serving expand) */
