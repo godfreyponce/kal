@@ -1,10 +1,10 @@
 ---
 glass: kal
 status: in-progress
-last_worked_on: 2026-07-21
-next_action: "#32 — Today restyle in the silent-menu language (spec design/today-silent-menu-combined.html; /plan-ticket 32; needs ready-for-agent green-light before build)"
+last_worked_on: 2026-07-22
+next_action: "#33 — Login restyle in the silent-menu language (spec design/login-silent-menu-combined.html; /plan-ticket 33; needs ready-for-agent green-light before build)"
 blocked_on: ""
-phase: "v1 shipped; #28 silent-menu rollout closed 2026-07-21 (design-only umbrella: cream canvas stays, tickets #32-#36 spawned); #27 copy sweep on main 2026-07-21; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
+phase: "v1 shipped; #32 Today silent-menu restyle on main 2026-07-22 (rollout continues: #33 Login, #34 Chat, #35 Plan); #28 silent-menu rollout closed 2026-07-21 (design-only umbrella: cream canvas stays, tickets #32-#36 spawned); #27 copy sweep on main 2026-07-21; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
 ---
 
 # Kal — Project State
@@ -20,6 +20,10 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
 
 *Unaccepted work only. Anything the owner has accepted belongs in `docs/HISTORY.md`, not here.*
 
+- Owner visual pass of the restyled Today (#32, accepted at gate 2 from the diff, no browser
+  check yet): compare `/` against `design/today-silent-menu-combined.html` (`rm -rf .next`
+  first, stale-CSS gotcha); glance at reduced-motion (stagger fully off) and the current
+  meal's red checkbox ring. Plan's header must still be serif (ac92726 restored it).
 - Owner phone-verify of **deployed** prod `/plan` — everything to date has passed on local prod
   builds over Tailscale (#6/#22 on 2026-07-15; #23/#24 incl. the #25 scrim fix on 2026-07-17)
   but the deployed-prod pass is still outstanding. Login now takes the same password as local

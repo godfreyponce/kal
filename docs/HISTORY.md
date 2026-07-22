@@ -71,6 +71,30 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Today restyle in the silent-menu language — #32 (2026-07-22) — COMMITTED & pushed to main; owner visual pass pending
+
+First code ticket of the #28 rollout, built subagent-driven from
+`docs/superpowers/plans/2026-07-22-issue-32.md` in two tasks + one review fix. (1) Token
+promotion: Groceries' `--gro-*` palette became shared `:root` `--sm-choc/pill/caramel/red/band`
+tokens (Groceries repointed 1:1, pixel-identical by construction; `--seg-empty`/`--ring-track`
+warmed to #eee5d2 — Today-only consumers). (2) Today rewrite per
+`design/today-silent-menu-combined.html`: uppercase 800 header + caramel date kicker; caramel
+`.top-nav`/`.top-link` nav (Sign out, Plan, Groceries, Chat ›); chocolate ring on warmed-cream
+track; macro bars colored via scoped `var(--sm-*)` props from `page.tsx`
+(`--protein/--carbs/--fat` untouched — they still feed the popup, Plan modal, Chat); Meals band
+is LITERAL #f1e7d3, not `--sm-band` (#f6efe2 vanishes on the cream canvas — do not "unify");
+chocolate "N cal" pills (greige `.faded` when eaten, `.ck .adjmark` cream); red current-meal
+checkbox ring; enter stagger with reduced-motion fully off. Owner removals from the pick:
+eaten-count text and the Meals tap hint. **Plan flaw caught by the whole-branch review:**
+`.head-row/.head-title/.head-date` are shared with Plan's header and the plan restyled them in
+place — fix ac92726 renamed Today's to `.today-head/.today-title/.today-date` and restored the
+serif/mono `.head-*` verbatim, so Plan keeps its old header until #35. Out of scope, stated at
+gate 2: `.mpop-*` meal popup (shared with Plan's day-detail modal), weigh-in card styling
+(stagger only), Plan's `.chat-link` back link. Verified: tsc clean, 170/170 (25 files), build
+`/` ƒ. Follow-up #37 filed (orphaned `--blue-*` tokens; dead `eatenCount` in `lib/today.ts`).
+Commits: be4a665 + 8599fdd + ac92726.
+Plan: `docs/superpowers/plans/2026-07-22-issue-32.md`.
+
 ## Silent-menu design language rollout, umbrella — #28 (2026-07-21) — CLOSED; design-only, code lands under #32-#36
 
 Four owner-gated mockup rounds rolled the Groceries silent-menu language (#1) across the app.
