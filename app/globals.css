@@ -79,14 +79,14 @@ body {
   .anim { animation: none; }
 }
 
-/* header */
-.head-row {
+/* header (Today, silent menu, #32) */
+.today-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 4px;
 }
-.head-title {
+.today-title {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: 0.01em;
@@ -94,13 +94,35 @@ body {
   line-height: 1;
   color: var(--sm-choc);
 }
-.head-date {
+.today-date {
   font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--sm-caramel);
   margin-top: 5px;
+}
+
+/* header (Plan, pre-#32 — restyle scoped to Today until #33) */
+.head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.head-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.head-date {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--faint);
+  letter-spacing: 0.06em;
+  margin-top: 4px;
 }
 .top-nav {
   display: flex;

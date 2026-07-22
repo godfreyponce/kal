@@ -70,10 +70,10 @@ export default async function TodayPage() {
   return (
     <main className="app">
       <RefreshOnFocus />
-      <div className="head-row anim">
+      <div className="today-head anim">
         <div>
-          <h1 className="head-title">Today</h1>
-          <div className="head-date">{headerDate(date)}</div>
+          <h1 className="today-title">Today</h1>
+          <div className="today-date">{headerDate(date)}</div>
         </div>
         <div className="top-nav">
           <SignOut />
