@@ -18,8 +18,8 @@
   --faint: #9b9a96;
   --border: #e6e4df;
 
-  --seg-empty: #e9e7e1;
-  --ring-track: #e7e5df;
+  --seg-empty: #eee5d2;
+  --ring-track: #eee5d2;
   --protein: #9f2f2d;
   --carbs: #8a6a1f;
   --fat: #1f6c9f;
@@ -30,6 +30,13 @@
   --blue-tx: #1f6c9f;
 
   --accent: #d97757; /* Claude terracotta */
+
+  /* silent-menu palette (#28 rollout) — promoted from Groceries' --gro-* in #32 */
+  --sm-choc: #3f2a1a;
+  --sm-pill: #48291a;
+  --sm-caramel: #a97a24;
+  --sm-red: #ac2318;
+  --sm-band: #f6efe2; /* cream band: Groceries kick, done checkboxes */
 }
 
 body {
@@ -1311,11 +1318,7 @@ body {
 /* ---- Groceries screen (issue #1 rework; design/groceries-rework-combined.html) ---- */
 
 .groceries {
-  --gro-choc: #3f2a1a;
-  --gro-pill: #48291a;
-  --gro-caramel: #a97a24;
-  --gro-red: #ac2318;
-  color: var(--gro-choc);
+  color: var(--sm-choc);
 }
 /* white canvas for this route only (reference is white, app canvas stays cream) */
 body:has(main.groceries) { background: #fff; }
@@ -1323,15 +1326,15 @@ body:has(main.groceries) { background: #fff; }
 .gro-top { display: flex; justify-content: space-between; align-items: flex-start; }
 .gro-title {
   font-size: 22px; font-weight: 800; letter-spacing: 0.01em; text-transform: uppercase;
-  line-height: 1; color: var(--gro-choc);
+  line-height: 1; color: var(--sm-choc);
 }
 .gro-kicker {
   font-size: 8.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--gro-caramel); margin-top: 5px;
+  color: var(--sm-caramel); margin-top: 5px;
 }
 .gro-back {
   font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--gro-caramel); text-decoration: none;
+  color: var(--sm-caramel); text-decoration: none;
 }
 
 .gro-modes { display: flex; gap: 22px; margin: 16px 0 2px; }
@@ -1340,19 +1343,19 @@ body:has(main.groceries) { background: #fff; }
   font-family: var(--font-sans-stack); font-size: 11.5px; font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase; color: #b3a390;
 }
-.gro-modes button.on { color: var(--gro-choc); }
+.gro-modes button.on { color: var(--sm-choc); }
 .gro-modes button.on::after {
-  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2.5px; background: var(--gro-red);
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2.5px; background: var(--sm-red);
 }
 
 .gro-shelf { margin-top: 26px; }
 .gro-kick {
   display: flex; align-items: baseline; justify-content: space-between;
-  background: #f6efe2; border-radius: 10px; padding: 9px 12px;
+  background: var(--sm-band); border-radius: 10px; padding: 9px 12px;
   font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--gro-choc);
+  color: var(--sm-choc);
 }
-.gro-kick small { color: var(--gro-caramel); font-weight: 700; letter-spacing: 0.1em; font-size: 10px; }
+.gro-kick small { color: var(--sm-caramel); font-weight: 700; letter-spacing: 0.1em; font-size: 10px; }
 .gro-list { list-style: none; margin: 0; padding: 0; }
 
 .gro-row {
@@ -1379,19 +1382,19 @@ body:has(main.groceries) { background: #fff; }
 .gro-pills { display: flex; gap: 5px; margin-bottom: 7px; }
 .gro-pill {
   display: inline-block; font-size: 8.5px; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; background: var(--gro-pill); color: #fff;
+  text-transform: uppercase; background: var(--sm-pill); color: #fff;
   border-radius: 999px; padding: 4px 10px;
 }
-.gro-pill.pro { background: var(--gro-caramel); }
+.gro-pill.pro { background: var(--sm-caramel); }
 .gro-nm {
   display: block; font-size: 17px; font-weight: 800; letter-spacing: 0.01em;
-  text-transform: uppercase; line-height: 1.2; color: var(--gro-choc);
+  text-transform: uppercase; line-height: 1.2; color: var(--sm-choc);
 }
 
 .gro-fab {
   position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom));
   width: 56px; height: 56px; border-radius: 50%; z-index: 5;
-  background: var(--gro-choc); color: #fff; border: 0;
+  background: var(--sm-choc); color: #fff; border: 0;
   font-size: 26px; font-weight: 300; line-height: 1; cursor: pointer;
   box-shadow: 0 10px 24px rgba(63, 42, 26, 0.4);
 }
@@ -1448,7 +1451,7 @@ body:has(main.groceries) { background: #fff; }
   cursor: pointer;
 }
 .gr-delete {
-  font-family: var(--font-mono); font-size: 12px; color: var(--gro-red);
+  font-family: var(--font-mono); font-size: 12px; color: var(--sm-red);
   background: none; border: none; cursor: pointer; margin-left: auto;
 }
 .gr-delete:disabled { color: var(--faint); cursor: default; }
