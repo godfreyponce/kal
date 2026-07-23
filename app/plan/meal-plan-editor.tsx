@@ -180,13 +180,14 @@ export function MealPlanEditor({
                 {adjusted.has(meal.id) && <span className="plan-adjusted" aria-label="adjusted today">⇄</span>}
               </span>
               <span className="plan-meal-end">
-                <span className="plan-meal-kc">
+                <span className="plan-pill kc">
                   {editing
                     ? editSource === "override"
                       ? Math.round(pendingMealKcal)
                       : Math.round(meal.kcal - baselineMealKcal + pendingMealKcal)
                     : meal.kcal} kcal
                 </span>
+                {!editing && <span className="plan-pill pr">{meal.proteinG} g</span>}
                 {!editing && (
                   <button
                     className="plan-edit-btn"

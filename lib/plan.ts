@@ -26,6 +26,7 @@ export type PlanMealView = {
   sortOrder: number;
   items: PlanItemView[];
   kcal: number;
+  proteinG: number;
 };
 export type PlanTargets = { kcal: number; proteinG: number; carbsG: number; fatG: number };
 export type PlanView = { meals: PlanMealView[]; totals: PlanTargets };
@@ -120,6 +121,7 @@ export async function getPlanView(): Promise<PlanView> {
         sortOrder: m.sortOrder,
         items,
         kcal: items.reduce((s, i) => s + i.kcal, 0),
+        proteinG: sumRawMacros(itemRows.filter((r) => r.mealId === m.id)).proteinG,
       };
     }),
     totals: sumRawMacros(itemRows),

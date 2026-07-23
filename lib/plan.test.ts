@@ -44,6 +44,18 @@ describe("getPlanView", () => {
     expect(typeof anyItem.kcal).toBe("number");
     expect(view.totals.kcal).toBeGreaterThan(0);
   });
+
+  it("reports per-meal protein summed raw x quantity", async () => {
+    const f = await firstFood();
+    const { id } = await createMeal({ name: TEST_MEAL });
+    await db.insert(mealItems).values({ mealId: id, foodId: f.id, quantity: "2" });
+    const view = await getPlanView();
+    const m = view.meals.find((x) => x.id === id)!;
+    expect(m.proteinG).toBe(Math.round(2 * Number(f.proteinG))); // integer qty -> exact
+    const empty = await createMeal({ name: `${TEST_MEAL} empty` });
+    const m2 = (await getPlanView()).meals.find((x) => x.id === empty.id)!;
+    expect(m2.proteinG).toBe(0);
+  });
 });
 
 describe("recomputeTargets", () => {
