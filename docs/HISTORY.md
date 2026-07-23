@@ -71,6 +71,36 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Chat restyle in the silent-menu language — #34 (2026-07-23) — COMMITTED & pushed to main; owner phone-passed (local prod over Tailscale)
+
+Third code ticket of the #28 rollout (after #32 Today, #33 Login). Single-task plan from
+`docs/superpowers/plans/2026-07-23-issue-34.md`, kept uncommitted in the working tree until
+accept per the single-task rule. Pure restyle — `chat.tsx` streaming/undo/photo-upload logic
+untouched; only class names + one inline `style` object changed. `app/globals.css`: four tokens
+added to the shared `--sm-*` block — `--sm-band-deep #f1e7d3` (deeper cream, meta strip),
+`--sm-muted #b3a390` (cost figure, placeholders), `--sm-border #e2d9c9` (plus button / popover /
+pending-chip hairlines), `--sm-pink #fc89ac` (Claude-config model name; theme pink washes out on
+cream) — and the 7 pre-existing hard-coded literals of those three hexes elsewhere refactored to
+the tokens (same-value swaps, no visual change; "no duplicated hex" as #32 did). Chat section
+rewritten block-by-block off the cool-grey `--ink/--surface/--border/--faint` palette to `--sm-*`:
+header = uppercase 800 chocolate "KAL" (sans, deliberately NOT Plan's serif), caramel "‹ Today"
+back-link + "Ephemeral / not saved" two-span kicker (kept as two spans, no comma injected — copy
+unchanged), chocolate "+ New" pill; deep-cream meta band (model pink, cost muted-brown via new
+`.cm-c`, token count green via new `.cm-t` reusing `--green-tx`); chocolate user bubble (incl.
+photo variant), cream AI bubble with chocolate ink; tool card = cream band, chocolate "Logged"
+pill with caramel dot, uppercase title + caramel detail, white "Undo" pill; remaining strip =
+cream kick band + white stat cells (sans 800 numbers, caramel labels); caramel typing dots;
+composer = white box (no border), caramel "+" with warm border, red-brown send (`--sm-red`,
+`#8f1d13` on :active). Fixed incidentally: `.bub-ai.err` referenced undefined `--red-bg`/`--red-tx`
+(the error bubble had no background) → now cream band + red-brown ink. `chat.tsx`: `.anim`
+enter-stagger added to header/meta/empty/every thread wrapper/composer (0/0.04s/0.24s load
+stagger; reuses #32's shared `@keyframes enter` + reduced-motion off-switch), and the cost/token
+spans split into `.cm-c`/`.cm-t` so they colour independently — logic identical. tsc clean,
+170/170 (25 files), clean `next build` (`/` stays `ƒ`). Owner phone-verified the local prod build
+over Tailscale (HTTPS via `tailscale serve`, the authed-page path) and passed it; OS
+reduced-motion toggle unglanced (identical `.anim` mechanism to #32/#33).
+Commit: 68eb7eb. Plan: `docs/superpowers/plans/2026-07-23-issue-34.md`.
+
 ## Login restyle in the silent-menu language — #33 (2026-07-23) — COMMITTED & pushed to main; browser-verified locally, owner OS reduced-motion glance pending
 
 Second code ticket of the #28 rollout (after #32). Single-task plan from

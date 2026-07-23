@@ -2,9 +2,9 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-23
-next_action: "#34 — Chat restyle in the silent-menu language (spec design/chat-silent-menu-combined.html; /plan-ticket 34; needs ready-for-agent green-light before build)"
+next_action: "#35 — Plan restyle in the silent-menu language (spec design/plan-silent-menu-combined.html; /plan-ticket 35; needs ready-for-agent green-light before build)"
 blocked_on: ""
-phase: "v1 shipped; #33 Login silent-menu restyle on main 2026-07-23; #32 Today silent-menu restyle on main 2026-07-22 (rollout continues: #34 Chat, #35 Plan); #28 silent-menu rollout closed 2026-07-21 (design-only umbrella: cream canvas stays, tickets #32-#36 spawned); #27 copy sweep on main 2026-07-21; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
+phase: "v1 shipped; #34 Chat silent-menu restyle on main 2026-07-23; #33 Login silent-menu restyle on main 2026-07-23; #32 Today silent-menu restyle on main 2026-07-22 (rollout continues: #35 Plan); #28 silent-menu rollout closed 2026-07-21 (design-only umbrella: cream canvas stays, tickets #32-#36 spawned); #27 copy sweep on main 2026-07-21; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
 ---
 
 # Kal — Project State
