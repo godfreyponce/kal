@@ -71,6 +71,57 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Plan restyle in the silent-menu language — #35 (2026-07-23) — COMMITTED & pushed to main; owner visual pass pending
+
+Fourth code ticket of the #28 rollout (after #32 Today, #33 Login, #34 Chat), built from the
+round-4 pick `design/plan-silent-menu-combined.html` (V2 plus the owner's section reorder).
+Multi-task plan → ticket branch `plan-silent-menu`, one commit per task, fast-forwarded to main.
+`app/plan/page.tsx`: Adherence and Profile swap (Adherence is now the first section), the four
+mono `.plan-sec-head`/`.plan-kicker` rows become deep-cream `.plan-kick` bands (name left, meta
+right in caramel via a `small` child), the `<div className="rule" />` under the header goes (the
+first band separates now), the white `.plan-card` around the adherence strip goes, and `.anim`
+enter-stagger lands on the header + each band (0.05/0.08/0.11/0.17/0.2s, reusing #32's shared
+`@keyframes enter` + reduced-motion off-switch). `<ProfileSection>` is deliberately NOT wrapped
+in `.anim` — `figure-canvas.tsx:97` sizes the WebGL drawing buffer from `wrap.clientWidth` at
+mount, and `.anim`'s `scale(0.97)` would measure a shrunk container; the Profile *band* staggers,
+the figure does not. `app/globals.css`: three regions converted off the cool-grey
+`--ink/--muted/--faint/--border` palette to the shared `--sm-*` tokens — the Plan header
+(`.head-*`, Plan-only since ac92726, now uppercase 800 chocolate sans + caramel kicker, dropping
+the serif face ac92726 had deliberately kept until this ticket), the main Plan block, and the
+Plan-owned `.dd-*` / `.cal-*` regions that sit up in the Today area of the file. `.chat-link`
+(the stale-named pill back link, one use site) deleted in favour of a bare caramel `.plan-back`;
+`.plan-sec-head`/`.plan-kicker`/`.plan-card`/`.plan-meal-kc` deleted with their use sites. Meal
+headers gained pills: chocolate `N KCAL` (`.plan-pill.kc`, keeping its live edit-time recompute)
+and caramel `N G` (`.plan-pill.pr`). Focus rings across Plan inputs/steppers/the memory textarea
+(which had none) became solid `--sm-red`. `.btn-dark` warmed to chocolate scoped as
+`.plan .btn-dark` only — the class is shared with Groceries and Chat, so a global warm would
+have changed two accepted screens (Groceries' nutrition-lookup button is a known leftover, worth
+folding into #37). One new token, `--sm-ink-soft #8a7a66`, the warm mid-brown V2 uses for the
+adherence sub-label and food amounts (`--sm-muted` was too light to hold that hierarchy).
+**The one non-cosmetic change:** `PlanMealView` gained `proteinG` (`lib/plan.ts`), computed
+server-side by reusing the existing `sumRawMacros` helper on that meal's own rows, so per-meal
+protein obeys the same round-once rule as `totals` (per-meal values may therefore not sum exactly
+to the total — correct for a display pill). Test-first: `lib/plan.test.ts` gained a per-meal
+protein case that failed red on `undefined` before the field existed. The protein pill is hidden
+while a meal is being edited — the editor recomputes kcal client-side from `it.unitKcal` and has
+no protein equivalent in its state; threading one through was judged out of scope for a restyle.
+**Data viz deliberately untouched** (the ticket's headline constraint): adherence bars
+(`.fill.hit/.miss/.now`), the `.track` neutral backdrop, `.tex-miss`, protein dots, `.now-tag`,
+`.tip`, the `#2f3437` weight-trend line, `.plan-tr-goal`, `.dd-bar-fill.*`, `.dd-note.*`,
+`.dd-verdict`, `.cell.today .dow`'s terracotta, `.plan-adjusted`'s ⇄ terracotta, and the
+owner-redefined `.cal-chip` streak colours (left whole for #30). `figure-canvas.tsx` was never
+opened. One judgment call the owner should eyeball: `.leg-dash` and `.e-line` (the adherence
+strip's dashed target line and its legend swatch) moved from neutral grey rgba to chocolate rgba
+— a chart element, but not one of the protected hit/miss/today codes, and "chocolate ink
+app-wide" is an explicit Done-when. Reverting both is a two-line change. Deliberate gap: the
+combined mockup draws Meal plan and Memory *collapsed*; this ships them expanded with no chevron,
+because the collapse behaviour is #36 and a chevron that collapses nothing lies to the user.
+tsc clean, 171/171 (25 files, +1 new), clean `next build` (`/plan` stays `ƒ`). No browser check
+was run — `/plan` is authed, and the rollout's visual passes have been the owner's. Note: #35 was
+never labeled `ready-for-agent` — owner launched the build directly, taken as the go-ahead (same
+as #33). Commits: 11d5e9b, 9e97b09, e315e3b, c6178f9 (branch `plan-silent-menu`, ff-merged).
+Plan: `docs/superpowers/plans/2026-07-23-issue-35.md`.
+
 ## Chat restyle in the silent-menu language — #34 (2026-07-23) — COMMITTED & pushed to main; owner phone-passed (local prod over Tailscale)
 
 Third code ticket of the #28 rollout (after #32 Today, #33 Login). Single-task plan from
