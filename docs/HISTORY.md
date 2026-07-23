@@ -71,6 +71,36 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Login restyle in the silent-menu language — #33 (2026-07-23) — COMMITTED & pushed to main; browser-verified locally, owner OS reduced-motion glance pending
+
+Second code ticket of the #28 rollout (after #32). Single-task plan from
+`docs/superpowers/plans/2026-07-22-issue-33.md`, kept uncommitted in the working tree until
+accept per the single-task rule. Pure styling + two copy changes; the login flow
+(`lib/session.ts`, `/api/auth/login`, the page's `submit()`, state hooks, fetch) is untouched.
+`app/login/page.tsx`: `.login-card` dissolves to `.login-inner` (300px, no card chrome on the
+cream canvas); the sub-copy paragraph becomes caramel `.login-kicker` reading "You shall not
+pass"; the input moves into a `.login-field` column with the red-brown error line "Incorrect
+password" (no trailing period) centered under the box, not the full form row (owner tweak, so
+the Enter pill can't pull it off-axis); `.anim` enter-stagger on mark/kicker/form at 0/0.05/0.1s
+reusing #32's shared `@keyframes enter` + reduced-motion off-switch; the input drops its
+`err`-class red border (the focus ring + error line carry the signal). `app/globals.css`: login
+block rewritten on shared `--sm-*` tokens — uppercase 800 chocolate wordmark (sans, deliberately
+NOT the serif face #32 restored for Plan's header), caramel kicker, chocolate `.login-btn` pill
+(a NEW class, not a `.btn-dark` override — `.btn-dark` is shared by weigh-in/Plan/Chat/Groceries
+and the pill needs different values almost everywhere; `:active` scale + `:disabled` dim carried
+over so press feel and empty-input disabling match the app), red-brown focus ring
+`0 0 0 3px rgba(172,35,24,.12)` (same ring as Today's current-meal checkbox). Auxiliary mockup
+literals stay literal (`#e2d9c9` input border, `#b3a390` placeholder, `#fff`), matching #32's
+convention. Deleted: `.login-card`, `.login-sub`, `.login .btn-dark`, `.login input.err`, the
+serif wordmark face (nothing else references them — verified). Verified in-browser on local dev
+(`/login`, fresh session): no card; sans 800 chocolate KAL; caramel YOU SHALL NOT PASS; red-brown
+focus ring on autofocus; INCORRECT PASSWORD centered under the box on a wrong password; chocolate
+ENTER pill (radius 999px) dimmed to 0.5 when empty; stagger delays 0/0.05/0.1s + the
+reduced-motion `.anim` rule present. tsc clean, 170/170 (25 files). Residual: OS-level
+reduced-motion toggle unglanced (identical mechanism to #32). Note: #33 was never labeled
+`ready-for-agent` — owner launched the build directly, taken as the go-ahead.
+Commit: 0e952c6. Plan: `docs/superpowers/plans/2026-07-22-issue-33.md`.
+
 ## Today restyle in the silent-menu language — #32 (2026-07-22) — COMMITTED & pushed to main; owner visual pass pending
 
 First code ticket of the #28 rollout, built subagent-driven from
