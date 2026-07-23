@@ -181,7 +181,7 @@ export function Chat({ model }: { model: string }) {
 
   return (
     <main className="chat">
-      <header className="chat-head">
+      <header className="chat-head anim">
         <Link href="/" className="home">‹ Today</Link>
         <div style={{ textAlign: "center" }}>
           <h1>Kal</h1>
@@ -190,17 +190,17 @@ export function Chat({ model }: { model: string }) {
         <button className="newbtn" onClick={newSession}>+ New</button>
       </header>
 
-      <div className="chat-meta">
+      <div className="chat-meta anim" style={{ animationDelay: "0.04s" }}>
         <span className="cm-model">{model}</span>
         <span className="cm-cost">
-          <span>{costKnown ? `$${costUsd.toFixed(4)}` : "cost n/a"}</span>
-          <span>{tokens.toLocaleString("en-US")} tok</span>
+          <span className="cm-c">{costKnown ? `$${costUsd.toFixed(4)}` : "cost n/a"}</span>
+          <span className="cm-t">{tokens.toLocaleString("en-US")} tok</span>
         </span>
       </div>
 
       <div className={`chat-thread${attachOpen ? " dim" : ""}`} ref={threadRef}>
         {items.length === 0 && (
-          <div className="chat-empty">
+          <div className="chat-empty anim">
             <div className="big">Ask Kal</div>
             Log meals, check what's left, or record a weigh-in.
           </div>
@@ -209,22 +209,22 @@ export function Chat({ model }: { model: string }) {
         {items.map((it) => {
           if (it.kind === "user")
             return it.imageUrl ? (
-              <div key={it.id} className="bub-user photo-bubble">
+              <div key={it.id} className="bub-user photo-bubble anim">
                 <img className="photo-img" src={it.imageUrl} alt="Attached photo" />
                 {it.text && <div className="cap">{it.text}</div>}
               </div>
             ) : (
-              <div key={it.id} className="bub-user">{it.text}</div>
+              <div key={it.id} className="bub-user anim">{it.text}</div>
             );
           if (it.kind === "ai")
             return (
-              <div key={it.id} className={`bub-ai${it.error ? " err" : ""}`}>
+              <div key={it.id} className={`bub-ai anim${it.error ? " err" : ""}`}>
                 {it.text || <span className="typing"><i /><i /><i /></span>}
               </div>
             );
           if (it.kind === "rstrip")
             return (
-              <div key={it.id} className="rstrip">
+              <div key={it.id} className="rstrip anim">
                 <div className="kicker">Remaining today</div>
                 <div className="grid">
                   <div className="stat"><b>{n(it.remaining.kcal)}</b><small>kcal</small></div>
@@ -236,7 +236,7 @@ export function Chat({ model }: { model: string }) {
             );
           // card
           return (
-            <div key={it.id} className={`tool-card${it.undone ? " undone" : ""}`}>
+            <div key={it.id} className={`tool-card anim${it.undone ? " undone" : ""}`}>
               <div className="tc-top">
                 <span className="chip"><span className="d" />{it.undone ? "Undone" : it.card.label}</span>
               </div>
@@ -257,7 +257,11 @@ export function Chat({ model }: { model: string }) {
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={onFilePicked} />
       <input ref={libraryRef} type="file" accept="image/*" hidden onChange={onFilePicked} />
 
-      <div className={`composer${attachOpen ? " has-pop" : ""}`} ref={composerRef}>
+      <div
+        className={`composer anim${attachOpen ? " has-pop" : ""}`}
+        style={{ animationDelay: "0.24s" }}
+        ref={composerRef}
+      >
         {attachOpen && (
           <div className="attach-pop">
             <button type="button" disabled={sending} onClick={() => cameraRef.current?.click()}>
