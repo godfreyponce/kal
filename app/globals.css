@@ -597,7 +597,7 @@ body {
 .dd-verdict.v-ahead{ color: var(--faint); }
 
 .dd-empty {
-  font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+  font-family: var(--font-mono); font-size: 12px; color: var(--sm-muted);
   padding: 22px 0 8px; text-align: center;
 }
 
@@ -605,26 +605,26 @@ body {
 .dd-stat-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
 .dd-lab {
   font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--faint);
+  text-transform: uppercase; color: var(--sm-caramel);
 }
-.dd-val { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.dd-val b { color: var(--ink); font-weight: 500; font-size: 15px; }
-.dd-bar { height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; position: relative; }
+.dd-val { font-family: var(--font-mono); font-size: 13px; color: var(--sm-ink-soft); font-variant-numeric: tabular-nums; }
+.dd-val b { color: var(--sm-choc); font-weight: 500; font-size: 15px; }
+.dd-bar { height: 6px; border-radius: 4px; background: var(--sm-band); overflow: hidden; position: relative; }
 .dd-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
 .dd-bar-fill.hit       { background: var(--green-tx); }
 .dd-bar-fill.over      { background: var(--protein); }
 .dd-bar-fill.pro-ok    { background: var(--green-tx); }
 .dd-bar-fill.pro-short { background: var(--protein); }
 .dd-bar-fill.now       { background: var(--accent); }
-.dd-target { position: absolute; top: -2px; bottom: -2px; width: 1.5px; background: var(--ink); opacity: 0.55; }
+.dd-target { position: absolute; top: -2px; bottom: -2px; width: 1.5px; background: var(--sm-choc); opacity: 0.55; }
 .dd-note { font-family: var(--font-mono); font-size: 10.5px; margin-top: 5px; }
 .dd-note.good { color: var(--green-tx); }
 .dd-note.bad  { color: var(--protein); }
 .dd-note.wip  { color: var(--muted); }
 .dd-foods-label {
   font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--faint);
-  padding-top: 13px; border-top: 1px solid var(--ink); margin-bottom: 2px;
+  text-transform: uppercase; color: var(--sm-caramel);
+  padding-top: 13px; border-top: 1px solid var(--sm-choc); margin-bottom: 2px;
 }
 
 /* ---- #24 day-detail bottom sheet (dedicated namespace — NOT the shared .mpop-*) ---- */
@@ -752,22 +752,22 @@ body {
   margin-top: 10px; padding: 7px 0 1px;
 }
 .adh-grab span {
-  display: block; width: 32px; height: 4px; border-radius: 9999px; background: var(--border);
+  display: block; width: 32px; height: 4px; border-radius: 9999px; background: var(--sm-border);
 }
 
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
-.cal-month { font-family: var(--font-serif); font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }
+.cal-month { font-family: var(--font-serif); font-size: 19px; font-weight: 500; letter-spacing: -0.01em; color: var(--sm-choc); }
 .cal-nav { display: flex; gap: 4px; }
 .cal-nav button {
-  width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 9999px; background: none;
-  font-family: var(--font-mono); font-size: 14px; color: var(--ink-soft); cursor: pointer; line-height: 1;
+  width: 30px; height: 30px; border: 1px solid var(--sm-border); border-radius: 9999px; background: none;
+  font-family: var(--font-mono); font-size: 14px; color: var(--sm-choc); cursor: pointer; line-height: 1;
   -webkit-tap-highlight-color: transparent;
 }
 .cal-nav button:disabled { opacity: 0.32; cursor: default; }
-.cal-sum { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 12px; }
+.cal-sum { font-family: var(--font-mono); font-size: 10px; color: var(--sm-ink-soft); margin-bottom: 12px; }
 
 .cal-dows { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
-.cal-dows span { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; color: var(--faint); text-align: center; }
+.cal-dows span { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; color: var(--sm-muted); text-align: center; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 7px; }
 .cal-cell { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 36px; position: relative; }
 
@@ -783,7 +783,7 @@ body {
 .cal-sheet .future .cal-chip, .cal-sheet .pre .cal-chip { color: #cfcdc7; }
 
 .cal-legend { display: flex; gap: 14px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
-.cal-legend .leg-row { font-size: 9.5px; color: var(--muted); gap: 6px; }
+.cal-legend .leg-row { font-size: 9.5px; color: var(--sm-muted); gap: 6px; }
 .cal-legend .leg-sw { display: inline-block; width: 11px; height: 11px; border-radius: 4px; flex-shrink: 0; }
 
 /* weigh-in (Sunday) */
@@ -1743,35 +1743,36 @@ body:has(main.groceries) { background: #fff; }
 
 /* Plan — memory */
 .plan-fact { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; }
-.plan-fact + .plan-fact { border-top: 1px solid var(--border); }
+.plan-fact + .plan-fact { border-top: 1px solid var(--sm-border); }
 .plan-fact-body { flex: 1; }
-.plan-fact-tx { font-family: var(--font-serif); font-size: 15px; color: var(--ink); line-height: 1.45; }
-.plan-fact-meta { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 3px; }
-.plan-fact-x { font-family: var(--font-mono); font-size: 13px; color: var(--faint); background: none; border: none; cursor: pointer; padding: 2px 6px; }
-.plan-fact-x:hover { color: var(--protein); }
+.plan-fact-tx { font-family: var(--font-serif); font-size: 15px; color: var(--sm-choc); line-height: 1.45; }
+.plan-fact-meta { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sm-caramel); margin-top: 3px; }
+.plan-fact-x { font-family: var(--font-mono); font-size: 13px; color: var(--sm-muted); background: none; border: none; cursor: pointer; padding: 2px 6px; }
+.plan-fact-x:hover { color: var(--sm-red); }
 .plan-fact-add, .plan-fact-form { margin-bottom: 4px; }
 .plan-fact-add {
   width: 100%; text-align: left; font-family: var(--font-mono); font-size: 9.5px;
-  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
-  background: none; border: 1px dashed #cdcbc4; border-radius: 9px; padding: 10px 12px; cursor: pointer;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--sm-ink-soft);
+  background: none; border: 1px dashed var(--sm-border); border-radius: 9px; padding: 10px 12px; cursor: pointer;
 }
 .plan-fact-input {
-  width: 100%; font-family: var(--font-serif); font-size: 15px; color: var(--ink);
-  border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; resize: none; background: #fff;
+  width: 100%; font-family: var(--font-serif); font-size: 15px; color: var(--sm-choc);
+  border: 1px solid var(--sm-border); border-radius: 9px; padding: 9px 11px; resize: none; background: #fff;
 }
-.plan-fact-empty { font-family: var(--font-mono); font-size: 10px; color: var(--faint); padding: 10px 0; }
+.plan-fact-input:focus { outline: 2px solid var(--sm-red); outline-offset: 1px; border-color: var(--sm-red); }
+.plan-fact-empty { font-family: var(--font-mono); font-size: 10px; color: var(--sm-muted); padding: 10px 0; }
 .plan-snack {
   position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
-  background: var(--ink); color: #f2f0eb; border-radius: 10px;
+  background: var(--sm-choc); color: #f2f0eb; border-radius: 10px;
   font-family: var(--font-mono); font-size: 10.5px; padding: 10px 14px;
   display: flex; align-items: center; gap: 14px; z-index: 50;
 }
-.plan-snack button { background: none; border: none; color: var(--accent); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; cursor: pointer; }
+.plan-snack button { background: none; border: none; color: var(--sm-caramel); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; cursor: pointer; }
 .plan-clear-all {
   width: 100%; margin-top: 14px; background: none; border: none; cursor: pointer;
-  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint);
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--sm-muted);
 }
-.plan-clear-all:hover { color: var(--protein); }
+.plan-clear-all:hover { color: var(--sm-red); }
 
 /* Plan — weight trend (Phase 2, design/plan-figure.html lines 176-190) */
 .plan-trend { margin-top: 12px; }
