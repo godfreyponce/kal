@@ -29,24 +29,27 @@ export default function LoginPage() {
 
   return (
     <main className="login">
-      <div className="login-card">
-        <div className="login-mark">Kal</div>
-        <p className="login-sub">Enter your password to continue.</p>
-        <form onSubmit={submit}>
-          <input
-            type="password"
-            placeholder="Password"
-            aria-label="Password"
-            autoFocus
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={error ? "err" : ""}
-          />
-          <button type="submit" className="btn-dark" disabled={busy || password === ""}>
+      <div className="login-inner">
+        <div className="login-mark anim">Kal</div>
+        <p className="login-kicker anim" style={{ animationDelay: "0.05s" }}>
+          You shall not pass
+        </p>
+        <form onSubmit={submit} className="anim" style={{ animationDelay: "0.1s" }}>
+          <div className="login-field">
+            <input
+              type="password"
+              placeholder="Password"
+              aria-label="Password"
+              autoFocus
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {error && <div className="login-err">Incorrect password</div>}
+          </div>
+          <button type="submit" className="login-btn" disabled={busy || password === ""}>
             {busy ? "…" : "Enter"}
           </button>
         </form>
-        {error && <div className="login-err">Incorrect password.</div>}
       </div>
     </main>
   );

@@ -1287,7 +1287,7 @@ body {
   cursor: pointer;
 }
 
-/* login */
+/* login (silent menu, #33 — spec: design/login-silent-menu-combined.html) */
 .login {
   min-height: 100dvh;
   display: flex;
@@ -1295,52 +1295,84 @@ body {
   justify-content: center;
   padding: 24px;
 }
-.login-card {
+.login-inner {
   width: 100%;
-  max-width: 320px;
+  max-width: 300px;
   text-align: center;
 }
 .login-mark {
-  font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 36px;
-  letter-spacing: -0.02em;
-  color: var(--ink);
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--sm-choc);
+  line-height: 1;
 }
-.login-sub {
-  color: var(--muted);
-  font-size: 14px;
-  margin: 8px 0 24px;
+.login-kicker {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sm-caramel);
+  margin-top: 8px;
 }
 .login form {
   display: flex;
   gap: 8px;
+  margin-top: 26px;
+  align-items: flex-start;
+}
+.login-field {
+  flex: 1;
+  min-width: 0;
 }
 .login input {
-  flex: 1;
+  width: 100%;
   font-family: var(--font-sans-stack);
   font-size: 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1.5px solid #e2d9c9;
+  border-radius: 10px;
   padding: 11px 13px;
-  background: var(--surface);
-  color: var(--ink);
+  background: #fff;
+  color: var(--sm-choc);
+}
+.login input::placeholder {
+  color: #b3a390;
 }
 .login input:focus {
   outline: none;
-  border-color: #c9c7c1;
+  border-color: var(--sm-red);
+  box-shadow: 0 0 0 3px rgba(172, 35, 24, 0.12);
 }
-.login input.err {
-  border-color: #9f2f2d;
+.login-btn {
+  font-family: var(--font-sans-stack);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--sm-pill);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 13px 20px;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.2s;
 }
-.login .btn-dark {
-  padding: 11px 18px;
+.login-btn:active {
+  transform: scale(0.98);
+}
+.login-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 .login-err {
-  color: #9f2f2d;
-  font-size: 12.5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sm-red);
   margin-top: 14px;
-  font-family: var(--font-mono);
+  text-align: center;
 }
 
 /* nav link on Today header */
