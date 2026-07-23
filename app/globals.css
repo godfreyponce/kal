@@ -41,6 +41,7 @@
   --sm-muted: #b3a390;     /* warm muted brown: Chat cost figure, input placeholders */
   --sm-border: #e2d9c9;    /* warm hairline: plus button, attach popover, pending chip */
   --sm-pink: #fc89ac;      /* Claude-config model name (clawd_body; theme pink washed out on cream) */
+  --sm-ink-soft: #8a7a66;  /* warm mid-brown between choc and muted: Plan hero sub-label, food amounts */
 }
 
 body {
@@ -107,26 +108,28 @@ body {
   margin-top: 5px;
 }
 
-/* header (Plan, pre-#32 — restyle scoped to Today until #33) */
+/* header (Plan, silent menu, #35 — .head-* has been Plan-only since ac92726) */
 .head-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 4px;
 }
 .head-title {
-  font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 26px;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--sm-choc);
 }
 .head-date {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--faint);
-  letter-spacing: 0.06em;
-  margin-top: 4px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sm-caramel);
+  margin-top: 5px;
 }
 .top-nav {
   display: flex;
@@ -1390,21 +1393,6 @@ body {
   text-align: center;
 }
 
-/* nav link on Today header */
-.chat-link {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  border-radius: 9999px;
-  padding: 5px 11px;
-  background: var(--surface);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
 /* ---- Groceries screen (issue #1 rework; design/groceries-rework-combined.html) ---- */
 
 .groceries {
@@ -1584,15 +1572,35 @@ body:has(main.groceries) { background: #fff; }
 .gr-photo-controls { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
 
 /* ===== Plan screen (app/plan) ===== */
-.plan section { margin-top: 22px; }
-.plan-sec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-.plan-kicker {
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--faint);
+.plan-back {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sm-caramel);
+  text-decoration: none;
+  white-space: nowrap;
+  margin-top: 4px;
 }
-.plan-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-  padding: 13px 14px;
+.plan section { margin-top: 18px; }
+.plan-kick {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  background: var(--sm-band-deep);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sm-choc);
+}
+.plan-kick small {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--sm-caramel);
 }
 .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .plan-lbl {

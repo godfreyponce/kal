@@ -47,45 +47,40 @@ export default async function PlanPage() {
 
   return (
     <main className="app plan">
-      <div className="head-row">
+      <div className="head-row anim">
         <div>
           <h1 className="head-title">Plan</h1>
           <div className="head-date">PROFILE MEALS MEMORY</div>
         </div>
-        <Link href="/" className="chat-link">‹ Today</Link>
+        <Link href="/" className="plan-back">‹ Today</Link>
       </div>
-      <div className="rule" />
 
       <section>
-        <div className="plan-sec-head">
-          <span className="plan-kicker">Profile</span>
-          <span className="plan-kicker">drag to rotate, tap to edit</span>
+        <div className="plan-kick anim" style={{ animationDelay: "0.05s" }}>
+          Adherence <small>this week</small>
         </div>
-        <ProfileSection profile={profile} weighIns={weighIns} />
-      </section>
-
-      <section>
-        <div className="plan-sec-head">
-          <span className="plan-kicker">Adherence</span>
-          <span className="plan-kicker">this week</span>
-        </div>
-        <div className="plan-card">
+        <div className="anim" style={{ animationDelay: "0.08s" }}>
           <WeeklyAdherence week={weekAdherence} foodsByDate={weekDayFoods} history={adherenceHistory} today={today} />
         </div>
       </section>
 
       <section>
-        <div className="plan-sec-head">
-          <span className="plan-kicker">Meal plan</span>
-          <span className="plan-kicker">{plan.meals.length} meals</span>
+        <div className="plan-kick anim" style={{ animationDelay: "0.11s" }}>
+          Profile <small>drag to rotate, tap to edit</small>
+        </div>
+        <ProfileSection profile={profile} weighIns={weighIns} />
+      </section>
+
+      <section>
+        <div className="plan-kick anim" style={{ animationDelay: "0.17s" }}>
+          Meal plan <small>{plan.meals.length} meals</small>
         </div>
         <MealPlanEditor plan={plan} groceries={groceries} overridesByMeal={overridesByMeal} />
       </section>
 
       <section>
-        <div className="plan-sec-head">
-          <span className="plan-kicker">Memory</span>
-          <span className="plan-kicker">{facts.length} facts</span>
+        <div className="plan-kick anim" style={{ animationDelay: "0.2s" }}>
+          Memory <small>{facts.length} facts</small>
         </div>
         <MemoryList facts={facts} />
       </section>
