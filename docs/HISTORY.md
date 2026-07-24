@@ -71,6 +71,41 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Collapse Meal plan and Memory bands on /plan — #36 (2026-07-24) — COMMITTED & pushed to main; owner browser pass pending
+
+Fifth and final code ticket of the #28 rollout — the collapse behaviour #35 deliberately deferred
+(shipping a chevron that collapses nothing "lies to the user"). The mockups draw Meal plan and
+Memory collapsed by default; this makes it real. Single-task plan → uncommitted working tree at
+gate 2 → one commit on main (no ticket branch). New client component
+`app/plan/collapsible-section.tsx`: the page is an async Server Component (reads live DB, no
+`useState`), so a small `CollapsibleSection` owns a `useState(false)` open flag, renders the
+existing `.plan-kick` band as a full-width `<button aria-expanded>` with a caramel `▾` chevron,
+and **keeps its children mounted**, hiding them with the `hidden` attribute when closed. Mounted-
+not-conditional is the whole point: `{open && children}` would unmount and lose the meal editor /
+memory form's in-progress React state on every collapse, and would also drop it across the post-
+save `router.refresh()`; `hidden` preserves both. `app/plan/page.tsx` wraps only `MealPlanEditor`
+and `MemoryList`; Adherence and Profile keep their plain always-open `.plan-kick` bands untouched.
+`app/globals.css`: `.plan-kick-btn` neutralizes the button chrome (border/appearance/margin off,
+full-width, left-aligned) while inheriting every `.plan-kick` visual — `font-family: inherit` is
+the one property that has to be restated because this repo has **no global button reset** (buttons
+are neutralized per-component) and the UA style would otherwise override it. `.plan-kick-end`
+groups the caramel `small` meta + chevron; `.plan-chev` rotates 180° via
+`[aria-expanded="true"]`, its transform transition nulled under `prefers-reduced-motion`. The
+chevron is `aria-hidden` (the button's `aria-expanded` already conveys state). No new deps; no
+copy change (the `▾` glyph, U+25BE, is the design-spec chevron, not copy). **Two design calls,
+both flagged at gate 1:** (1) no expand animation — a plain `hidden` toggle in both modes, the
+least code that satisfies the reduced-motion floor; a `grid-template-rows: 0fr→1fr` drop-in is
+noted if motion in the normal case is ever wanted. (2) Tapping a band always collapses, even with
+an editor open — a deliberate tap is intent; the editor is hidden and restored intact, not blocked
+(blocking would need plumbing an "is-editing" flag up from the child editors, avoided). No React
+component-test harness exists (every test is a pure `lib/*.ts` vitest with no jsdom, and the
+ticket forbids new deps) and this is trivial client state with no extractable pure function, so no
+unit test was added — stated explicitly at gate 2 rather than fabricated. tsc clean, 171/171 (25
+files, unchanged — no logic touched). No browser check was run by the agent — `/plan` is authed
+and the rollout's visual passes have been the owner's; the dev server was left for the owner to
+walk the Done-when logged in. Commit: 0ed6663 (working tree, single-task, no branch).
+Plan: `docs/superpowers/plans/2026-07-24-issue-36.md`.
+
 ## Plan restyle in the silent-menu language — #35 (2026-07-23) — COMMITTED & pushed to main; owner visual pass pending
 
 Fourth code ticket of the #28 rollout (after #32 Today, #33 Login, #34 Chat), built from the

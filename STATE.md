@@ -1,10 +1,10 @@
 ---
 glass: kal
 status: in-progress
-last_worked_on: 2026-07-23
-next_action: "#36 — Plan: collapse Meal plan and Memory sections by default (inherits #35's .plan-kick band markup and owns the chevron #35 deliberately left off; /plan-ticket 36)"
+last_worked_on: 2026-07-24
+next_action: "#38 — Plan: rate-limit the login endpoint (per-IP backoff + constant-time compare); ready-for-agent + red-team (/plan-ticket 38). Owner may redirect to #37 cleanup or another design ticket."
 blocked_on: ""
-phase: "v1 shipped; #35 Plan silent-menu restyle on main 2026-07-23 (last screen of the rollout; #36 collapse behaviour remains); #34 Chat silent-menu restyle on main 2026-07-23; #33 Login silent-menu restyle on main 2026-07-23; #32 Today silent-menu restyle on main 2026-07-22; #28 silent-menu rollout closed 2026-07-21 (design-only umbrella: cream canvas stays, tickets #32-#36 spawned); #27 copy sweep on main 2026-07-21; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
+phase: "v1 shipped; #36 Plan collapse Meal/Memory bands on main 2026-07-24 (silent-menu rollout complete); #35 Plan silent-menu restyle on main 2026-07-23; #34 Chat silent-menu restyle on main 2026-07-23; #33 Login silent-menu restyle on main 2026-07-23; #32 Today silent-menu restyle on main 2026-07-22; #28 silent-menu rollout closed 2026-07-21 (design-only umbrella: cream canvas stays, tickets #32-#36 spawned); #27 copy sweep on main 2026-07-21; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
 ---
 
 # Kal — Project State
@@ -20,6 +20,11 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
 
 *Unaccepted work only. Anything the owner has accepted belongs in `docs/HISTORY.md`, not here.*
 
+- Owner browser pass of #36 collapse (accepted at gate 2 from the diff, no browser check yet):
+  on `/plan`, Meal plan and Memory start collapsed (cream band + `▾` only, "N MEALS"/"N FACTS");
+  tapping a band toggles it and the chevron flips; open a meal's Edit (or Memory's add-fact form),
+  collapse, reopen -> editor is still open with its in-progress values (children are hidden, not
+  unmounted). `rm -rf .next` first (stale-CSS gotcha). Auth-gated, so do it logged in.
 - Owner visual pass of the restyled Plan (#35, accepted at gate 2 from the diff, no browser check
   yet): compare `/plan` against `design/plan-silent-menu-combined.html` (`rm -rf .next` first).
   Headline check is that the adherence bars behind the chocolate hero are STILL green / dark red /
