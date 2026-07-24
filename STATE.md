@@ -2,7 +2,7 @@
 glass: kal
 status: in-progress
 last_worked_on: 2026-07-24
-next_action: "#38 — Plan: rate-limit the login endpoint (per-IP backoff + constant-time compare); ready-for-agent + red-team (/plan-ticket 38). Owner may redirect to #37 cleanup or another design ticket."
+next_action: "#37 — Plan: cleanup after #32, orphaned --blue-* tokens and unused eatenCount in the today view (/plan-ticket 37). (Red-team #38-#40 are handled by /kal-redteam, not this flow.)"
 blocked_on: ""
 phase: "v1 shipped; #36 Plan collapse Meal/Memory bands on main 2026-07-24 (silent-menu rollout complete); #35 Plan silent-menu restyle on main 2026-07-23; #34 Chat silent-menu restyle on main 2026-07-23; #33 Login silent-menu restyle on main 2026-07-23; #32 Today silent-menu restyle on main 2026-07-22; #28 silent-menu rollout closed 2026-07-21 (design-only umbrella: cream canvas stays, tickets #32-#36 spawned); #27 copy sweep on main 2026-07-21; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
 ---
