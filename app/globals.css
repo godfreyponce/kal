@@ -1602,6 +1602,23 @@ body:has(main.groceries) { background: #fff; }
   letter-spacing: 0.1em;
   color: var(--sm-caramel);
 }
+/* collapsible section bands: Meal plan, Memory (#36) */
+.plan-kick-btn {
+  width: 100%;
+  margin: 0;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.plan-kick-end { display: inline-flex; align-items: baseline; gap: 8px; }
+.plan-chev { color: var(--sm-caramel); font-size: 10px; transition: transform 0.2s ease; }
+.plan-kick-btn[aria-expanded="true"] .plan-chev { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .plan-chev { transition: none; }
+}
 .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .plan-lbl {
   display: block; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.07em;

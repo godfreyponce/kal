@@ -12,6 +12,7 @@ import { ProfileSection } from "./profile-section";
 import { WeeklyAdherence } from "./weekly-adherence";
 import { MealPlanEditor } from "./meal-plan-editor";
 import { MemoryList } from "./memory-list";
+import { CollapsibleSection } from "./collapsible-section";
 
 // Reads live DB — must render per request (see the force-dynamic gotcha).
 export const dynamic = "force-dynamic";
@@ -72,17 +73,15 @@ export default async function PlanPage() {
       </section>
 
       <section>
-        <div className="plan-kick anim" style={{ animationDelay: "0.17s" }}>
-          Meal plan <small>{plan.meals.length} meals</small>
-        </div>
-        <MealPlanEditor plan={plan} groceries={groceries} overridesByMeal={overridesByMeal} />
+        <CollapsibleSection title="Meal plan" meta={`${plan.meals.length} meals`} animationDelay="0.17s">
+          <MealPlanEditor plan={plan} groceries={groceries} overridesByMeal={overridesByMeal} />
+        </CollapsibleSection>
       </section>
 
       <section>
-        <div className="plan-kick anim" style={{ animationDelay: "0.2s" }}>
-          Memory <small>{facts.length} facts</small>
-        </div>
-        <MemoryList facts={facts} />
+        <CollapsibleSection title="Memory" meta={`${facts.length} facts`} animationDelay="0.2s">
+          <MemoryList facts={facts} />
+        </CollapsibleSection>
       </section>
     </main>
   );
