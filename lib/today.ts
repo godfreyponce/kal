@@ -40,7 +40,6 @@ export type TodayView = {
   date: string;
   summary: DaySummary;
   meals: TodayMeal[];
-  eatenCount: number;
   latestWeighIn: WeighIn | null;
   /** True on Sundays with no weigh-in logged yet — surfaces the quick-add card. */
   weighInDue: boolean;
@@ -168,7 +167,6 @@ export async function getTodayView(date: string): Promise<TodayView> {
     date,
     summary,
     meals: mealsView,
-    eatenCount: mealsView.filter((m) => m.status === "eaten").length,
     latestWeighIn: latest ? { date: latest.date, weightLb: Number(latest.weightLb) } : null,
     weighInDue,
   };
