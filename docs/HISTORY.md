@@ -71,7 +71,44 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
-## Collapse Meal plan and Memory bands on /plan — #36 (2026-07-24) — COMMITTED & pushed to main; owner browser pass pending
+## Orphan cleanup after the silent-menu rollout — #37 (2026-07-25) — COMMITTED & pushed to main; owner-accepted
+
+Housekeeping tail of the #32-#36 rollout: two declarations #32 left dead. Single-task plan →
+uncommitted working tree at gate 2, then one `chore(cleanup)` commit.
+
+**Deleted (4 lines, 2 files, zero additions):**
+- `app/globals.css` — the `--blue-bg` / `--blue-tx` custom properties. Declared, never read.
+  After the deletion `grep -rni blue app lib` returns nothing.
+- `lib/today.ts` — `TodayView.eatenCount` and its computation in `getTodayView`
+  (`mealsView.filter((m) => m.status === "eaten").length`).
+
+**Why it was safe:** `app/page.tsx` destructures `{ summary, meals, latestWeighIn, weighInDue }`
+and never touched `eatenCount`, and no REST route exposed it — so removing it is not an
+API-contract change. `mealsView` stays live as `meals:`, so no orphaned local was created.
+`--fat: #1f6c9f` shares its hex with the deleted `--blue-tx` but is a different live token
+(macro bars) and was left alone, as were `--green-bg` / `--green-tx` (live via `.dd-*`,
+`.cal-sheet`, `.src-tag`).
+
+**The `design/*.html` mockups still declare their own `--blue-*`** and were deliberately left
+untouched — each is a standalone file with its own `:root` that does not load `app/globals.css`,
+so the globals deletion cannot affect them. A repo-wide `grep -rn eatenCount .` also still hits
+STATE.md, this file, and the #32 plan: those are historical prose, not consumers.
+
+**Verified:** clean `tsc --noEmit`; 171 tests across 25 files; clean `rm -rf .next && npm run
+build` with `/` still `ƒ` in the route table. No visual check was needed — both symbols had zero
+consumers, so no rendered pixel could change.
+
+**Plan-file nit for future tickets:** the plan's verification greps targeted `app lib components`,
+but there is no `components/` directory in this repo (components live under `app/`). `ugrep`
+exited 2 (missing directory) rather than the expected 1, which reads as ambiguous rather than as
+a pass. Re-run against `app lib` (+ `db`, `scripts`, `public`) instead.
+
+**Scope declined by the owner (2026-07-24):** a wider audit of `globals.css` `:root` for other
+zero-consumer tokens left by #32-#36. None surfaced incidentally during this ticket.
+
+---
+
+## Collapse Meal plan and Memory bands on /plan — #36 (2026-07-24) — COMMITTED & pushed to main; owner browser-passed 2026-07-25
 
 Fifth and final code ticket of the #28 rollout — the collapse behaviour #35 deliberately deferred
 (shipping a chevron that collapses nothing "lies to the user"). The mockups draw Meal plan and
@@ -106,7 +143,7 @@ and the rollout's visual passes have been the owner's; the dev server was left f
 walk the Done-when logged in. Commit: 0ed6663 (working tree, single-task, no branch).
 Plan: `docs/superpowers/plans/2026-07-24-issue-36.md`.
 
-## Plan restyle in the silent-menu language — #35 (2026-07-23) — COMMITTED & pushed to main; owner visual pass pending
+## Plan restyle in the silent-menu language — #35 (2026-07-23) — COMMITTED & pushed to main; owner visual-passed 2026-07-25
 
 Fourth code ticket of the #28 rollout (after #32 Today, #33 Login, #34 Chat), built from the
 round-4 pick `design/plan-silent-menu-combined.html` (V2 plus the owner's section reorder).
@@ -217,7 +254,7 @@ reduced-motion toggle unglanced (identical mechanism to #32). Note: #33 was neve
 `ready-for-agent` — owner launched the build directly, taken as the go-ahead.
 Commit: 0e952c6. Plan: `docs/superpowers/plans/2026-07-22-issue-33.md`.
 
-## Today restyle in the silent-menu language — #32 (2026-07-22) — COMMITTED & pushed to main; owner visual pass pending
+## Today restyle in the silent-menu language — #32 (2026-07-22) — COMMITTED & pushed to main; owner visual-passed 2026-07-25
 
 First code ticket of the #28 rollout, built subagent-driven from
 `docs/superpowers/plans/2026-07-22-issue-32.md` in two tasks + one review fix. (1) Token
@@ -271,7 +308,7 @@ glyph in `meal-plan-editor.tsx` stays. Code comments (incl. every hit in `global
 outside comments empty; diff touched no comment lines; tsc clean; 170/170 (25 files).
 Plan: `docs/superpowers/plans/2026-07-20-issue-27.md`.
 
-## Adherence day-cell bubble press + history grabber pill — #26 (2026-07-20) — COMMITTED & pushed to main; phone pass pending
+## Adherence day-cell bubble press + history grabber pill — #26 (2026-07-20) — COMMITTED & pushed to main; owner phone-passed 2026-07-25 (no levers needed)
 
 Two feel refinements to the /plan adherence card. (1) Press-and-hold on a weekly-strip day cell
 now sinks with weight — `scale(0.94) translateY(1px)` on a 0.45s decel curve
@@ -336,7 +373,7 @@ as `""`, so it was unrecoverable anyway). Ops notes: `vercel redeploy` needs
 `kal-delta.vercel.app` moved each time. Verified: tsc clean, 170/170 (25 files), tree untouched.
 Plan: `docs/superpowers/plans/2026-07-18-issue-2.md`.
 
-## Plan-screen edit chooser on ⇄ meals — #18 (2026-07-17) — COMMITTED & pushed to main; owner in-app pass of the chooser pending
+## Plan-screen edit chooser on ⇄ meals — #18 (2026-07-17) — COMMITTED & pushed to main; owner in-app-passed 2026-07-25
 
 Editing a ⇄-adjusted meal used to seed the editor from the template, so "Save for today"
 silently discarded the existing override. Now Edit on a ⇄ meal opens a chooser (owner-picked
@@ -465,7 +502,7 @@ Plan: `docs/superpowers/plans/2026-07-15-issue-24.md`.
 - **Structure:** shipped as **four per-task commits** (gesture math → sheet shell → drag → food
   expand, each typecheck-green) at the owner's request, then this accept commit (STATE/HISTORY/plan).
 
-## Adherence day-detail modal — #22 (2026-07-15) — COMMITTED & pushed to main; deployed-prod phone-verify pending
+## Adherence day-detail modal — #22 (2026-07-15) — COMMITTED & pushed to main; deployed-prod phone-verified 2026-07-25
 
 Tapping a day in the #6 adherence strip now opens a centered day-detail modal on `/plan`: the
 day's date, an on/off-plan verdict, a kcal bar (consumed vs target) + note, a protein bar + note,
@@ -505,7 +542,7 @@ were an owner add. Plan: `docs/superpowers/plans/2026-07-14-issue-22.md`.
 - **Follow-ons:** #24 (redesign the modal's mobile open/close animation, ref
   spottedinprod.com/clips) filed 2026-07-15; #23 (swipe-up calendar history) still open. Both unlabeled.
 
-## Weekly adherence on /plan — #6 (2026-07-14) — COMMITTED & pushed to main; owner phone-verify on prod pending
+## Weekly adherence on /plan — #6 (2026-07-14) — COMMITTED & pushed to main; owner phone-verified on deployed prod 2026-07-25
 
 A weekly-adherence module on `/plan`, between Profile and Meal plan: a headline "X/7 days on
 plan" over a **fixed Monday→Sunday calendar week** (denominator always 7, resets Monday — NOT a

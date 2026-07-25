@@ -1,10 +1,10 @@
 ---
 glass: kal
 status: in-progress
-last_worked_on: 2026-07-24
-next_action: "#37 — Plan: cleanup after #32, orphaned --blue-* tokens and unused eatenCount in the today view (/plan-ticket 37). (Red-team #38-#40 are handled by /kal-redteam, not this flow.)"
+last_worked_on: 2026-07-25
+next_action: "#31 — Plan: adherence day-detail sheet, swipe-off dismiss from the grabber and remove the X button (/plan-ticket 31). Then #30, then #29. (Red-team #38-#43 are handled by /kal-redteam, not this flow.)"
 blocked_on: ""
-phase: "v1 shipped; #36 Plan collapse Meal/Memory bands on main 2026-07-24 (silent-menu rollout complete); #35 Plan silent-menu restyle on main 2026-07-23; #34 Chat silent-menu restyle on main 2026-07-23; #33 Login silent-menu restyle on main 2026-07-23; #32 Today silent-menu restyle on main 2026-07-22; #28 silent-menu rollout closed 2026-07-21 (design-only umbrella: cream canvas stays, tickets #32-#36 spawned); #27 copy sweep on main 2026-07-21; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18; deployed-prod phone-verify pending"
+phase: "v1 shipped; owner phone/browser pass CLEARED the whole #32-#36 + #18 + #26 backlog 2026-07-25, incl. the deployed-prod pass — all passed, no levers needed; #37 orphan cleanup on main 2026-07-25; #36 Plan collapse Meal/Memory bands on main 2026-07-24 (silent-menu rollout complete); #35 Plan silent-menu restyle on main 2026-07-23; #34 Chat silent-menu restyle on main 2026-07-23; #33 Login silent-menu restyle on main 2026-07-23; #32 Today silent-menu restyle on main 2026-07-22; #28 silent-menu rollout closed 2026-07-21 (design-only umbrella: cream canvas stays, tickets #32-#36 spawned); #27 copy sweep on main 2026-07-21; #26 adherence press feel + history pill on main 2026-07-20; groceries browse face rework (#1) on main + owner phone-passed 2026-07-20; ⇄ edit chooser (#18) on main 2026-07-17; #2 prod config live-verified 2026-07-18"
 ---
 
 # Kal — Project State
@@ -20,32 +20,6 @@ Archive: `docs/HISTORY.md`. Queue: GitHub Issues (`gh issue list`). Protocol: `A
 
 *Unaccepted work only. Anything the owner has accepted belongs in `docs/HISTORY.md`, not here.*
 
-- Owner browser pass of #36 collapse (accepted at gate 2 from the diff, no browser check yet):
-  on `/plan`, Meal plan and Memory start collapsed (cream band + `▾` only, "N MEALS"/"N FACTS");
-  tapping a band toggles it and the chevron flips; open a meal's Edit (or Memory's add-fact form),
-  collapse, reopen -> editor is still open with its in-progress values (children are hidden, not
-  unmounted). `rm -rf .next` first (stale-CSS gotcha). Auth-gated, so do it logged in.
-- Owner visual pass of the restyled Plan (#35, accepted at gate 2 from the diff, no browser check
-  yet): compare `/plan` against `design/plan-silent-menu-combined.html` (`rm -rf .next` first).
-  Headline check is that the adherence bars behind the chocolate hero are STILL green / dark red /
-  terracotta. Also: the two meal-header pills (chocolate kcal, caramel protein; the protein one
-  hides mid-edit), the 3D figure still renders and rotates, red-brown focus rings, and the dashed
-  target line + legend dash now chocolate rather than grey (revertible if that reads as viz).
-- Owner visual pass of the restyled Today (#32, accepted at gate 2 from the diff, no browser
-  check yet): compare `/` against `design/today-silent-menu-combined.html` (`rm -rf .next`
-  first, stale-CSS gotcha); glance at reduced-motion (stagger fully off) and the current
-  meal's red checkbox ring.
-- Owner phone-verify of **deployed** prod `/plan` — everything to date has passed on local prod
-  builds over Tailscale (#6/#22 on 2026-07-15; #23/#24 incl. the #25 scrim fix on 2026-07-17)
-  but the deployed-prod pass is still outstanding. Login now takes the same password as local
-  (#2 synced it).
-- Owner in-app pass of the #18 ⇄ edit chooser (plan Step 6 deferred at gate 2) — glance at the
-  cancel link's left alignment while there.
-- Owner phone pass of #26 (accepted at gate 2 without it): bubble press feel on the day cells,
-  and the history grabber's ~12px hit target (under reduced-motion the pill is the ONLY way into
-  history — the pull gesture is off). Levers if either disappoints, in order: 26px pill padding
-  (margin-top 3px / padding 14px 0 8px, pill optically unmoved), `touch-action: manipulation` on
-  `.cell`, then the plan's JS `.pressing` contingency (docs/superpowers/plans/2026-07-20-issue-26.md).
 - Owner hygiene: delete the Rodin uploads, cancel the $6 Creator plan; optionally dashboard-delete
   the #2 test blob `groceries/200dd72a-1e47-4ba8-a1f5-22cdd2f19fb7.png` from kal-photos.
 
