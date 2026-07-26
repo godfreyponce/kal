@@ -672,14 +672,22 @@ body {
   transform: translateY(var(--sheet-y, 0px));
 }
 
-/* grabber handle — visual affordance that the whole sheet is draggable */
+/* grabber handle — the sheet's drag handle (a pull starting here always drags the
+   sheet, #31). ::after widens the touch target without moving any layout: 4px of
+   bar is not a hit target. */
 .sheet-grab {
+  position: relative;
   width: 36px;
   height: 4px;
   border-radius: 2px;
   background: var(--border);
   margin: 6px auto 8px;
   flex-shrink: 0;
+}
+.sheet-grab::after {
+  content: "";
+  position: absolute;
+  inset: -12px -40px;
 }
 
 /* header row (own classes — mirrors the mpop header look without sharing it) */

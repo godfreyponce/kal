@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DayCell, Macros, DayFood } from "@/lib/adherence-view";
 import { dayVerdict, kcalWithinBand, proteinMet } from "@/lib/adherence-view";
-import { rubberBand, shouldDismiss, scrimProgress } from "@/lib/sheet-gesture";
+import { rubberBand, shouldDismiss, scrimProgress, claimsSheetDrag } from "@/lib/sheet-gesture";
 
 const num = (n: number) => Math.round(n).toLocaleString("en-US");
 const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -65,6 +65,7 @@ export function DayDetailModal({
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let active = false; // are we dragging the SHEET (vs. letting it scroll)?
+    let fromHandle = false; // did this gesture start on the grabber?
     let startY = 0;
     let lastY = 0;
     let lastT = 0;
@@ -88,22 +89,23 @@ export function DayDetailModal({
       lastT = e.timeStamp;
       velocity = 0;
       active = false; // decide on first move whether this is a sheet-drag or a scroll
+      fromHandle = e.target instanceof Element && !!e.target.closest(".sheet-grab");
     };
 
     const onMove = (e: PointerEvent) => {
       if (e.pointerId !== pointerId) return;
       const dyRaw = e.clientY - startY;
 
-      // Decide gesture ownership once: a downward pull with the list at the top
-      // drags the sheet; anything else is left to native scroll.
+      // Decide gesture ownership once: a pull off the grabber is always the sheet's;
+      // elsewhere it takes a downward pull with the list at the top. Everything else
+      // is left to native scroll.
       if (!active) {
-        if (dyRaw > 4 && card.scrollTop <= 0) {
-          active = true;
-          setDragging(true);
-          card.setPointerCapture(pointerId);
-        } else {
+        if (!claimsSheetDrag({ dy: dyRaw, fromHandle, scrollTop: card.scrollTop })) {
           return; // let native scroll run
         }
+        active = true;
+        setDragging(true);
+        card.setPointerCapture(pointerId);
       }
 
       e.preventDefault(); // we own the gesture — stop native scroll
