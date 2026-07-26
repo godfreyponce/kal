@@ -34,7 +34,6 @@ export function DayDetailModal({
   const [shown, setShown] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
-  const closeBtn = useRef<HTMLButtonElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,7 +47,7 @@ export function DayDetailModal({
   }, [onClose]);
 
   useEffect(() => {
-    closeBtn.current?.focus();
+    cardRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
@@ -193,13 +192,11 @@ export function DayDetailModal({
         role="dialog"
         aria-modal="true"
         aria-label={`${dateLabel(day.date)} detail`}
+        tabIndex={-1}
       >
         <div className="sheet-grab" aria-hidden="true" />
         <div className="sheet-head">
           <span className="sheet-title">{dateLabel(day.date)}</span>
-          <button ref={closeBtn} type="button" className="sheet-x" onClick={close} aria-label="Close">
-            ✕
-          </button>
         </div>
         <div className={`dd-verdict v-${v.kind}`}>{v.text}</div>
 
