@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { rubberBand, shouldDismiss, scrimProgress } from "./sheet-gesture";
+import { rubberBand, shouldDismiss, scrimProgress, claimsSheetDrag } from "./sheet-gesture";
 
 describe("rubberBand", () => {
   it("returns 0 at the boundary", () => {
@@ -46,5 +46,32 @@ describe("scrimProgress", () => {
   it("clamps past the ends", () => {
     expect(scrimProgress(900, 600)).toBe(0);
     expect(scrimProgress(-50, 600)).toBe(1);
+  });
+});
+
+describe("claimsSheetDrag", () => {
+  it("ignores jitter on the handle", () => {
+    expect(claimsSheetDrag({ dy: 1, fromHandle: true, scrollTop: 0 })).toBe(false);
+  });
+  it("claims a downward pull that starts on the handle", () => {
+    expect(claimsSheetDrag({ dy: 10, fromHandle: true, scrollTop: 0 })).toBe(true);
+  });
+  it("claims a handle pull even when the list is scrolled", () => {
+    expect(claimsSheetDrag({ dy: 10, fromHandle: true, scrollTop: 220 })).toBe(true);
+  });
+  it("claims an upward handle pull too, so it rubber-bands instead of scrolling", () => {
+    expect(claimsSheetDrag({ dy: -10, fromHandle: true, scrollTop: 0 })).toBe(true);
+  });
+  it("still claims a top-of-list downward pull from the body", () => {
+    expect(claimsSheetDrag({ dy: 10, fromHandle: false, scrollTop: 0 })).toBe(true);
+  });
+  it("ignores a body pull under the slop threshold", () => {
+    expect(claimsSheetDrag({ dy: 3, fromHandle: false, scrollTop: 0 })).toBe(false);
+  });
+  it("leaves a scrolled body to native scroll", () => {
+    expect(claimsSheetDrag({ dy: 10, fromHandle: false, scrollTop: 220 })).toBe(false);
+  });
+  it("leaves an upward body drag to native scroll", () => {
+    expect(claimsSheetDrag({ dy: -10, fromHandle: false, scrollTop: 0 })).toBe(false);
   });
 });

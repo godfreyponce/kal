@@ -672,8 +672,11 @@ body {
   transform: translateY(var(--sheet-y, 0px));
 }
 
-/* grabber handle — visual affordance that the whole sheet is draggable */
+/* grabber handle — the sheet's drag handle (a pull starting here always drags the
+   sheet, #31). ::after widens the touch target without moving any layout: 4px of
+   bar is not a hit target. */
 .sheet-grab {
+  position: relative;
   width: 36px;
   height: 4px;
   border-radius: 2px;
@@ -681,17 +684,17 @@ body {
   margin: 6px auto 8px;
   flex-shrink: 0;
 }
+.sheet-grab::after {
+  content: "";
+  position: absolute;
+  inset: -12px -40px;
+}
 
 /* header row (own classes — mirrors the mpop header look without sharing it) */
 .sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 2px; }
 .sheet-title {
   font-family: var(--font-serif); font-size: 24px; font-weight: 500;
   letter-spacing: -0.02em; flex: 1; min-width: 0; line-height: 1.2;
-}
-.sheet-x {
-  flex-shrink: 0; width: 28px; height: 28px; border-radius: 9999px; border: 0;
-  background: var(--surface-2); color: var(--muted); font-size: 13px;
-  line-height: 1; cursor: pointer;
 }
 
 /* Reduced motion: no transform, no drag — plain opacity fade only. */
