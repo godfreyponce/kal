@@ -71,6 +71,59 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Day-detail sheet: grabber becomes the drag handle, X removed — #31 (2026-07-26) — COMMITTED & pushed to main; owner phone-passed 2026-07-26
+
+The sheet already had finger-coupled drag-to-dismiss from #24. What changed is **who owns the
+gesture**, not the motion: none of `rubberBand` / `shouldDismiss` / `scrimProgress` or the CSS
+transitions was retuned. Multi-task plan → branch `issue-31-sheet-grab-handle`, one commit per
+task, merged `--no-ff`.
+
+**New pure helper** — `claimsSheetDrag({ dy, fromHandle, scrollTop })` in `lib/sheet-gesture.ts`.
+It pulls #24's inline ownership test (`dyRaw > 4 && card.scrollTop <= 0`) out of the component and
+adds one rule: a pull that *starts on the grabber* is always the sheet's, in either direction and
+at any scroll position, because the grabber is the sheet's handle rather than content.
+`HANDLE_SLOP = 2` px of jitter, `BODY_SLOP = 4` px (the old threshold, unchanged). 8 new unit
+tests; suite went 171 → 179 across 25 files.
+
+**Component** (`app/plan/day-detail-modal.tsx`): `onDown` records
+`fromHandle = e.target instanceof Element && !!e.target.closest(".sheet-grab")`; `onMove` defers
+to `claimsSheetDrag`. Everything below that branch — `preventDefault`, velocity sampling, the
+rubber band, `shouldDismiss`, `clearVars`, `close` — is byte-identical, so `--scrim-o` still goes
+to `card.parentElement` and the #25 fix is intact.
+
+**Hit target**: the visible grabber is 36×4 px, which is not a touch target. `.sheet-grab` gained
+`position: relative` plus an `::after` at `inset: -12px -40px` (~116×28 px) — pseudo-elements
+hit-test as their originating element, so `e.target` is still `.sheet-grab`, and no layout moved.
+That `::after` does overlap the top ~4 px of `.sheet-head`, which is inert now that the header
+holds only the title.
+
+**X button deleted**, with `.sheet-x` (orphaned by this change) removed from `globals.css`. The
+a11y answer: Escape and scrim-tap were already wired and stay; initial focus moved from the button
+to the card itself (`tabIndex={-1}` on the `role="dialog"` div). That is not a new posture — it is
+what the adherence **calendar** sheet has always shipped. `.sheet-head` kept as a flex row so the
+title does not move. Rejected alternative: making the grabber a `<button aria-label="Close">`,
+which fires a synthetic `click` on pointerup, so a spring-back drag would close the sheet unless
+click suppression were bolted on.
+
+**Deliberate divergence:** `app/plan/adherence-calendar.tsx` carries a near-identical copy of this
+gesture block and was **not** given the handle rule. It shares `.sheet-grab`, so it picks up the
+wider hit box, but that is inert there (its ownership rule never reads `e.target`).
+
+**Known caveat, accepted:** the grabber is not sticky — it scrolls away with the content, so the
+"pull from the grabber while the list is scrolled" path is only reachable while the bar is still
+on screen. The rule itself is correct and unit-tested. Pinning it would mean a full-bleed opaque
+band inside a padded scroll container, a visual change nobody asked for.
+
+**Verified:** clean `tsc --noEmit`; 179 tests across 25 files; `npm run build` green with `/` and
+`/plan` both still `ƒ`. TDD held — the 8 new tests failed first with `claimsSheetDrag is not a
+function`. There is no jsdom/testing-library in this repo, so drag feel was judged where it is
+judgeable: owner phone pass on local prod over Tailscale HTTPS, 2026-07-26.
+
+**Not filed as follow-ups** (offer standing, owner has not asked): giving the calendar sheet the
+same handle rule, and pinning the grabber.
+
+---
+
 ## Orphan cleanup after the silent-menu rollout — #37 (2026-07-25) — COMMITTED & pushed to main; owner-accepted
 
 Housekeeping tail of the #32-#36 rollout: two declarations #32 left dead. Single-task plan →
