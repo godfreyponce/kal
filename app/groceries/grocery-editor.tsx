@@ -385,6 +385,102 @@ export function GroceryEditor({
     </>
   );
 
+  const padSheet = pad && (
+    <div className={`sheet${padOpen ? " open" : ""}`}>
+      <button type="button" className="sheet-scrim" aria-label="Close" onClick={closePad} />
+      <div className="sheet-card" role="dialog" aria-label={pad.label}>
+        <div className="sheet-grab" />
+        <div className="gre-pad-l">{pad.label}</div>
+        <div className="gre-pad-row">
+          {pad.kind === "select" ? (
+            <select autoFocus value={draft} onChange={(e) => setDraft(e.target.value)}>
+              <option value="">Category</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{CAT_LABEL[c]}</option>)}
+            </select>
+          ) : (
+            <input
+              autoFocus
+              className={pad.kind === "text" ? "txt" : ""}
+              inputMode={pad.kind === "number" ? "decimal" : "text"}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitPad(); } }}
+            />
+          )}
+          {pad.fixedUnit && <span className="gre-fixed-unit">{pad.fixedUnit}</span>}
+          {pad.units && (
+            <div className="gre-unit">
+              {pad.units.map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  className={u === draftUnit ? "on" : ""}
+                  onClick={() => setDraftUnit(u)}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="gre-pad-acts">
+          <button type="button" className="btn-dark" onClick={commitPad}>Done</button>
+          <button type="button" className="gr-cancel" onClick={closePad}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Adding keeps plain inputs rather than the pad: for a brand-new item you fill
+  // every field in sequence, and a sheet per field would be four extra taps.
+  if (form.id === null) {
+    return (
+      <div className="gre">
+        {error && <div className="gr-error">{error}</div>}
+        <button type="button" className="gre-back" onClick={onDone}>&larr; Groceries</button>
+
+        {lookupBlock}
+
+        <div className="gr-form">
+          <input aria-label="Name" placeholder="Name" value={form.name} onChange={(e) => set("name", e.target.value)} />
+          <div className="gr-row">
+            <input aria-label="Serving size" inputMode="decimal" placeholder="Serving size" value={form.serving} onChange={(e) => set("serving", e.target.value)} />
+            <select aria-label="Serving size unit" value={form.servingUnit} onChange={(e) => set("servingUnit", e.target.value as WeightUnit)}>
+              <option value="g">g</option>
+              <option value="oz">oz</option>
+            </select>
+            <span className="gr-hint">per serving</span>
+          </div>
+          <div className="gr-row">
+            <input aria-label="My serving" inputMode="decimal" placeholder="My serving" value={form.myServing} onChange={(e) => set("myServing", e.target.value)} />
+            <select aria-label="My serving unit" value={form.myServingUnit} onChange={(e) => set("myServingUnit", e.target.value as WeightUnit)}>
+              <option value="g">g</option>
+              <option value="oz">oz</option>
+            </select>
+            <span className="gr-hint">shown on the card</span>
+          </div>
+          <div className="gr-4">
+            <input aria-label="Calories per serving" inputMode="decimal" placeholder="kcal" value={form.kcal} onChange={(e) => set("kcal", e.target.value)} />
+            <input aria-label="Protein grams per serving" inputMode="decimal" placeholder="P" value={form.proteinG} onChange={(e) => set("proteinG", e.target.value)} />
+            <input aria-label="Carb grams per serving" inputMode="decimal" placeholder="C" value={form.carbsG} onChange={(e) => set("carbsG", e.target.value)} />
+            <input aria-label="Fat grams per serving" inputMode="decimal" placeholder="F" value={form.fatG} onChange={(e) => set("fatG", e.target.value)} />
+          </div>
+
+          {moreBlock}
+
+          <div className="gr-actions">
+            <button type="button" className="btn-dark" disabled={saving} onClick={save}>
+              {saving ? "Saving…" : "Add"}
+            </button>
+            <button type="button" className="gr-cancel" onClick={onDone}>Cancel</button>
+          </div>
+        </div>
+
+        {padSheet}
+      </div>
+    );
+  }
+
   return (
     <div className="gre">
       {error && <div className="gr-error">{error}</div>}
@@ -489,51 +585,7 @@ export function GroceryEditor({
         </div>
       )}
 
-      {pad && (
-        <div className={`sheet${padOpen ? " open" : ""}`}>
-          <button type="button" className="sheet-scrim" aria-label="Close" onClick={closePad} />
-          <div className="sheet-card" role="dialog" aria-label={pad.label}>
-            <div className="sheet-grab" />
-            <div className="gre-pad-l">{pad.label}</div>
-            <div className="gre-pad-row">
-              {pad.kind === "select" ? (
-                <select autoFocus value={draft} onChange={(e) => setDraft(e.target.value)}>
-                  <option value="">Category</option>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{CAT_LABEL[c]}</option>)}
-                </select>
-              ) : (
-                <input
-                  autoFocus
-                  className={pad.kind === "text" ? "txt" : ""}
-                  inputMode={pad.kind === "number" ? "decimal" : "text"}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitPad(); } }}
-                />
-              )}
-              {pad.fixedUnit && <span className="gre-fixed-unit">{pad.fixedUnit}</span>}
-              {pad.units && (
-                <div className="gre-unit">
-                  {pad.units.map((u) => (
-                    <button
-                      key={u}
-                      type="button"
-                      className={u === draftUnit ? "on" : ""}
-                      onClick={() => setDraftUnit(u)}
-                    >
-                      {u}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="gre-pad-acts">
-              <button type="button" className="btn-dark" onClick={commitPad}>Done</button>
-              <button type="button" className="gr-cancel" onClick={closePad}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {padSheet}
     </div>
   );
 }
