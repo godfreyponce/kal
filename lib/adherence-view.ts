@@ -97,3 +97,11 @@ export function bucketDayFoods(rows: DayFoodRow[]): Record<string, DayFood[]> {
   }
   return out;
 }
+
+const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** "2026-07-14" -> "Tue 7/14". UTC only (Vercel runs UTC), same as the rest of this module. */
+export function monthDayLabel(iso: string): string {
+  const d = new Date(iso + "T00:00:00Z");
+  return `${WEEKDAY[d.getUTCDay()]} ${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+}
