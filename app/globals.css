@@ -765,7 +765,22 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .cal-nav button:disabled { opacity: 0.32; cursor: default; }
-.cal-sum { font-family: var(--font-mono); font-size: 10px; color: var(--sm-ink-soft); margin-bottom: 12px; }
+/* streak visual (#30). Not one of the design/plan-cal-day-variants.html A/B/C mockups —
+   the owner supplied this treatment instead: the current run with a flame, all-time best
+   beside it. Both numbers are global, so the row does not move as you page months.
+   The zero state keeps the same row (no layout jump) with the flame greyed out. */
+.cal-streak { display: flex; align-items: baseline; gap: 6px; margin: 7px 0 13px; }
+.cal-streak b {
+  font-family: var(--font-serif); font-size: 30px; font-weight: 500;
+  line-height: 0.9; letter-spacing: -0.02em; color: var(--sm-choc);
+}
+.cal-streak .flame { font-size: 18px; line-height: 1; }
+.cal-streak .best {
+  margin-left: 5px; font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: 0.06em; color: var(--sm-muted);
+}
+.cal-streak.zero b { color: var(--sm-muted); }
+.cal-streak.zero .flame { filter: grayscale(1); opacity: 0.4; }
 
 .cal-dows { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
 .cal-dows span { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; color: var(--sm-muted); text-align: center; }

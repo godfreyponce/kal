@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { flushSync } from "react-dom";
-import { buildCalMonth, historyMonthRange } from "@/lib/adherence-calendar";
+import { bestStreak, buildCalMonth, currentStreak, historyMonthRange } from "@/lib/adherence-calendar";
 import type { AdherenceHistory } from "@/lib/adherence-calendar";
 import { rubberBand, shouldDismiss, scrimProgress } from "@/lib/sheet-gesture";
 
@@ -44,6 +44,9 @@ export function AdherenceCalendar({
 
   const range = historyMonthRange(history, today);
   const cal = useMemo(() => buildCalMonth(monthIdx, history, today), [monthIdx, history, today]);
+  // Both streak numbers are global (owner-picked #30), so the row holds still while you page months.
+  const streak = useMemo(() => currentStreak(history, today), [history, today]);
+  const best = useMemo(() => bestStreak(history), [history]);
 
   useEffect(() => {
     if (!open || pullingRef.current) return;
@@ -308,10 +311,14 @@ export function AdherenceCalendar({
                 </button>
               </div>
             </div>
-            <div className="cal-sum">
-              {cal.summary.judged
-                ? `${cal.summary.on} of ${cal.summary.judged} judged days on plan, best streak ${cal.summary.bestStreak}`
-                : "no judged days yet"}
+            <div
+              className={`cal-streak${streak === 0 ? " zero" : ""}`}
+              role="img"
+              aria-label={`${streak} day streak, best ${best}`}
+            >
+              <b>{streak}</b>
+              <span className="flame">🔥</span>
+              <span className="best">best: {best}</span>
             </div>
             <div className="cal-dows">
               {DOWS.map((d, i) => (
