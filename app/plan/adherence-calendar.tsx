@@ -10,11 +10,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { flushSync } from "react-dom";
 import { bestStreak, buildCalMonth, currentStreak, historyMonthRange } from "@/lib/adherence-calendar";
-import type { AdherenceHistory } from "@/lib/adherence-calendar";
+import type { AdherenceHistory, CalCell } from "@/lib/adherence-calendar";
+import { monthDayLabel } from "@/lib/adherence-view";
+import type { Macros } from "@/lib/adherence-view";
 import { rubberBand, shouldDismiss, scrimProgress } from "@/lib/sheet-gesture";
+import { CalDayPopup } from "./day-popup";
 
 const EXIT_MS = 240; // must match the .sheet-card exit transition (see globals.css)
 const DOWS = ["M", "T", "W", "T", "F", "S", "S"];
+
+// Screen-reader copy for a pressable day, appended to its date.
+const CELL_LABEL: Record<string, string> = {
+  on: "on plan",
+  onx: "on plan, with extras",
+  off: "off plan",
+  unlogged: "not logged",
+  today: "today, in progress",
+};
 
 // Swipe-up pull thresholds — owner tunes these on-phone (see STATE.md run/verify,
 // the touch-action/passive-listener interaction on iOS Safari is a known tuning spot).
@@ -27,16 +39,25 @@ export function AdherenceCalendar({
   history,
   today,
   stripRef,
+  targets,
+  todayConsumed,
 }: {
   history: AdherenceHistory;
   today: string;
   stripRef: RefObject<HTMLDivElement | null>;
+  targets: Macros;
+  todayConsumed: Macros | null;
 }) {
   const [open, setOpen] = useState(false);
   const [shown, setShown] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [monthIdx, setMonthIdx] = useState(() => historyMonthRange(history, today).last);
+  // The pressed calendar day, plus the chip's viewport rect (kept for a later anchored variant).
+  const [day, setDay] = useState<{ cell: CalCell; rect: DOMRect } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  // Set when the card-drag handler claims a gesture; a claimed drag must not also
+  // fire the cell's click. Cleared on the next pointerdown.
+  const dragClaimedRef = useRef(false);
   // True from the moment a swipe-up pull claims the gesture until it settles.
   // Guards the auto-enter effect below so a pulled mount doesn't also spring
   // open on its own (settlePull drives `shown` itself for that path).
@@ -47,6 +68,8 @@ export function AdherenceCalendar({
   // Both streak numbers are global (owner-picked #30), so the row holds still while you page months.
   const streak = useMemo(() => currentStreak(history, today), [history, today]);
   const best = useMemo(() => bestStreak(history), [history]);
+  // The macros a pressed day shows: history for past days, the live prop for today.
+  const dayConsumed = day ? (day.cell.state === "today" ? todayConsumed : day.cell.consumed) : null;
 
   useEffect(() => {
     if (!open || pullingRef.current) return;
@@ -61,6 +84,7 @@ export function AdherenceCalendar({
   }, [history, today]);
 
   const close = useCallback(() => {
+    setDay(null); // the popup must never outlive the sheet it was opened from
     setShown(false);
     window.setTimeout(() => setOpen(false), EXIT_MS);
   }, []);
@@ -101,11 +125,13 @@ export function AdherenceCalendar({
     if (!open) return;
     if (!pullingRef.current) cardRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key !== "Escape") return;
+      if (day) return; // the day popup is up; it handles its own Escape (with its exit animation)
+      close();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, close]);
+  }, [open, close, day]);
 
   // Whole-sheet, scroll-aware drag-to-dismiss. Copied from day-detail-modal.tsx's
   // pattern (#24) — native non-passive listeners so we can preventDefault the
@@ -136,6 +162,7 @@ export function AdherenceCalendar({
 
     const onDown = (e: PointerEvent) => {
       if (e.pointerType === "mouse") return; // pointer-drag is a touch affordance
+      dragClaimedRef.current = false;
       pointerId = e.pointerId;
       startY = lastY = e.clientY;
       lastT = e.timeStamp;
@@ -152,6 +179,7 @@ export function AdherenceCalendar({
       if (!active) {
         if (dyRaw > 4 && card.scrollTop <= 0) {
           active = true;
+          dragClaimedRef.current = true;
           setDragging(true);
           card.setPointerCapture(pointerId);
         } else {
@@ -296,14 +324,20 @@ export function AdherenceCalendar({
               <span className="cal-month">{cal.label}</span>
               <div className="cal-nav">
                 <button
-                  onClick={() => setMonthIdx((i) => i - 1)}
+                  onClick={() => {
+                    setDay(null);
+                    setMonthIdx((i) => i - 1);
+                  }}
                   disabled={monthIdx <= range.first}
                   aria-label="Previous month"
                 >
                   ‹
                 </button>
                 <button
-                  onClick={() => setMonthIdx((i) => i + 1)}
+                  onClick={() => {
+                    setDay(null);
+                    setMonthIdx((i) => i + 1);
+                  }}
                   disabled={monthIdx >= range.last}
                   aria-label="Next month"
                 >
@@ -329,11 +363,27 @@ export function AdherenceCalendar({
               {Array.from({ length: cal.leading }, (_, i) => (
                 <div key={`b${i}`} className="cal-cell" />
               ))}
-              {cal.cells.map((c) => (
-                <div key={c.date} className={`cal-cell ${c.state}`}>
-                  <span className="cal-chip">{c.day}</span>
-                </div>
-              ))}
+              {cal.cells.map((c) =>
+                c.state === "future" || c.state === "pre" ? (
+                  <div key={c.date} className={`cal-cell ${c.state}`}>
+                    <span className="cal-chip">{c.day}</span>
+                  </div>
+                ) : (
+                  <button
+                    key={c.date}
+                    type="button"
+                    className={`cal-cell ${c.state}`}
+                    aria-label={`${monthDayLabel(c.date)}, ${CELL_LABEL[c.state]}`}
+                    onClick={(e) => {
+                      if (dragClaimedRef.current) return;
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setDay((d) => (d?.cell.date === c.date ? null : { cell: c, rect }));
+                    }}
+                  >
+                    <span className="cal-chip">{c.day}</span>
+                  </button>
+                )
+              )}
             </div>
             <div className="cal-legend">
               <div className="leg-row">
@@ -351,6 +401,14 @@ export function AdherenceCalendar({
             </div>
           </div>
         </div>
+      )}
+      {day && (
+        <CalDayPopup
+          cell={day.cell}
+          consumed={dayConsumed}
+          targets={targets}
+          onClose={() => setDay(null)}
+        />
       )}
     </>
   );
