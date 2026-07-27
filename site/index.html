@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal: a fitness log i talk to</title>
+<meta name="description" content="My personal fitness chat app. A Claude assistant that knows my meal plan and writes my daily log">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231f2421'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-family='Menlo,monospace' font-size='36' font-weight='700' fill='%23d97757'%3E_%3C/text%3E%3C/svg%3E">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* variant 3 skin: paper, ink, one accent */
+  body { background: #f7f6f3; color: #1f2421; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; }
+
+  .hero {
+    background: #1f2421; padding: 96px 24px 88px; text-align: center;
+  }
+  .hero .word {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: clamp(56px, 12vw, 88px); font-weight: 700; letter-spacing: .28em; color: #f7f6f3;
+    padding-left: .28em; /* optically recenters tracked text */
+  }
+  .hero .word .cursor { color: #d97757; animation: blink 1.2s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .hero .word .cursor { animation: none; } }
+  .hero .sub {
+    font-family: ui-monospace, Menlo, monospace; font-size: 14px; color: #9b9a96;
+    margin-top: 24px; letter-spacing: .05em;
+  }
+
+  .col { max-width: 640px; margin: 0 auto; padding: 0 24px; }
+  .wide { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  .warning {
+    border-left: 4px solid #d97757; background: #fdfcfa;
+    padding: 16px 20px; margin: 48px auto 0; font-size: 15px; line-height: 1.65;
+  }
+  .warning .label {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: #d97757; margin-bottom: 8px;
+  }
+
+  .prose { font-size: 17px; line-height: 1.7; margin-top: 40px; }
+  .prose p { margin-bottom: 18px; }
+  .prose .mono { font-family: ui-monospace, Menlo, monospace; font-size: 15px; }
+
+  h2 {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 20px; font-weight: 700; margin: 64px 0 20px;
+  }
+
+  blockquote {
+    border-left: 4px solid #1f2421; padding: 2px 20px; margin: 28px 0;
+    font-family: ui-monospace, Menlo, monospace; font-size: 15px; line-height: 1.7;
+  }
+
+  .shot {
+    display: block; width: 100%;
+    border: 1px solid #d5d2cc; border-radius: 12px;
+  }
+  .shot.phone { width: 300px; margin: 48px auto 0; }
+  .caption {
+    display: block; text-align: center; margin: 12px auto 0; max-width: 420px;
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #59636e; line-height: 1.7;
+  }
+
+  .screens { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
+  .screens figure { width: 280px; }
+
+  .pills {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 72px auto 0; padding: 0 24px;
+  }
+  .pill {
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #1f2421;
+    border: 1px solid #c9c6c0; border-radius: 999px; padding: 4px 14px; background: #fdfcfa;
+  }
+
+  footer {
+    background: #1f2421; color: #f7f6f3; margin-top: 72px; padding: 64px 24px 56px;
+    text-align: center; font-family: ui-monospace, Menlo, monospace;
+  }
+  footer .lead { font-size: 14px; color: #9b9a96; line-height: 1.8; max-width: 480px; margin: 0 auto; }
+  footer a { color: #f7f6f3; text-decoration: underline; text-underline-offset: 3px; }
+  footer .repo {
+    display: inline-block; margin-top: 24px; border: 1px solid #d97757; color: #d97757;
+    padding: 10px 22px; border-radius: 6px; font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  footer .contact { margin-top: 32px; font-size: 13px; }
+  footer .contact a { color: #9b9a96; margin: 0 10px; }
+  footer .mit { margin-top: 32px; font-size: 12px; color: #59636e; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="word">KAL<span class="cursor">_</span></div>
+  <div class="sub">a fitness log i talk to</div>
+</div>
+
+<div class="col">
+  <div class="warning">
+    <div class="label">Warning</div>
+    This is my personal app. One user, one password, my meal plan. The code is public.
+    The login page will tell you that you shall not pass.
+  </div>
+
+  <div class="prose">
+    <p>Kal is a Claude assistant with write access to my food log. It knows my profile, my meal
+    plan, and what I have eaten today.</p>
+    <p>On a normal day I do not talk to it at all. I tap a meal on the Today screen and it is
+    logged. Off-plan days are the whole reason it exists: I tell it what I am about to eat, it
+    finds real macros, rewrites the rest of today to fit, and logs what actually happened. The
+    plan template is never touched.</p>
+  </div>
+
+  <img class="shot phone" src="media/shot-01-today.png" alt="The Today screen on a phone: calorie ring with remaining kcal, segmented macro bars, a meal checklist with one meal checked">
+  <span class="caption">the whole day on one screen. tap a meal, it's logged. tap again, it's not.</span>
+
+  <h2>the one rule</h2>
+  <div class="prose" style="margin-top:0;">
+    <p>The model once saw <span class="mono">6× Chicken breast</span>,
+    guessed a serving size, and handed me a 372 g protein day. Never again:</p>
+    <blockquote>kal does not guess numbers. every food line arrives resolved: weight, unit, macros.</blockquote>
+    <p>The numbers come from a grocery library of things I actually buy, with label macros. When
+    something new comes up, it checks nutrition databases first, then asks me for a product link
+    or a photo of the label, and only then estimates, labeled as an estimate, which I have to
+    approve before it writes anything.</p>
+  </div>
+</div>
+
+<div class="wide">
+  <h2 style="text-align:center;">the screens</h2>
+  <div class="screens">
+    <figure>
+      <img class="shot" src="media/shot-02-chat.png" alt="The chat screen mid conversation: a tool card with an Undo button, a remaining-today stat strip, and the model and cost readout">
+      <span class="caption">an off-plan day in progress. every write gets an undo button, and the running cost shows while i type. a full conversation is about three cents.</span>
+    </figure>
+    <figure>
+      <img class="shot" src="media/shot-03-plan.png" alt="The Plan screen: a 3D figure mid drag-rotate, with a weekly adherence strip and weight trend chart below">
+      <span class="caption">the plan. drag the figure and it spins. adherence and weight trend live below it.</span>
+    </figure>
+    <figure>
+      <img class="shot" src="media/shot-04-groceries.png" alt="The Groceries screen on white: product photo rows, kcal and protein pills, shelf bands grouping items by meal">
+      <span class="caption">the grocery library, where the numbers come from. things i actually buy, with label macros.</span>
+    </figure>
+  </div>
+</div>
+
+<div class="pills">
+  <span class="pill">one user</span>
+  <span class="pill">MIT</span>
+  <span class="pill">179 tests</span>
+  <span class="pill">11 tools</span>
+  <span class="pill">no accounts</span>
+</div>
+
+<footer>
+  <p class="lead">this page is the short version. the readme has the architecture, the tests,
+  and the run-it instructions.</p>
+  <a class="repo" href="https://github.com/godfreyponce/kal">read the readme on github</a>
+  <p class="lead" style="margin-top:24px;">it runs my actual days at
+  <a href="https://kal-delta.vercel.app">kal-delta.vercel.app</a> (password-gated).</p>
+  <div class="contact">
+    <a href="https://github.com/godfreyponce/">github</a> / <a href="https://www.linkedin.com/in/godfreyponce/">linkedin</a> / <a href="https://godfreyponce.dev/">personal website</a>
+  </div>
+  <div class="mit">MIT © 2026 Godfrey Ponce</div>
+</footer>
+
+</body>
+</html>
