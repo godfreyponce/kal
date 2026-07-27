@@ -2054,3 +2054,101 @@ body:has(main.groceries) { background: #fff; }
 .plan-ed-inp:focus { outline: 2px solid var(--sm-red); outline-offset: 1px; border-color: var(--sm-red); }
 .plan-ed-hint { font-family: var(--font-mono); font-size: 8.5px; color: var(--sm-muted); margin-top: 8px; line-height: 1.6; }
 .plan-ed-save { margin-top: 10px; }
+
+/* ---- #29 Groceries editor: read-first label, every value opens the pad ---- */
+.gre-back {
+  display: inline-block; font-family: var(--font-mono); font-size: 10.5px;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--sm-ink-soft);
+  background: none; border: 0; padding: 0; margin-bottom: 18px; cursor: pointer;
+}
+.gre-hero { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 20px; }
+.gre-shot { width: 150px; height: 120px; object-fit: contain; mix-blend-mode: multiply; filter: saturate(1.04); }
+.gre-name {
+  font-size: 24px; font-weight: 800; letter-spacing: -0.01em; text-transform: uppercase;
+  line-height: 1.1; color: var(--sm-choc); background: none; border: 0; margin-top: 6px;
+  padding: 2px 0; border-bottom: 1.5px dashed var(--sm-border); cursor: pointer;
+  font-family: var(--font-sans-stack);
+}
+.gre-sub {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--sm-muted); background: none; border: 0; margin-top: 10px; padding: 2px 0;
+  border-bottom: 1.5px dashed var(--sm-border); cursor: pointer;
+}
+.gre-figs {
+  display: flex; border-top: 1px solid var(--sm-border);
+  border-bottom: 1px solid var(--sm-border); margin-bottom: 18px;
+}
+.gre-fig { flex: 1; padding: 18px 0 16px; text-align: center; background: none; border: 0; cursor: pointer; }
+.gre-fig + .gre-fig { border-left: 1px solid var(--sm-border); }
+.gre-fig .v {
+  display: inline-block; font-size: 23px; font-weight: 800; color: var(--sm-choc);
+  letter-spacing: -0.02em; line-height: 1; border-bottom: 1.5px dashed var(--sm-border); padding-bottom: 3px;
+}
+.gre-fig .v small { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--sm-muted); margin-left: 3px; }
+.gre-fig .l {
+  display: block; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--sm-muted); margin-top: 9px;
+}
+.gre-macros { display: flex; justify-content: center; gap: 9px; margin-bottom: 20px; }
+.gre-pill {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; background: var(--sm-pill); color: #fff; border: 0;
+  border-radius: 999px; padding: 9px 15px; cursor: pointer;
+}
+.gre-pill.pro { background: var(--sm-caramel); }
+.gre-editing { outline: 2px solid var(--sm-caramel); outline-offset: 3px; border-radius: 4px; }
+
+.gre-foot { display: flex; align-items: center; margin-top: 18px; }
+.gre-dirty {
+  position: sticky; bottom: 0; display: flex; align-items: center; gap: 10px;
+  margin-top: 22px; padding: 14px 0 2px; border-top: 1px solid var(--sm-border); background: var(--canvas);
+}
+
+/* pad contents (the shell is the shared .sheet/.sheet-card) */
+.gre-pad-l { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sm-muted); }
+.gre-pad-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 14px; }
+.gre-pad-row input, .gre-pad-row select {
+  flex: 1; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: var(--sm-choc);
+  border: 0; border-bottom: 2px solid var(--sm-caramel); background: none; padding: 3px 0; width: 100%;
+  font-family: var(--font-sans-stack);
+}
+.gre-pad-row input.txt { font-size: 19px; }
+.gre-pad-row select { font-family: var(--font-mono); font-size: 15px; }
+.gre-pad-row input:focus, .gre-pad-row select:focus { outline: none; }
+.gre-unit { display: flex; gap: 6px; flex-shrink: 0; }
+.gre-unit button {
+  font-family: var(--font-mono); font-size: 11px; padding: 8px 13px; border-radius: 999px;
+  border: 1px solid var(--sm-border); background: #fff; color: var(--sm-ink-soft); cursor: pointer;
+}
+.gre-unit button.on { background: var(--sm-choc); color: #fff; border-color: var(--sm-choc); }
+.gre-fixed-unit { font-family: var(--font-mono); font-size: 13px; color: var(--sm-muted); flex-shrink: 0; }
+.gre-pad-acts { display: flex; align-items: center; gap: 10px; }
+
+.gre-more-btn {
+  display: block; width: 100%; font-family: var(--font-mono); font-size: 10.5px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--sm-ink-soft);
+  background: none; border: 0; border-top: 1px solid var(--sm-border);
+  padding: 15px 0 4px; text-align: center; cursor: pointer;
+}
+.gre-lines { border-top: 1px solid var(--sm-border); margin-top: 12px; }
+.gre-line {
+  display: flex; align-items: baseline; justify-content: space-between; width: 100%;
+  background: none; border: 0; border-bottom: 1px solid var(--sm-border);
+  padding: 14px 2px; text-align: left; cursor: pointer;
+}
+.gre-line .l {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--sm-muted);
+}
+.gre-line .v {
+  font-size: 15px; font-weight: 700; color: var(--sm-choc);
+  border-bottom: 1.5px dashed var(--sm-border); padding-bottom: 1px;
+}
+.gre-line .v.empty { color: var(--sm-muted); font-weight: 500; font-family: var(--font-mono); font-size: 12px; }
+.gre-line .v small { font-family: var(--font-mono); font-size: 10px; font-weight: 500; color: var(--sm-muted); margin-left: 3px; }
+.gre-tools { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.gre-tool {
+  display: block; width: 100%; text-align: center; font-family: var(--font-mono); font-size: 11px;
+  color: var(--sm-ink-soft); background: #fff; border: 1px solid var(--sm-border);
+  border-radius: 8px; padding: 11px; cursor: pointer;
+}
