@@ -71,6 +71,68 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Groceries editor: read-first label card with a per-value pad — #29 (2026-07-27) — COMMITTED & pushed to main; owner-accepted from the desktop pass
+
+Tapping a grocery row used to drop eighteen controls on you at once. Now it opens a read-first
+label card where every value is a tappable label, and each one opens a focused bottom-sheet pad for
+that one value. Multi-task plan → branch `issue-29-groceries-edit`, four commits, merged `--no-ff`.
+No new dependency, no new API route, no DB or schema change: the payload the editor PATCHes is
+byte-for-byte the one the old form sent.
+
+**`lib/grocery-form.ts` (new)** — the payload logic came out of the component first, before any UI
+moved, so the rework had a safety net. `FormState`, `EMPTY` and `toForm` moved verbatim;
+`buildGroceryPatch` is the payload half of the old `save()` lifted out unchanged, returning
+`{ok: true, body}` or `{ok: false, error}` instead of calling `setError`. Pure: the
+`GroceryGroupItem` import is type-only, so nothing pulls in `lib/groceries`' db client — proved by
+running the file's tests with `env -u DATABASE_URL`, which is what the commit gate does. 14 new
+tests, suite 188 → 202 across 26 files. The count-food landmine finally has a test pinning it:
+`updateGrocery` rewrites `servingDesc` to `"<n> g"` whenever `servingGrams` arrives, so a count
+food must omit the key entirely or "1 tbsp" becomes "170 g". Two tests also pin behavior we are
+*not* endorsing — a blank calorie box saves as 0, because `Number("")` is 0 and 0 is finite.
+
+**`app/groceries/grocery-editor.tsx` (new, 591 lines)** — the whole edit face. `groceries-list.tsx`
+drops 490 → 121 lines and keeps only the browse face plus one piece of state, `editing:
+GroceryGroupItem | "new" | null`. The editor is keyed on the item id so backing out and tapping a
+different row gets a fresh `original` ref. The pad reuses `.sheet` / `.sheet-scrim` / `.sheet-card`
+from the #24 block, so it moves like the sheets already phone-passed in #30 and #31; only the inner
+content is new (`.gre-*`). Pad lifecycle mirrors the day-detail sheet: mount closed, add `.open` on
+the second rAF, unmount after `EXIT_MS = 240`.
+
+**One pad, one value.** `PadTarget` says which `FormState` key is being edited and how to render
+it. Count foods get their basis as plain text with **no g/oz toggle** — offering one would invite
+exactly the clobber the new test guards against — and the Serving size line is hidden for them
+under More for the same reason. Each Done writes to local state only; nothing reaches the API until
+Save, which is what the sticky dirty bar is for. Discard restores `original.current`.
+
+**Deviation from the plan, and it mattered.** Tasks 3 and 4 specified `LookupBlock()` and
+`MoreBlock()` as function components declared inside `GroceryEditor` and rendered as
+`<LookupBlock />`. A function declared in a render body has a new identity every render, so React
+remounts the subtree on each keystroke and the lookup input loses focus after one character. Built
+instead as `const lookupBlock`/`const moreBlock` holding JSX — the plan's own `const padSheet = …`
+pattern. Verified live by typing "greek yogurt" and keeping all twelve characters.
+
+**Add flow keeps its shape.** For an item that does not exist yet, lookup and the label photo
+genuinely are the first thing you want, so `form.id === null` renders plain inputs top to bottom
+with the lookup block above them. It only loses the rare fields to More. A sheet per field would be
+four extra taps on a form where you are filling everything in sequence.
+
+**Known interface lie, left in deliberately.** The label's second line renders `brand, store`
+joined, yet tapping it opens a pad headed **Brand** only. Visible in practice: a banana with no
+brand shows `WALMART` and edits Brand. Alternatives were a brand-only subtitle or a two-field pad,
+which breaks the one-value-per-pad rule. Also unreconciled: the editor's category dropdown says
+"Fat and oil" while the browse shelf still says "Fat & Oil".
+
+**No drag-to-dismiss on the pad.** It reuses `.sheet` CSS but not `lib/sheet-gesture.ts` — a drag
+on a sheet whose whole content is a focused numeric input fights the on-screen keyboard, and the
+pad has explicit Done and Cancel. Doing it properly means extracting a shared `<Sheet>` from
+`day-detail-modal.tsx`, which is its own ticket.
+
+**Verification gap to know about**: desktop Chrome only. Macro pills are 10px type in a 9px pill,
+fine with a mouse and untested with a thumb; if the phone pass finds them fiddly the fix is moving
+P/C/F into the figures block as a second row, CSS-only.
+
+---
+
 ## Calendar sheet: streak visual + pressable days with a per-day popup — #30 (2026-07-27) — COMMITTED & pushed to main; owner-accepted from the desktop pass
 
 Two owner requests from #26 acceptance, landed together. Multi-task plan → branch `issue-30`,
