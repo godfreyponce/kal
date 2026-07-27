@@ -71,6 +71,63 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Calendar sheet: streak visual + pressable days with a per-day popup — #30 (2026-07-27) — COMMITTED & pushed to main; owner-accepted from the desktop pass
+
+Two owner requests from #26 acceptance, landed together. Multi-task plan → branch `issue-30`,
+one commit per task, merged `--no-ff`. No new dependency, no new API route, no new DB query:
+everything the popup shows was already being fetched and then thrown away.
+
+**Model (`lib/adherence-calendar.ts`)** — `classifyHistoryRows` used to discard each day's kcal
+and protein after judging it. Now `JudgedDay` and `CalCell` carry them (`consumed: Macros | null`,
+non-null only for the three judged states), which is what lets a pressed day show numbers without
+a fetch. New pure exports: `calDayVerdict()` maps the calendar's finer states onto the weekly
+strip's `DayCell["state"]` and reuses `dayVerdict()`'s copy, appending ", with extras" for `onx` —
+the one thing the shared verdict cannot know. `currentStreak(history, today)` walks backwards from
+yesterday and stops at the first off day *or gap*; `bestStreak(history)` takes the longest run in
+all of history, using date contiguity to detect unlogged gaps (`history.days` holds logged days
+only). `monthDayLabel()` was lifted from `weekly-adherence.tsx` into `lib/adherence-view.ts` so the
+strip tooltip and the popup print a date the same way. Suite 179 → 188 across the same 25 files.
+
+**Streak visual** — the owner rejected all three mockup variants (A cream badge / B editorial rule
+/ C chip run) and supplied a fourth: the number, a flame, and `best: N` beside it. Both numbers are
+**global** (current run, all-time best), owner-picked 2026-07-27, so the row does not change as you
+page months — which is why `cal.summary.bestStreak` (month-scoped, what the deleted `.cal-sum` line
+showed) is no longer displayed anywhere, though it stays in `CalMonth` and its tests. The zero state
+renders the same row with a grey number and a `grayscale(1)` flame, so nothing below it jumps.
+
+**Pressable days** — `.cal-cell` is a `<button>` for every state that has something to say;
+`future` and `pre` stay `<div>`s, because a button that opens a popup saying nothing is worse than
+no button. Press feel is #26's values verbatim (`scale(0.94) translateY(1px)`, the same two curves,
+sink on the long decel and spring back on release) — copied, not retuned. `aria-label` reads
+"Tue 7/14, on plan". A `dragClaimedRef`, set where the card-drag effect claims a gesture and
+cleared on `pointerdown`, stops a sheet drag that began on a chip from also firing its click.
+
+**Popup** (`app/plan/day-popup.tsx`, new file — `adherence-calendar.tsx` is already 350 lines of
+gesture code) — owner picked variant 2, the centred mini card, rise-and-sink like the Today meal
+popup at a smaller size, in its own `.dp-*` namespace so `.mpop` is untouched. Mounted as a sibling
+of `.sheet`, never inside `.sheet-card`: that card carries a `transform` even when open, which
+would make it the containing block for a `position: fixed` child, and it is `overflow-y: auto`,
+which would clip it. Today's row is live — `weekly-adherence.tsx` passes `todayConsumed` down,
+since `getAdherenceHistory`'s `lt(date, today)` filter deliberately excludes today and widening it
+would have changed `firstLogDate` semantics for one number available for free.
+
+**Escape ordering, a deviation from the plan.** The plan had the sheet do `setDay(null)`, which
+snaps the card away with no exit animation. Instead the popup owns its own Escape and plays its
+180 ms exit, and the sheet's handler stands down while a popup is mounted. Cost: for that 180 ms
+window a second Escape does nothing. Verified in-browser: first Escape closes the popup and leaves
+the sheet up, second closes the sheet.
+
+**Not done, deliberately** — no per-food detail in the popup. Those foods come from
+`getWeekDayFoods`, which reads the current week only; a calendar spanning months would need a new
+route, a client fetch, a loading state, and a sheet nested in a sheet. That is a separate ticket if
+the owner ever wants it.
+
+**Verification gap to know about**: the local DB had no on-plan day in July, so the desktop pass
+only ever exercised the zero state and the miss/unlogged popup. A lit flame, a non-zero streak, and
+an on-plan day's popup were never seen against real data.
+
+---
+
 ## Day-detail sheet: grabber becomes the drag handle, X removed — #31 (2026-07-26) — COMMITTED & pushed to main; owner phone-passed 2026-07-26
 
 The sheet already had finger-coupled drag-to-dismiss from #24. What changed is **who owns the

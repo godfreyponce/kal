@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan — calendar streak visual + per-day popup (issue #30)</title>
+<style>
+  :root {
+    --canvas: #f7f6f3;
+    --surface: #fff;
+    --surface-2: #f0efeb;
+    --ink: #1f2421;
+    --ink-soft: #2f3437;
+    --muted: #787774;
+    --faint: #9b9a96;
+    --border: #e6e4df;
+    --protein: #9f2f2d;
+    --green-bg: #e6efe5;
+    --green-tx: #346538;
+    --accent: #d97757;
+    --sm-choc: #3f2a1a;
+    --sm-band: #f6efe2;
+    --sm-band-deep: #f1e7d3;
+    --sm-muted: #b3a390;
+    --sm-border: #e2d9c9;
+    --sm-ink-soft: #8a7a66;
+    --font-sans-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #b9b7b2; color: var(--ink);
+    font-family: var(--font-sans-stack); line-height: 1.6;
+    -webkit-font-smoothing: antialiased; padding: 32px 20px 64px;
+  }
+  .page-head { max-width: 1320px; margin: 0 auto 10px; color: #f4f3f0; }
+  .page-head h1 { font-family: var(--font-serif); font-weight: 500; font-size: 24px; letter-spacing: -0.02em; }
+  .page-head p { font-family: var(--font-mono); font-size: 11.5px; opacity: 0.85; margin-top: 4px; }
+  .note {
+    max-width: 1320px; margin: 0 auto 26px; color: #f4f3f0;
+    font-family: var(--font-mono); font-size: 11px; line-height: 1.7;
+    border-left: 2px solid rgba(244, 243, 240, 0.5); padding-left: 12px; opacity: 0.9;
+  }
+  .note b { color: #fff; font-weight: 500; }
+  .sec {
+    max-width: 1320px; margin: 34px auto 14px; color: #f4f3f0;
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 1px solid rgba(244,243,240,0.3); padding-bottom: 6px;
+  }
+  .row {
+    display: flex; flex-wrap: wrap; gap: 36px; justify-content: center;
+    align-items: flex-start; max-width: 1320px; margin: 0 auto;
+  }
+  .variant { width: 396px; max-width: 100%; }
+  .vlabel {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em;
+    color: #f4f3f0; margin-bottom: 4px;
+  }
+  .vsub {
+    font-family: var(--font-mono); font-size: 10.5px; line-height: 1.6;
+    color: rgba(244,243,240,0.75); margin-bottom: 12px; min-height: 34px;
+  }
+
+  /* ---- the sheet card, as it renders on /plan ---- */
+  .card {
+    position: relative; background: var(--canvas); border: 1px solid var(--border);
+    border-radius: 22px; padding: 8px 22px 22px; overflow: hidden;
+    box-shadow: 0 14px 40px rgba(31, 36, 33, 0.2);
+  }
+  .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 6px auto 8px; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+  .cal-month { font-family: var(--font-serif); font-size: 19px; font-weight: 500; letter-spacing: -0.01em; color: var(--sm-choc); }
+  .cal-nav { display: flex; gap: 4px; }
+  .cal-nav button {
+    width: 30px; height: 30px; border: 1px solid var(--sm-border); border-radius: 9999px; background: none;
+    font-family: var(--font-mono); font-size: 14px; color: var(--sm-choc); line-height: 1; cursor: pointer;
+  }
+  .cal-dows { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
+  .cal-dows span { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; color: var(--sm-muted); text-align: center; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 7px; }
+  .cal-cell {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    min-height: 36px; position: relative;
+    border: 0; background: none; font: inherit; padding: 0; margin: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.30s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  button.cal-cell { cursor: pointer; }
+  button.cal-cell:active {
+    transform: scale(0.94) translateY(1px); /* the #26 .cell values, unchanged */
+    transition: transform 0.45s cubic-bezier(0.16, 0.9, 0.3, 1);
+  }
+  .cal-chip {
+    width: 32px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft);
+  }
+  .on .cal-chip { background: var(--green-tx); color: #fff; font-weight: 500; }
+  .onx .cal-chip { background: var(--green-bg); color: var(--green-tx); font-weight: 500; }
+  .off .cal-chip, .unlogged .cal-chip { background: rgba(159, 47, 45, 0.45); color: #fff; font-weight: 500; }
+  .today .cal-chip { border: 1.5px solid var(--accent); color: var(--accent); font-weight: 500; }
+  .future .cal-chip, .pre .cal-chip { color: #cfcdc7; }
+  .cal-legend { display: flex; gap: 14px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .cal-legend .leg-row { font-size: 9.5px; color: var(--sm-muted); display: flex; align-items: center; gap: 6px; }
+  .cal-legend .leg-sw { display: inline-block; width: 11px; height: 11px; border-radius: 4px; flex-shrink: 0; }
+
+  /* the line this ticket replaces, kept for reference in the last card */
+  .cal-sum { font-family: var(--font-mono); font-size: 10px; color: var(--sm-ink-soft); margin-bottom: 12px; }
+
+  /* ============ STREAK VARIANT A — cream badge ============ */
+  .stk-a { display: inline-flex; align-items: baseline; gap: 7px; margin: 6px 0 13px;
+    background: var(--sm-band); border-radius: 10px; padding: 5px 11px 6px; }
+  .stk-a b { font-family: var(--font-serif); font-size: 21px; font-weight: 500; line-height: 1; color: var(--green-tx); }
+  .stk-a span { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sm-ink-soft); }
+  .stk-a.zero b { color: var(--sm-muted); }
+
+  /* ============ STREAK VARIANT B — editorial rule ============ */
+  .stk-b { display: flex; align-items: baseline; gap: 9px; margin: 8px 0 14px; }
+  .stk-b b { font-family: var(--font-serif); font-size: 30px; font-weight: 500; line-height: 0.9; letter-spacing: -0.02em; color: var(--green-tx); }
+  .stk-b .r { flex: 1; height: 1px; background: var(--sm-border); transform: translateY(-3px); }
+  .stk-b span { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sm-muted); }
+  .stk-b.zero b { color: var(--sm-muted); }
+
+  /* ============ STREAK VARIANT C — chip run ============ */
+  .stk-c { display: flex; align-items: center; gap: 8px; margin: 8px 0 14px; flex-wrap: wrap; }
+  .stk-c .pips { display: flex; gap: 3px; }
+  .stk-c .pip { width: 9px; height: 9px; border-radius: 3px; background: var(--green-tx); }
+  .stk-c .pip.x { background: var(--green-bg); }
+  .stk-c b { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--green-tx); }
+  .stk-c span { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sm-muted); }
+  .stk-c.zero b { color: var(--sm-muted); }
+  .stk-c.zero .pip { background: var(--surface-2); }
+
+  /* ============ POPUP shared content ============ */
+  .dp-date { font-family: var(--font-serif); font-size: 17px; font-weight: 500; letter-spacing: -0.01em; color: var(--sm-choc); }
+  .dp-rows { font-family: var(--font-mono); font-size: 11px; color: var(--sm-ink-soft); margin-top: 5px; line-height: 1.75; }
+  .dp-rows i { font-style: normal; color: var(--green-tx); font-weight: 500; }
+  .dp-rows i.bad { color: var(--protein); }
+  .dp-verdict { font-family: var(--font-mono); font-size: 10.5px; margin-top: 7px; font-weight: 500; }
+  .dp-verdict.hit { color: var(--green-tx); }
+  .dp-verdict.miss { color: var(--protein); }
+  .dp-verdict.wip { color: var(--accent); }
+
+  /* ---- POPUP 1 — anchored bubble ---- */
+  .pop1 {
+    position: absolute; z-index: 4; width: 194px;
+    background: var(--surface); border: 1px solid var(--sm-border); border-radius: 14px;
+    padding: 11px 13px 12px; box-shadow: 0 12px 30px rgba(31, 36, 33, 0.18);
+    opacity: 0; transform: scale(0.86); transform-origin: var(--ox, 50%) var(--oy, 0%);
+    transition: opacity 0.15s ease-in, transform 0.15s cubic-bezier(0.4, 0, 1, 1);
+    pointer-events: none;
+  }
+  .pop1.open { opacity: 1; transform: scale(1); pointer-events: auto;
+    transition: opacity 0.2s ease-out, transform 0.26s cubic-bezier(0.32, 0.72, 0.33, 1); }
+  .pop1 .caret {
+    position: absolute; width: 10px; height: 10px; background: var(--surface);
+    border-left: 1px solid var(--sm-border); border-top: 1px solid var(--sm-border);
+    transform: rotate(45deg); top: -6px; left: var(--cx, 50%); margin-left: -5px;
+  }
+  .pop1.up .caret { top: auto; bottom: -6px; transform: rotate(225deg); }
+
+  /* ---- POPUP 2 — centered mini card ---- */
+  .pop2-wrap { position: absolute; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center;
+    padding: 20px; pointer-events: none; }
+  .pop2-wrap.open { pointer-events: auto; }
+  .pop2-scrim { position: absolute; inset: 0; background: rgba(31, 36, 33, 0.32); opacity: 0; transition: opacity 0.16s ease-in; }
+  .pop2-wrap.open .pop2-scrim { opacity: 1; transition: opacity 0.22s ease-out; }
+  .pop2 {
+    position: relative; width: 100%; max-width: 250px;
+    background: var(--canvas); border: 1px solid var(--border); border-radius: 18px;
+    padding: 15px 17px 16px; box-shadow: 0 20px 60px rgba(31, 36, 33, 0.22);
+    opacity: 0; transform: translateY(20px) scale(0.98);
+    transition: opacity 0.17s ease-in, transform 0.17s cubic-bezier(0.4, 0, 1, 1);
+  }
+  .pop2-wrap.open .pop2 { opacity: 1; transform: translateY(0) scale(1);
+    transition: opacity 0.24s ease-out, transform 0.26s cubic-bezier(0.32, 0.72, 0.33, 1); }
+
+  /* ---- POPUP 3 — inline band inside the grid ---- */
+  .pop3 {
+    grid-column: 1 / -1; overflow: hidden; height: 0;
+    transition: height 0.26s cubic-bezier(0.32, 0.72, 0.33, 1);
+  }
+  .pop3 .inner {
+    background: var(--sm-band); border-radius: 12px; padding: 11px 14px 12px; margin: 3px 0 1px;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  }
+  .pop3 .inner .dp-rows { margin-top: 3px; }
+
+  .hint { font-family: var(--font-mono); font-size: 10px; color: var(--sm-muted); text-align: center; margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Adherence calendar — streak visual + per-day popup</h1>
+  <p>issue #30 &nbsp;|&nbsp; two independent picks: a letter (streak) and a number (popup)</p>
+</div>
+
+<div class="note">
+  <b>Row 1 — what replaces the text under the month.</b> Today that row reads
+  "18 of 22 judged days on plan, best streak 10". The ticket says it becomes the streak only, with a
+  visual treatment. All three cards below show <b>10</b>, the best streak <i>within the shown month</i>
+  (the number already in that line). If you meant the <b>current</b> streak instead (the run of on-plan
+  days ending today, which is 4 here, and does not change as you page through months), say so at gate 1
+  and the same visual gets that number.<br>
+  <b>Row 2 — what a pressed day opens.</b> Every day chip in row 2 is pressable (tap one; the sink and
+  spring is the #26 bubble feel). All three show the same content: date, kcal, protein, verdict. Food
+  level detail is deliberately not here, see the plan. Tap a red day and today's outlined chip too.<br>
+  <b>Judge row 2 on the phone</b>, the press weight does not read on a trackpad.
+</div>
+
+<div class="sec">Row 1 — streak visual (pick A, B or C)</div>
+<div class="row">
+
+  <div class="variant">
+    <div class="vlabel">A — cream badge</div>
+    <div class="vsub">Sits in a soft band, the same cream used by Groceries kicks and the meals band. Quiet, contained, reads as a small label rather than a headline.</div>
+    <div class="card">
+      <div class="grab"></div>
+      <div class="cal-head">
+        <span class="cal-month">July 2026</span>
+        <div class="cal-nav"><button>&lsaquo;</button><button>&rsaquo;</button></div>
+      </div>
+      <div class="stk-a"><b>10</b><span>day streak</span></div>
+      <div class="cal-dows"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal-grid" data-grid></div>
+      <div class="cal-legend">
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-tx)"></span>on plan</div>
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-bg)"></span>with extras</div>
+        <div class="leg-row"><span class="leg-sw" style="background:rgba(159,47,45,.45)"></span>miss or not logged</div>
+      </div>
+    </div>
+    <div class="hint">zero state: <span style="color:#f4f3f0">a grey 0 in the same badge</span></div>
+  </div>
+
+  <div class="variant">
+    <div class="vlabel">B — editorial rule</div>
+    <div class="vsub">Serif numeral at display size with a hairline running to the edge. Loudest of the three, and the closest to the Plan hero numbers already on the page.</div>
+    <div class="card">
+      <div class="grab"></div>
+      <div class="cal-head">
+        <span class="cal-month">July 2026</span>
+        <div class="cal-nav"><button>&lsaquo;</button><button>&rsaquo;</button></div>
+      </div>
+      <div class="stk-b"><b>10</b><span>day streak</span><i class="r"></i></div>
+      <div class="cal-dows"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal-grid" data-grid></div>
+      <div class="cal-legend">
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-tx)"></span>on plan</div>
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-bg)"></span>with extras</div>
+        <div class="leg-row"><span class="leg-sw" style="background:rgba(159,47,45,.45)"></span>miss or not logged</div>
+      </div>
+    </div>
+    <div class="hint">zero state: <span style="color:#f4f3f0">a grey 0, rule unchanged</span></div>
+  </div>
+
+  <div class="variant">
+    <div class="vlabel">C — chip run</div>
+    <div class="vsub">One small chip per day of the streak, in the grid's own two greens. Says the length by shape before you read the number, and echoes the calendar below it.</div>
+    <div class="card">
+      <div class="grab"></div>
+      <div class="cal-head">
+        <span class="cal-month">July 2026</span>
+        <div class="cal-nav"><button>&lsaquo;</button><button>&rsaquo;</button></div>
+      </div>
+      <div class="stk-c">
+        <div class="pips">
+          <i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip x"></i><i class="pip"></i>
+          <i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip x"></i><i class="pip"></i>
+        </div>
+        <b>10</b><span>day streak</span>
+      </div>
+      <div class="cal-dows"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal-grid" data-grid></div>
+      <div class="cal-legend">
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-tx)"></span>on plan</div>
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-bg)"></span>with extras</div>
+        <div class="leg-row"><span class="leg-sw" style="background:rgba(159,47,45,.45)"></span>miss or not logged</div>
+      </div>
+    </div>
+    <div class="hint">zero state: <span style="color:#f4f3f0">grey empty pips, grey 0</span><br>long streaks cap at 14 pips then read "14+"</div>
+  </div>
+
+</div>
+
+<div class="sec">Row 2 — per-day popup (pick 1, 2 or 3) — tap the day chips</div>
+<div class="row">
+
+  <div class="variant">
+    <div class="vlabel">1 — anchored bubble</div>
+    <div class="vsub">Grows out of the chip you pressed and points back at it. Best match for the motion doc ("enters from its source"), and the calendar stays visible behind it.</div>
+    <div class="card" data-pop="1">
+      <div class="grab"></div>
+      <div class="cal-head">
+        <span class="cal-month">July 2026</span>
+        <div class="cal-nav"><button>&lsaquo;</button><button>&rsaquo;</button></div>
+      </div>
+      <div class="stk-a"><b>10</b><span>day streak</span></div>
+      <div class="cal-dows"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal-grid" data-grid></div>
+      <div class="cal-legend">
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-tx)"></span>on plan</div>
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-bg)"></span>with extras</div>
+        <div class="leg-row"><span class="leg-sw" style="background:rgba(159,47,45,.45)"></span>miss or not logged</div>
+      </div>
+      <div class="pop1"><span class="caret"></span><div data-body></div></div>
+    </div>
+    <div class="hint">closes on: tap outside, Esc, tap the same chip again</div>
+  </div>
+
+  <div class="variant">
+    <div class="vlabel">2 — centred mini card</div>
+    <div class="vsub">The Today meal popup shell at a smaller size, rising over a scrim. Cheapest to build and the most familiar, but it hides the month and loses the origin.</div>
+    <div class="card" data-pop="2">
+      <div class="grab"></div>
+      <div class="cal-head">
+        <span class="cal-month">July 2026</span>
+        <div class="cal-nav"><button>&lsaquo;</button><button>&rsaquo;</button></div>
+      </div>
+      <div class="stk-a"><b>10</b><span>day streak</span></div>
+      <div class="cal-dows"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal-grid" data-grid></div>
+      <div class="cal-legend">
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-tx)"></span>on plan</div>
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-bg)"></span>with extras</div>
+        <div class="leg-row"><span class="leg-sw" style="background:rgba(159,47,45,.45)"></span>miss or not logged</div>
+      </div>
+      <div class="pop2-wrap"><div class="pop2-scrim"></div><div class="pop2"><div data-body></div></div></div>
+    </div>
+    <div class="hint">closes on: scrim tap, Esc</div>
+  </div>
+
+  <div class="variant">
+    <div class="vlabel">3 — inline band</div>
+    <div class="vsub">No overlay at all. The grid opens a band under the pressed day's week row and pushes the rest down. Nothing is covered, but the month jumps as it opens.</div>
+    <div class="card" data-pop="3">
+      <div class="grab"></div>
+      <div class="cal-head">
+        <span class="cal-month">July 2026</span>
+        <div class="cal-nav"><button>&lsaquo;</button><button>&rsaquo;</button></div>
+      </div>
+      <div class="stk-a"><b>10</b><span>day streak</span></div>
+      <div class="cal-dows"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal-grid" data-grid></div>
+      <div class="cal-legend">
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-tx)"></span>on plan</div>
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-bg)"></span>with extras</div>
+        <div class="leg-row"><span class="leg-sw" style="background:rgba(159,47,45,.45)"></span>miss or not logged</div>
+      </div>
+    </div>
+    <div class="hint">closes on: tap the same chip again, tap another day, Esc</div>
+  </div>
+
+</div>
+
+<div class="sec">For reference — the row this ticket removes</div>
+<div class="row">
+  <div class="variant">
+    <div class="vlabel">current, on main</div>
+    <div class="vsub">The line the ticket replaces. Days are plain divs here, nothing is pressable.</div>
+    <div class="card">
+      <div class="grab"></div>
+      <div class="cal-head">
+        <span class="cal-month">July 2026</span>
+        <div class="cal-nav"><button>&lsaquo;</button><button>&rsaquo;</button></div>
+      </div>
+      <div class="cal-sum">18 of 22 judged days on plan, best streak 10</div>
+      <div class="cal-dows"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal-grid" data-grid data-static></div>
+      <div class="cal-legend">
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-tx)"></span>on plan</div>
+        <div class="leg-row"><span class="leg-sw" style="background:var(--green-bg)"></span>with extras</div>
+        <div class="leg-row"><span class="leg-sw" style="background:rgba(159,47,45,.45)"></span>miss or not logged</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// July 2026: the 1st is a Wednesday, so two blanks lead. Fake but plausible states,
+// giving 18 of 22 judged days on plan and a best run of 10 (the 12th to the 21st).
+var STATES = ["on","onx","on","off","unlogged","on","on","onx","on","on","off","on","on","on",
+              "onx","on","on","on","on","onx","on","off","on","on","onx","on","today",
+              "future","future","future","future"];
+var LEADING = 2;
+var TARGET = { kcal: 2200, p: 165 };
+// per-day consumed, only for judged days (the shape the real popup gets from the history rows)
+var CONSUMED = {
+  1:[2170,171], 2:[2340,180], 3:[2115,168], 4:[2760,150], 5:null, 6:[2180,169], 7:[2230,172],
+  8:[2390,177], 9:[2140,166], 10:[2205,170], 11:[1810,148], 12:[2160,167], 13:[2240,171],
+  14:[2140,168], 15:[2355,179], 16:[2190,166], 17:[2210,173], 18:[2175,170], 19:[2230,168],
+  20:[2380,181], 21:[2150,167], 22:[2620,159], 23:[2185,169], 24:[2215,172], 25:[2345,176],
+  26:[2160,168], 27:[1290,96]
+};
+var DOWNAME = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+var n = function (x) { return Math.round(x).toLocaleString("en-US"); };
+
+function label(day) { return DOWNAME[(LEADING + day - 1) % 7] + " 7/" + day; }
+
+// Same copy the real popup will render, built from the same three facts.
+function body(day) {
+  var st = STATES[day - 1], c = CONSUMED[day];
+  var head = '<div class="dp-date">' + label(day) + (st === "today" ? ", today" : "") + "</div>";
+  if (st === "unlogged") {
+    return head + '<div class="dp-rows">nothing logged</div>'
+      + '<div class="dp-verdict miss">&#10005; off plan</div>';
+  }
+  var kOk = Math.abs(c[0] - TARGET.kcal) <= TARGET.kcal * 0.1;
+  var pOk = c[1] >= TARGET.p * 0.9;
+  var rows = '<div class="dp-rows">'
+    + 'kcal <i class="' + (kOk ? "" : "bad") + '">' + n(c[0]) + "</i> of " + n(TARGET.kcal) + "<br>"
+    + 'protein <i class="' + (pOk ? "" : "bad") + '">' + n(c[1]) + "</i> of " + n(TARGET.p) + " g</div>";
+  var v;
+  if (st === "today") {
+    v = '<div class="dp-verdict wip">in progress</div>'; // shared dayVerdict() copy, not new wording
+  } else if (st === "on") {
+    v = '<div class="dp-verdict hit">&#10003; on plan</div>';
+  } else if (st === "onx") {
+    v = '<div class="dp-verdict hit">&#10003; on plan, with extras</div>';
+  } else {
+    v = '<div class="dp-verdict miss">&#10005; '
+      + (kOk ? "short protein" : (c[0] > TARGET.kcal ? n(c[0] - TARGET.kcal) + " over kcal"
+                                                     : n(TARGET.kcal - c[0]) + " under kcal")) + "</div>";
+  }
+  return head + rows + v;
+}
+
+document.querySelectorAll("[data-grid]").forEach(function (grid) {
+  var live = !grid.hasAttribute("data-static");
+  for (var i = 0; i < LEADING; i++) grid.appendChild(document.createElement("div"));
+  STATES.forEach(function (st, idx) {
+    var day = idx + 1;
+    var pressable = live && st !== "future";
+    var el = document.createElement(pressable ? "button" : "div");
+    el.className = "cal-cell " + st;
+    el.innerHTML = '<span class="cal-chip">' + day + "</span>";
+    if (pressable) { el.type = "button"; el.dataset.day = String(day); }
+    grid.appendChild(el);
+  });
+});
+
+// ---- popup wiring (mockup only; the real thing is React state) ----
+document.querySelectorAll("[data-pop]").forEach(function (card) {
+  var kind = card.dataset.pop;
+  var openDay = null;
+
+  function close() {
+    openDay = null;
+    if (kind === "1") card.querySelector(".pop1").classList.remove("open");
+    if (kind === "2") card.querySelector(".pop2-wrap").classList.remove("open");
+    if (kind === "3") {
+      var band = card.querySelector(".pop3");
+      if (band) { band.style.height = "0px"; setTimeout(function () { band.remove(); }, 280); }
+    }
+  }
+
+  function open(cell, day) {
+    if (openDay === day) return close();
+    var was = openDay;
+    openDay = day;
+
+    if (kind === "1") {
+      var pop = card.querySelector(".pop1");
+      pop.querySelector("[data-body]").innerHTML = body(day);
+      var cr = cell.getBoundingClientRect(), pr = card.getBoundingClientRect();
+      var w = 194, cx = cr.left - pr.left + cr.width / 2;
+      var left = Math.max(10, Math.min(cx - w / 2, pr.width - w - 10));
+      var below = cr.bottom - pr.top + 9;
+      pop.classList.remove("up");
+      pop.style.left = left + "px";
+      pop.style.top = below + "px";
+      pop.style.setProperty("--cx", (cx - left) + "px");
+      pop.style.setProperty("--ox", (cx - left) + "px");
+      pop.style.setProperty("--oy", "0%");
+      // flip above when it would run past the card's bottom
+      requestAnimationFrame(function () {
+        if (below + pop.offsetHeight > pr.height - 8) {
+          pop.classList.add("up");
+          pop.style.top = (cr.top - pr.top - pop.offsetHeight - 9) + "px";
+          pop.style.setProperty("--oy", "100%");
+        }
+        pop.classList.add("open");
+      });
+    }
+
+    if (kind === "2") {
+      var wrap = card.querySelector(".pop2-wrap");
+      wrap.querySelector("[data-body]").innerHTML = body(day);
+      requestAnimationFrame(function () { wrap.classList.add("open"); });
+    }
+
+    if (kind === "3") {
+      var old = card.querySelector(".pop3");
+      if (old) old.remove();
+      var grid = card.querySelector("[data-grid]");
+      var band = document.createElement("div");
+      band.className = "pop3";
+      band.innerHTML = '<div class="inner">' + body(day) + "</div>";
+      // insert after the last cell of the pressed day's week row
+      var rowEnd = Math.min(Math.ceil((LEADING + day) / 7) * 7 - LEADING, STATES.length);
+      var after = grid.querySelector('[data-day="' + rowEnd + '"]') || grid.lastElementChild;
+      grid.insertBefore(band, after.nextSibling);
+      var h = band.firstElementChild.offsetHeight + 4;
+      if (was === null) { band.style.height = "0px"; requestAnimationFrame(function () { band.style.height = h + "px"; }); }
+      else band.style.height = h + "px";
+    }
+  }
+
+  card.addEventListener("click", function (e) {
+    var cell = e.target.closest("button.cal-cell");
+    if (cell) return open(cell, Number(cell.dataset.day));
+    if (kind === "1" && !e.target.closest(".pop1")) close();
+    if (kind === "2" && e.target.closest(".pop2-scrim")) close();
+  });
+});
+
+window.addEventListener("keydown", function (e) {
+  if (e.key !== "Escape") return;
+  document.querySelectorAll(".pop1.open").forEach(function (p) { p.classList.remove("open"); });
+  document.querySelectorAll(".pop2-wrap.open").forEach(function (p) { p.classList.remove("open"); });
+  document.querySelectorAll(".pop3").forEach(function (b) { b.style.height = "0px"; setTimeout(function () { b.remove(); }, 280); });
+});
+</script>
+</body>
+</html>
