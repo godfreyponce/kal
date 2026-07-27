@@ -1,6 +1,6 @@
 // DB-free: imports only ./adherence-view. No `import "../db/env"` needed.
 import { describe, it, expect } from "vitest";
-import { dayVerdict, judgeDay } from "./adherence-view";
+import { dayVerdict, judgeDay, monthDayLabel } from "./adherence-view";
 import type { DayCell, Macros } from "./adherence-view";
 
 const T: Macros = { kcal: 2200, proteinG: 165 }; // ±10% kcal = [1980,2420]; 90% protein = 148.5
@@ -65,5 +65,12 @@ describe("bucketDayFoods", () => {
     expect(out["2026-07-09"][0]).toEqual({
       name: "Chicken breast", amountLabel: "170 g (6 oz)", kcal: 281, proteinG: 53,
     });
+  });
+});
+
+describe("monthDayLabel", () => {
+  it("prints weekday and month/day from an ISO date, UTC", () => {
+    expect(monthDayLabel("2026-07-14")).toBe("Tue 7/14");
+    expect(monthDayLabel("2026-07-01")).toBe("Wed 7/1");
   });
 });

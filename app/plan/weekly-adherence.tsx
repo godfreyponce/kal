@@ -5,7 +5,7 @@
 // types come from lib/adherence (type-only import, erased). Desktop keeps the :hover tooltip.
 import { useRef, useState } from "react";
 import type { WeekAdherence, DayCell } from "@/lib/adherence";
-import { dayVerdict, kcalWithinBand, proteinMet } from "@/lib/adherence-view";
+import { dayVerdict, kcalWithinBand, proteinMet, monthDayLabel } from "@/lib/adherence-view";
 import type { DayFood } from "@/lib/adherence-view";
 import type { AdherenceHistory } from "@/lib/adherence-calendar";
 import { DayDetailModal } from "./day-detail-modal";
@@ -14,11 +14,6 @@ import { AdherenceCalendar } from "./adherence-calendar";
 const TRACK_PX = 64;   // .track height
 const TARGET_PX = 48;  // kcal target height within the track (matches .e-line top: 16px)
 
-const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHDAY = (iso: string) => {
-  const d = new Date(iso + "T00:00:00Z");
-  return `${WEEKDAY[d.getUTCDay()]} ${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
-};
 const num = (n: number) => Math.round(n).toLocaleString("en-US");
 
 // px from the track floor; target kcal sits at TARGET_PX, clamped to the track.
@@ -34,7 +29,7 @@ function Cell({
   targets: WeekAdherence["targets"];
   onOpen: (day: DayCell) => void;
 }) {
-  const label = MONTHDAY(day.date);
+  const label = monthDayLabel(day.date);
 
   if (day.state === "ahead") {
     return (
@@ -139,7 +134,13 @@ export function WeeklyAdherence({
           </div>
         </div>
       </div>
-      <AdherenceCalendar history={history} today={today} stripRef={bodyRef} />
+      <AdherenceCalendar
+        history={history}
+        today={today}
+        stripRef={bodyRef}
+        targets={targets}
+        todayConsumed={days.find((d) => d.state === "today")?.consumed ?? null}
+      />
       {open && (
         <DayDetailModal
           day={open}

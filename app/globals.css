@@ -765,12 +765,43 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .cal-nav button:disabled { opacity: 0.32; cursor: default; }
-.cal-sum { font-family: var(--font-mono); font-size: 10px; color: var(--sm-ink-soft); margin-bottom: 12px; }
+/* streak visual (#30). Not one of the design/plan-cal-day-variants.html A/B/C mockups —
+   the owner supplied this treatment instead: the current run with a flame, all-time best
+   beside it. Both numbers are global, so the row does not move as you page months.
+   The zero state keeps the same row (no layout jump) with the flame greyed out. */
+.cal-streak { display: flex; align-items: baseline; gap: 6px; margin: 7px 0 13px; }
+.cal-streak b {
+  font-family: var(--font-serif); font-size: 30px; font-weight: 500;
+  line-height: 0.9; letter-spacing: -0.02em; color: var(--sm-choc);
+}
+.cal-streak .flame { font-size: 18px; line-height: 1; }
+.cal-streak .best {
+  margin-left: 5px; font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: 0.06em; color: var(--sm-muted);
+}
+.cal-streak.zero b { color: var(--sm-muted); }
+.cal-streak.zero .flame { filter: grayscale(1); opacity: 0.4; }
 
 .cal-dows { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
 .cal-dows span { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.06em; color: var(--sm-muted); text-align: center; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 7px; }
-.cal-cell { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 36px; position: relative; }
+/* Day cells are buttons (#30). Reset mirrors .cell; the press is #26's two-speed
+   bubble, values unchanged: instant sink on the long decel curve, spring back on release. */
+.cal-cell {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  min-height: 36px; position: relative;
+  border: 0; background: none; font: inherit; padding: 0; margin: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.30s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+button.cal-cell { cursor: pointer; }
+button.cal-cell:active {
+  transform: scale(0.94) translateY(1px);
+  transition: transform 0.45s cubic-bezier(0.16, 0.9, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cal-cell, button.cal-cell:active { transition: none; transform: none; }
+}
 
 /* chip state colors (owner-redefined 2026-07-16: two greens, one honest red; not-logged counts as a miss) */
 .cal-sheet .cal-chip {
@@ -786,6 +817,35 @@ body {
 .cal-legend { display: flex; gap: 14px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
 .cal-legend .leg-row { font-size: 9.5px; color: var(--sm-muted); gap: 6px; }
 .cal-legend .leg-sw { display: inline-block; width: 11px; height: 11px; border-radius: 4px; flex-shrink: 0; }
+
+/* per-day popup (#30, design/plan-cal-day-variants.html pick 2: centred mini card).
+   Own namespace so the Today meal popup's .mpop rules are untouched. */
+.dp-date { font-family: var(--font-serif); font-size: 17px; font-weight: 500; letter-spacing: -0.01em; color: var(--sm-choc); }
+.dp-rows { font-family: var(--font-mono); font-size: 11px; color: var(--sm-ink-soft); margin-top: 5px; line-height: 1.75; }
+.dp-rows i { font-style: normal; color: var(--green-tx); font-weight: 500; }
+.dp-rows i.bad { color: var(--protein); }
+.dp-verdict { font-family: var(--font-mono); font-size: 10.5px; margin-top: 7px; font-weight: 500; }
+.dp-verdict.hit { color: var(--green-tx); }
+.dp-verdict.miss { color: var(--protein); }
+.dp-verdict.wip { color: var(--accent); }
+
+.dp-wrap { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.dp-scrim { position: absolute; inset: 0; background: rgba(31, 36, 33, 0.32); opacity: 0; transition: opacity 0.16s ease-in; }
+.dp-wrap.open .dp-scrim { opacity: 1; transition: opacity 0.22s ease-out; }
+.dp-card {
+  position: relative; width: 100%; max-width: 250px;
+  background: var(--canvas); border: 1px solid var(--border); border-radius: 18px;
+  padding: 15px 17px 16px; box-shadow: 0 20px 60px rgba(31, 36, 33, 0.22);
+  opacity: 0; transform: translateY(20px) scale(0.98);
+  transition: opacity 0.17s ease-in, transform 0.17s cubic-bezier(0.4, 0, 1, 1);
+}
+.dp-wrap.open .dp-card {
+  opacity: 1; transform: translateY(0) scale(1);
+  transition: opacity 0.24s ease-out, transform 0.26s cubic-bezier(0.32, 0.72, 0.33, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dp-card, .dp-wrap.open .dp-card { transform: none; transition: opacity 0.15s linear; }
+}
 
 /* weigh-in (Sunday) */
 .weigh {
