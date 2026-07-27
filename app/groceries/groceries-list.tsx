@@ -5,12 +5,9 @@ import { useState, useTransition } from "react";
 import type { GroceryGroupItem, GroceryGroups } from "@/lib/groceries";
 import type { NutritionHit } from "@/lib/nutrition-lookup";
 import type { LabelNutrition } from "@/lib/label-vision";
-import { toGrams } from "@/lib/units";
+import { buildGroceryPatch, EMPTY, toForm, type FormState, type WeightUnit } from "@/lib/grocery-form";
 import { servingDisplay } from "@/lib/serving-display";
-import { parseServing } from "@/lib/resolve-item";
 import { fileToScaledJpeg } from "@/app/image-scale";
-
-type WeightUnit = "g" | "oz" | "lb";
 
 // Fixed category list (drives the colored shelves + the form dropdown).
 const CATEGORIES = ["protein", "carb", "fat", "dairy", "fruit", "veg", "other"] as const;
@@ -30,62 +27,6 @@ function normCat(c: string | null): Cat {
   if (k === "fruit" || k === "fruits") return "fruit";
   if (k === "veg" || k === "veggie" || k === "vegetable" || k === "vegetables") return "veg";
   return "other";
-}
-
-type FormState = {
-  id: number | null;
-  name: string;
-  brand: string;
-  store: string;
-  link: string;
-  imageUrl: string;
-  category: string;
-  serving: string;
-  servingUnit: WeightUnit;
-  myServing: string;       // display serving: grams/oz for weighed, count for unit foods
-  myServingUnit: WeightUnit;
-  basisUnit: string | null; // "tbsp"/"egg"/… for count foods; null = weighed or new
-  kcal: string;
-  proteinG: string;
-  carbsG: string;
-  fatG: string;
-  purchase: string;
-  purchaseUnit: WeightUnit;
-  price: string;
-};
-
-const EMPTY: FormState = {
-  id: null, name: "", brand: "", store: "", link: "", imageUrl: "", category: "",
-  serving: "", servingUnit: "g", myServing: "", myServingUnit: "g", basisUnit: null,
-  kcal: "", proteinG: "", carbsG: "", fatG: "",
-  purchase: "", purchaseUnit: "lb", price: "",
-};
-
-function toForm(g: GroceryGroupItem): FormState {
-  return {
-    id: g.id,
-    name: g.name,
-    brand: g.brand ?? "",
-    store: g.store ?? "",
-    link: g.link ?? "",
-    imageUrl: g.imageUrl ?? "",
-    category: (CATEGORIES as readonly string[]).includes(g.category ?? "") ? g.category! : "",
-    serving: g.servingGrams != null ? String(g.servingGrams) : "",
-    servingUnit: "g",
-    myServing:
-      g.servingGrams != null
-        ? String(+(g.displayQty * g.servingGrams).toFixed(1))
-        : String(g.displayQty),
-    myServingUnit: "g",
-    basisUnit: g.servingGrams != null ? null : parseServing(g.servingDesc).unit,
-    kcal: String(g.kcal),
-    proteinG: String(g.proteinG),
-    carbsG: String(g.carbsG),
-    fatG: String(g.fatG),
-    purchase: g.purchaseWeightG != null ? String(g.purchaseWeightG) : "",
-    purchaseUnit: "g",
-    price: g.price != null ? String(g.price) : "",
-  };
 }
 
 export function GroceriesList({ groups }: { groups: GroceryGroups }) {
@@ -109,48 +50,18 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!form || saving) return;
-    const isCount = form.basisUnit !== null;
-    const serving = Number(form.serving);
-    const kcal = Number(form.kcal);
-    if (!form.name.trim() || !Number.isFinite(kcal) || (!isCount && (!Number.isFinite(serving) || serving <= 0))) {
-      setError("Name and calories are required (plus a positive serving size for weighed foods).");
+    const built = buildGroceryPatch(form);
+    if (!built.ok) {
+      setError(built.error);
       return;
-    }
-    // Count foods (eggs, tbsp, slices) must NOT send servingGrams — updateGrocery
-    // rewrites servingDesc to "<n> g" whenever it arrives, clobbering "1 tbsp".
-    const servingGrams = isCount ? null : toGrams(serving, form.servingUnit);
-    let displayQty: number | null = null;
-    if (form.myServing.trim() !== "") {
-      const v = Number(form.myServing);
-      if (!Number.isFinite(v) || v <= 0) {
-        setError("My serving must be a positive number.");
-        return;
-      }
-      displayQty = isCount ? v : toGrams(v, form.myServingUnit) / servingGrams!;
     }
     setSaving(true);
     setError(null);
-    const body = {
-      name: form.name.trim(),
-      brand: form.brand || null,
-      store: form.store || null,
-      link: form.link || null,
-      imageUrl: form.imageUrl || null,
-      category: form.category || null,
-      ...(servingGrams != null ? { servingGrams } : {}),
-      displayQty,
-      kcal,
-      proteinG: Number(form.proteinG) || 0,
-      carbsG: Number(form.carbsG) || 0,
-      fatG: Number(form.fatG) || 0,
-      purchaseWeightG: form.purchase.trim() === "" ? null : toGrams(Number(form.purchase), form.purchaseUnit),
-      price: form.price.trim() === "" ? null : Number(form.price),
-    };
     try {
       const res = await fetch(form.id ? `/api/groceries/${form.id}` : "/api/groceries", {
         method: form.id ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(built.body),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Save failed");
       setForm(null);
