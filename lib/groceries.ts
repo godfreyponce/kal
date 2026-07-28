@@ -36,6 +36,7 @@ export type GroceryView = {
   proteinG: number;
   carbsG: number;
   fatG: number;
+  isEstimated: boolean;
   purchaseWeightG: number | null;
   price: number | null;
 };
@@ -67,6 +68,7 @@ function toView(r: Row): GroceryView {
     proteinG: Number(r.proteinG),
     carbsG: Number(r.carbsG),
     fatG: Number(r.fatG),
+    isEstimated: r.isEstimated,
     purchaseWeightG: numOrNull(r.purchaseWeight),
     price: numOrNull(r.price),
   };

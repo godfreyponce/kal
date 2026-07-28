@@ -2097,6 +2097,16 @@ body:has(main.groceries) { background: #fff; }
 }
 .gre-pill.pro { background: var(--sm-caramel); }
 .gre-editing { outline: 2px solid var(--sm-caramel); outline-offset: 3px; border-radius: 4px; }
+.gre-src {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--sm-muted);
+  text-align: center; line-height: 1.7; margin: -6px 0 18px;
+}
+.gre-src button {
+  display: block; margin: 6px auto 0; background: none; border: 0; padding: 4px 2px;
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--sm-caramel);
+  border-bottom: 1px solid var(--sm-border); cursor: pointer;
+}
 
 .gre-foot { display: flex; align-items: center; margin-top: 18px; }
 .gre-dirty {

@@ -10,6 +10,8 @@ import {
   deleteGrocery,
   getGroceryGroups,
 } from "./groceries";
+import { NextRequest } from "next/server";
+import { PATCH } from "../app/api/groceries/[id]/route";
 
 const SENTINEL = "ZZTEST_GROCERY";
 
@@ -78,6 +80,48 @@ describe("grocery CRUD", () => {
     expect(cleared!.displayQty).toBe(1);
 
     await deleteGrocery(created.id);
+  });
+
+  it("round-trips isEstimated and defaults it to false", async () => {
+    const plain = await createGrocery({
+      name: `${SENTINEL}_est_default`, servingGrams: 100, kcal: 100,
+      proteinG: 10, carbsG: 10, fatG: 10,
+    });
+    expect(plain.isEstimated).toBe(false);
+
+    const guessed = await createGrocery({
+      name: `${SENTINEL}_est_true`, servingGrams: 100, kcal: 100,
+      proteinG: 10, carbsG: 10, fatG: 10, isEstimated: true,
+    });
+    expect(guessed.isEstimated).toBe(true);
+
+    // the browse screen reads through listGroceries, so the flag must survive that path
+    const listed = (await listGroceries()).find((g) => g.id === guessed.id);
+    expect(listed?.isEstimated).toBe(true);
+
+    const cleared = await updateGrocery(guessed.id, { isEstimated: false });
+    expect(cleared?.isEstimated).toBe(false);
+  });
+
+  it("PATCH accepts isEstimated in both directions", async () => {
+    const created = await createGrocery({
+      name: `${SENTINEL}_est_patch`, servingGrams: 100, kcal: 100,
+      proteinG: 10, carbsG: 10, fatG: 10, isEstimated: true,
+    });
+
+    const patch = async (isEstimated: boolean) => {
+      const req = new NextRequest(`http://localhost/api/groceries/${created.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isEstimated }),
+      });
+      const res = await PATCH(req, { params: Promise.resolve({ id: String(created.id) }) });
+      expect(res.status).toBe(200);
+      return res.json();
+    };
+
+    expect((await patch(false)).isEstimated).toBe(false);
+    expect((await patch(true)).isEstimated).toBe(true);
   });
 });
 

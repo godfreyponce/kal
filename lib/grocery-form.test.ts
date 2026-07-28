@@ -8,7 +8,7 @@ const weighed: FormState = {
   imageUrl: "", category: "protein",
   serving: "170", servingUnit: "g", myServing: "170", myServingUnit: "g", basisUnit: null,
   kcal: "280", proteinG: "53", carbsG: "0", fatG: "6",
-  purchase: "", purchaseUnit: "lb", price: "",
+  purchase: "", purchaseUnit: "lb", price: "", isEstimated: false,
 };
 
 // A count food: the basis is "tbsp", so there is no gram serving size at all.
@@ -106,13 +106,25 @@ describe("buildGroceryPatch", () => {
     if (!r.ok) return;
     expect(r.body.name).toBe("Chicken breast");
   });
+
+  it("ships isEstimated in the patch body", () => {
+    const r = buildGroceryPatch({ ...weighed, isEstimated: true });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.body.isEstimated).toBe(true);
+
+    const r2 = buildGroceryPatch(weighed);
+    expect(r2.ok).toBe(true);
+    if (!r2.ok) return;
+    expect(r2.body.isEstimated).toBe(false);
+  });
 });
 
 describe("toForm", () => {
   const base = {
     id: 7, name: "Olive oil", brand: null, store: null, link: null, imageUrl: null,
     category: "fat", rawToCookedYield: null, kcal: 119, proteinG: 0, carbsG: 0, fatG: 13.5,
-    purchaseWeightG: null, price: null, mealIds: [],
+    purchaseWeightG: null, price: null, isEstimated: true, mealIds: [],
   };
 
   it("derives basisUnit from servingDesc for a count food", () => {
@@ -129,5 +141,11 @@ describe("toForm", () => {
     expect(f.basisUnit).toBeNull();
     expect(f.serving).toBe("170");
     expect(f.myServing).toBe("255");
+  });
+
+  it("carries isEstimated onto the form", () => {
+    const g = { ...base, servingGrams: 170, servingDesc: "170 g", displayQty: 1 } as GroceryGroupItem;
+    expect(toForm(g).isEstimated).toBe(true);
+    expect(toForm({ ...g, isEstimated: false } as GroceryGroupItem).isEstimated).toBe(false);
   });
 });

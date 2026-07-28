@@ -242,6 +242,9 @@ export function GroceryEditor({
   const isCount = form.basisUnit !== null;
   const subtitle = [form.brand, form.store].filter(Boolean).join(", ") || "Add a brand";
   const catKey = (CATEGORIES as readonly string[]).includes(form.category) ? form.category : "other";
+  // Estimated macros read as approximate. Presentational only: the pad and the
+  // patch body always take their value from form state, never from this string.
+  const approx = form.isEstimated ? "~" : "";
 
   // Held as JSX consts, not local components: a function component declared in
   // this body gets a new identity every render, so React would remount the block
@@ -533,7 +536,7 @@ export function GroceryEditor({
           className={`gre-fig${pad?.key === "kcal" ? " gre-editing" : ""}`}
           onClick={() => openPad({ key: "kcal", label: "Calories", kind: "number" })}
         >
-          <span className="v">{form.kcal || "0"}<small>cal</small></span>
+          <span className="v">{approx}{form.kcal || "0"}<small>cal</small></span>
           <span className="l">Calories</span>
         </button>
       </div>
@@ -544,21 +547,28 @@ export function GroceryEditor({
           className={`gre-pill pro${pad?.key === "proteinG" ? " gre-editing" : ""}`}
           onClick={() => openPad({ key: "proteinG", label: "Protein, grams", kind: "number" })}
         >
-          {form.proteinG || 0} P
+          {approx}{form.proteinG || 0} P
         </button>
         <button
           type="button"
           className={`gre-pill${pad?.key === "carbsG" ? " gre-editing" : ""}`}
           onClick={() => openPad({ key: "carbsG", label: "Carbs, grams", kind: "number" })}
         >
-          {form.carbsG || 0} C
+          {approx}{form.carbsG || 0} C
         </button>
         <button
           type="button"
           className={`gre-pill${pad?.key === "fatG" ? " gre-editing" : ""}`}
           onClick={() => openPad({ key: "fatG", label: "Fat, grams", kind: "number" })}
         >
-          {form.fatG || 0} F
+          {approx}{form.fatG || 0} F
+        </button>
+      </div>
+
+      <div className="gre-src">
+        {form.isEstimated ? "Estimated, not off a label" : "From the label"}
+        <button type="button" onClick={() => set("isEstimated", !form.isEstimated)}>
+          {form.isEstimated ? "I typed this off the label" : "These are estimates"}
         </button>
       </div>
 

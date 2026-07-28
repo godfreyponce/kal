@@ -35,6 +35,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
     patch.displayQty = body.displayQty === null ? null : Number(body.displayQty);
   }
+  // Provenance: only an explicit boolean moves it, so a body that omits it is a no-op.
+  if (typeof body.isEstimated === "boolean") patch.isEstimated = body.isEstimated;
 
   const updated = await updateGrocery(groceryId, patch);
   if (!updated) return Response.json({ error: "not found" }, { status: 404 });

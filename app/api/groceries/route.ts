@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     displayQty: body.displayQty == null ? null : Number(body.displayQty),
     purchaseWeightG: body.purchaseWeightG == null ? null : Number(body.purchaseWeightG),
     price: body.price == null ? null : Number(body.price),
+    isEstimated: body.isEstimated === true,
   };
   return Response.json(await createGrocery(input), { status: 201 });
 }
