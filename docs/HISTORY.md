@@ -71,6 +71,55 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Estimated-macro provenance in the Groceries UI — #9 (2026-07-28) — COMMITTED & pushed to main; owner-accepted from the desktop pass
+
+`foods.is_estimated` had existed since the schema was written and `updateGrocery` already wrote it,
+but nothing read it out to the browser, so six of the fourteen groceries were quietly running on
+guessed macros with no way to tell. Now they say so. Multi-task plan → branch
+`issue-9-estimated-provenance`, three commits, merged `--no-ff`. No schema change, no new
+dependency, no new route, and no row's flag was rewritten (correcting the data is #10's job).
+
+**Variant B, the tilde.** An estimated food writes its calories and macros as `~165 cal`, `~31P` —
+no badge, no new element, no extra row height on the browse shelves. Picked over a "needs a label"
+filter mode (variant C) because provenance is something you want to notice while reading, not a
+mode you switch into.
+
+**The tilde is presentational and only presentational.** It is a `const approx = form.isEstimated
+? "~" : ""` computed at render, prefixed onto the rendered figure. It never enters `FormState`, a
+pad draft, or a request body — the pad reads `form[t.key]`, never rendered text. The check that
+proves it: tapping Calories on an estimated food opens the pad on `165`, not `~165`. Anything that
+looks like `.replace("~", "")` anywhere downstream means this got wired wrong.
+
+**Three layers, in order.** `GroceryView` gains `isEstimated` and `toView` maps it; `FormState` and
+`GroceryPatchBody` carry it so it round-trips; PATCH takes it only as an explicit boolean
+(`typeof body.isEstimated === "boolean"`), so a body that omits the key is a no-op rather than a
+silent reset to false. POST takes `body.isEstimated === true`. Suite 202 → 206 across 26 files,
+including a route-level test that drives the real PATCH handler with a `NextRequest` in both
+directions.
+
+**No pad on the flip.** The editor read card gets one muted mono line under the macro pills naming
+the source in plain words, with a one-tap button that flips it. The existing dirty bar is the
+confirm step — Save commits, Discard is the undo — which is exactly why the flag lives in
+`FormState` instead of the button PATCHing directly. **My serving** deliberately keeps no tilde:
+that number is the owner's own portion choice, not an estimate.
+
+**Plan was wrong in two places.** Task 1 could not end `tsc`-clean as written: making `isEstimated`
+required on `GroceryView` breaks the `base` fixture in `lib/grocery-form.test.ts`, an edit the plan
+assigned to Task 2. Pulled one task earlier. And the plan's browser check 8 asserts a brand-new
+grocery "reads From the label" — but the ＋ add flow is the `gr-` lookup-first form, which this
+ticket never touches and which has no source line at all. What is true and was verified: a row
+added through ＋ saves unflagged and reads "From the label" when reopened in the read card.
+**Whether the add form should show provenance at all is still an open question.**
+
+**Verification gap to know about**: desktop Chrome only, same as #29. The tilde is a small glyph on
+an 8.5px browse pill — whether it reads on a phone is only answerable on a phone.
+
+**Live-data note.** The browser pass necessarily wrote to live Neon (flipping Chicken breast,
+creating and deleting a throwaway row to exercise POST). Both were reverted and the library was
+reconfirmed byte-for-byte against its pre-session state.
+
+---
+
 ## Groceries editor: read-first label card with a per-value pad — #29 (2026-07-27) — COMMITTED & pushed to main; owner-accepted from the desktop pass
 
 Tapping a grocery row used to drop eighteen controls on you at once. Now it opens a read-first
