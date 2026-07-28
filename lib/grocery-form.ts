@@ -26,13 +26,14 @@ export type FormState = {
   purchase: string;
   purchaseUnit: WeightUnit;
   price: string;
+  isEstimated: boolean;
 };
 
 export const EMPTY: FormState = {
   id: null, name: "", brand: "", store: "", link: "", imageUrl: "", category: "",
   serving: "", servingUnit: "g", myServing: "", myServingUnit: "g", basisUnit: null,
   kcal: "", proteinG: "", carbsG: "", fatG: "",
-  purchase: "", purchaseUnit: "lb", price: "",
+  purchase: "", purchaseUnit: "lb", price: "", isEstimated: false,
 };
 
 const CATEGORIES = ["protein", "carb", "fat", "dairy", "fruit", "veg", "other"] as const;
@@ -61,6 +62,7 @@ export function toForm(g: GroceryGroupItem): FormState {
     purchase: g.purchaseWeightG != null ? String(g.purchaseWeightG) : "",
     purchaseUnit: "g",
     price: g.price != null ? String(g.price) : "",
+    isEstimated: g.isEstimated,
   };
 }
 
@@ -79,6 +81,7 @@ export type GroceryPatchBody = {
   fatG: number;
   purchaseWeightG: number | null;
   price: number | null;
+  isEstimated: boolean;
 };
 
 export function buildGroceryPatch(
@@ -126,6 +129,7 @@ export function buildGroceryPatch(
       purchaseWeightG:
         form.purchase.trim() === "" ? null : toGrams(Number(form.purchase), form.purchaseUnit),
       price: form.price.trim() === "" ? null : Number(form.price),
+      isEstimated: form.isEstimated,
     },
   };
 }
