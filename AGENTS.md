@@ -58,6 +58,20 @@ natural seams — phase acceptance, plan approval, deploy — rather than lettin
 balloon; a decision that lives only in conversation memory doesn't exist, so write it to
 the right file the moment it's made.
 
+# Verification scope (owner rule, 2026-07-28)
+
+The suite hits **live Neon** and runs its files sequentially (`vitest.config.ts`:
+`fileParallelism: false`) because tests share singleton DB state — so full runs are slow by
+design, and a second concurrent runner races the same live rows.
+
+- **While iterating, run only the test files for the modules you touched**
+  (`npx vitest run lib/foo.test.ts`). The full `npm test` runs once, at the end of
+  `/build-ticket` — and again at the commit gate. Not after every change.
+- **One test runner and one dev server at a time.** Subagents must never run
+  `npm test`/`vitest` or start dev servers — the suite only serializes within a single run.
+- **Stop what you started.** Kill any dev server, `next start`, or `tailscale serve` you
+  launched before ending the session.
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
