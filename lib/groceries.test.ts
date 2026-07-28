@@ -79,6 +79,27 @@ describe("grocery CRUD", () => {
 
     await deleteGrocery(created.id);
   });
+
+  it("round-trips isEstimated and defaults it to false", async () => {
+    const plain = await createGrocery({
+      name: `${SENTINEL}_est_default`, servingGrams: 100, kcal: 100,
+      proteinG: 10, carbsG: 10, fatG: 10,
+    });
+    expect(plain.isEstimated).toBe(false);
+
+    const guessed = await createGrocery({
+      name: `${SENTINEL}_est_true`, servingGrams: 100, kcal: 100,
+      proteinG: 10, carbsG: 10, fatG: 10, isEstimated: true,
+    });
+    expect(guessed.isEstimated).toBe(true);
+
+    // the browse screen reads through listGroceries, so the flag must survive that path
+    const listed = (await listGroceries()).find((g) => g.id === guessed.id);
+    expect(listed?.isEstimated).toBe(true);
+
+    const cleared = await updateGrocery(guessed.id, { isEstimated: false });
+    expect(cleared?.isEstimated).toBe(false);
+  });
 });
 
 describe("getGroceryGroups", () => {

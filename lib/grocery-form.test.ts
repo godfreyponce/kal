@@ -112,7 +112,7 @@ describe("toForm", () => {
   const base = {
     id: 7, name: "Olive oil", brand: null, store: null, link: null, imageUrl: null,
     category: "fat", rawToCookedYield: null, kcal: 119, proteinG: 0, carbsG: 0, fatG: 13.5,
-    purchaseWeightG: null, price: null, mealIds: [],
+    purchaseWeightG: null, price: null, isEstimated: true, mealIds: [],
   };
 
   it("derives basisUnit from servingDesc for a count food", () => {

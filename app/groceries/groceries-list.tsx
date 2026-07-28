@@ -36,6 +36,8 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
     const disp = servingDisplay(g);
     const macros = disp.baseMacros;
     const protein = Math.round(macros.proteinG);
+    // Estimated macros read as approximate. Presentational only, never a stored value.
+    const approx = g.isEstimated ? "~" : "";
     return (
       <li key={key}>
         <button
@@ -52,8 +54,8 @@ export function GroceriesList({ groups }: { groups: GroceryGroups }) {
           )}
           <span className="gro-txt">
             <span className="gro-pills">
-              <span className="gro-pill">{macros.kcal} cal</span>
-              {protein > 0 && <span className="gro-pill pro">{protein}P</span>}
+              <span className="gro-pill">{approx}{macros.kcal} cal</span>
+              {protein > 0 && <span className="gro-pill pro">{approx}{protein}P</span>}
             </span>
             <span className="gro-nm">{disp.title}</span>
           </span>
