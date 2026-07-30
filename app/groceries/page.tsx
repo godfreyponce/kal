@@ -12,7 +12,6 @@ export default async function GroceriesPage() {
       <div className="gro-top">
         <div>
           <div className="gro-title">Groceries</div>
-          <div className="gro-kicker">Your source of truth</div>
         </div>
         <Link href="/" className="gro-back">‹ Today</Link>
       </div>
