@@ -2,6 +2,8 @@
 
 <p align="center"><b>179</b> tests · <b>11</b> tools · <b>10</b> tables · <b>1</b> user · MIT · <a href="https://github.com/godfreyponce/">github</a> / <a href="https://www.linkedin.com/in/godfreyponce/">linkedin</a> / <a href="https://godfreyponce.dev/">personal website</a></p>
 
+<p align="center"><sub>short version without the code talk: <a href="https://godfreyponce.github.io/kal/">godfreyponce.github.io/kal</a></sub></p>
+
 > [!WARNING]
 > This is my personal app. One user, one password, my meal plan. You can run it, but it will feed you my chicken and rice until you seed your own. Fork accordingly.
 
