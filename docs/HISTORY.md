@@ -71,6 +71,42 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Phone-width screenshot pass for gate-2 evidence — #50 (2026-08-08) — COMMITTED & pushed to main; owner-accepted
+
+Every UI ticket since #29 has shipped with "phone pass still owed" in its acceptance note,
+because gate 2 had no way to show the owner what a screen looks like at phone width. Now it
+does: `npx tsx scripts/screenshot-pass.ts` (against an already-running server) logs in through
+the real `/login` form with `APP_PASSWORD` from `.env.local`, emulates an iPhone 13 (390×844,
+DPR 3) in headless Chromium, and writes full-page PNGs of `/`, `/groceries`, `/plan`, `/chat`
+to the gitignored `screenshots/` directory. AGENTS.md's `/build-ticket` bullet now names it:
+UI tickets attach these captures as gate-2 evidence. **It is evidence, not acceptance — the
+owner phone pass stays human** (press feel, thumb reach, and real-device rendering are not
+things a PNG can answer).
+
+**Read-only by design.** The script visits pages, nothing more — no chat sends, no log writes,
+no Neon rows, no Anthropic calls; the login POST writes only a session cookie. It never starts
+a server (fails fast if nothing listens at `BASE_URL`, default `localhost:3100`) and closes the
+browser in a `finally`, so the one-dev-server rule and "stop what you started" stay intact.
+
+**Playwright as a devDependency, argued.** The ticket preferred ad-hoc `npx playwright`; the
+CLI lost because its only session mechanism is `--load-storage`, which would need a second
+fragile script to manufacture the cookie file — it can't drive the login form non-interactively.
+A pinned `playwright` (^1.62.1, dev-only, browsers cached outside the repo in
+`~/Library/Caches/ms-playwright`) gives one browser launch per run, the real login flow, and
+shipped types so `tsc --noEmit` stays clean. One-time setup: `npx playwright install chromium`
+(documented in the script header, alongside the Turbopack stale-CSS remedy for wrong-looking
+captures).
+
+**"Calendar" is not a route.** The captured set is the four real screens; the adherence
+calendar the ticket asked for lives on `/plan` and `fullPage: true` includes it.
+
+**Verified live, to plan, no deviations.** Four captures at 1170px wide (390 CSS px × DPR 3),
+exit 0, logged-in pages confirmed by eye, `git status` clean of `screenshots/`, no Chromium
+left behind. Suite 206/206 across 26 files (script is imported by nothing). Single-task plan —
+landed as one working-tree commit.
+
+---
+
 ## Estimated-macro provenance in the Groceries UI — #9 (2026-07-28) — COMMITTED & pushed to main; owner-accepted from the desktop pass
 
 `foods.is_estimated` had existed since the schema was written and `updateGrocery` already wrote it,
