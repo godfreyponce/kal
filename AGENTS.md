@@ -23,7 +23,9 @@ a fresh session builds from it.
   stop. No code. The owner reads the plan (**gate 1** — cheap; nothing is built yet).
 - `/clear`
 - **`/build-ticket [#N]`** — build from the plan file, run the suite, **paste the real output**,
-  stop before landing anything on main. Multi-task plans build on a ticket branch with one commit
+  stop before landing anything on main. UI tickets also run `npx tsx scripts/screenshot-pass.ts`
+  (against your running dev server) and attach the phone-width screenshots as gate-2 evidence.
+  Multi-task plans build on a ticket branch with one commit
   per approved task; single-task plans stay uncommitted in the working tree. The owner reads the
   diff (**gate 2**).
 - On the owner's accept: land the code (merge the branch, or commit the working tree), then a
