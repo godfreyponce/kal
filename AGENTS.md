@@ -67,12 +67,36 @@ The suite hits **live Neon** and runs its files sequentially (`vitest.config.ts`
 design, and a second concurrent runner races the same live rows.
 
 - **While iterating, run only the test files for the modules you touched**
-  (`npx vitest run lib/foo.test.ts`). The full `npm test` runs once, at the end of
+  (`npx vitest run lib/foo.test.ts`). The full check (below) runs once, at the end of
   `/build-ticket` — and again at the commit gate. Not after every change.
 - **One test runner and one dev server at a time.** Subagents must never run
   `npm test`/`vitest` or start dev servers — the suite only serializes within a single run.
 - **Stop what you started.** Kill any dev server, `next start`, or `tailscale serve` you
   launched before ending the session.
+
+The full check. **Paste the real output**, not a claim about it:
+
+```bash
+npx tsc --noEmit
+npm test
+```
+
+A commit hook (`.claude/hooks/test-gate.sh`, wired in `.claude/settings.json`) runs these anyway
+on every `git commit` and blocks you if they're red — but by then you've wasted the owner's time.
+Run them yourself first.
+
+# Visual rule
+
+Anything visual gets 3 single-file HTML variants first; the owner picks; the winner gets wired in.
+Three variants means three shapes — a second flavor of the first shape doesn't count. Variants go
+in `design/` (the `*-variants.html` precedent there); the winner is wired into the page or
+component it stands in for, and the losing variants are kept.
+
+# Commit format
+
+`type(scope): summary (refs #N)`. Trailers: the harness default `Co-Authored-By` line, nothing
+else. Commit hook: `.claude/hooks/test-gate.sh` (see "Verification scope") — a red suite blocks
+the commit.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
