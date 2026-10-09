@@ -29,7 +29,8 @@ a fresh session builds from it.
   per approved task; single-task plans stay uncommitted in the working tree. The owner reads the
   diff (**gate 2**).
 - On the owner's accept: land the code (merge the branch, or commit the working tree), then a
-  docs commit; push both together, close the issue, `/clear`.
+  docs commit; push both together, close the issue, link the ticket's `design/` files (see
+  "Visual rule"), `/clear`.
 
 # STATE.md is written exactly once per ticket
 
@@ -46,7 +47,8 @@ One write, at the seam:
   2026-07-17): the code first — the ticket branch's per-task commits merged, or a single
   `type(scope)` commit for single-task tickets — then one docs commit carrying `STATE.md` (Now
   cleared of the finished item, `next_action` advanced to the next ticket, `last_worked_on`
-  bumped) and the feature's section in `docs/HISTORY.md`. Then close the issue.
+  bumped), the feature's section in `docs/HISTORY.md`, and the ticket's `design/` files (see
+  "Visual rule"). Then close the issue.
 - **"Now" holds unaccepted work only.** The moment the owner accepts something it moves to
   `docs/HISTORY.md`. Keep "Now" under ~6 lines. Gotchas stay in STATE.md — they're the memory that
   earns its place — but a gotcha lives there only while it would still bite an agent working today.
@@ -91,6 +93,14 @@ Anything visual gets 3 single-file HTML variants first; the owner picks; the win
 Three variants means three shapes — a second flavor of the first shape doesn't count. Variants go
 in `design/` (the `*-variants.html` precedent there); the winner is wired into the page or
 component it stands in for, and the losing variants are kept.
+
+Variant files are primary sources: they land on main, and their issue links to them.
+
+- **Commit:** the accept-time docs commit carries every `design/` file the ticket made.
+- **Link:** once the owner's push lands, `gh issue comment N` with a permalink to each file at
+  the docs commit's SHA (`https://github.com/godfreyponce/kal/blob/<sha>/design/<file>`), so the
+  link outlives a later cleanup, and name the variant the owner picked.
+- **Reference only:** `design/` is for people and agents to read; app code imports nothing from it.
 
 # Commit format
 
