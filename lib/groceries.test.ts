@@ -12,6 +12,7 @@ import {
 } from "./groceries";
 import { NextRequest } from "next/server";
 import { PATCH } from "../app/api/groceries/[id]/route";
+import { POST } from "../app/api/groceries/route";
 
 const SENTINEL = "ZZTEST_GROCERY";
 
@@ -122,6 +123,24 @@ describe("grocery CRUD", () => {
 
     expect((await patch(false)).isEstimated).toBe(false);
     expect((await patch(true)).isEstimated).toBe(true);
+  });
+
+  it("POST records isEstimated when sent and defaults it to false", async () => {
+    const post = async (name: string, extra: Record<string, unknown>) => {
+      const req = new NextRequest("http://localhost/api/groceries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name, servingGrams: 100, kcal: 100, proteinG: 10, carbsG: 10, fatG: 10, ...extra,
+        }),
+      });
+      const res = await POST(req);
+      expect(res.status).toBe(201);
+      return res.json();
+    };
+
+    expect((await post(`${SENTINEL}_est_post_true`, { isEstimated: true })).isEstimated).toBe(true);
+    expect((await post(`${SENTINEL}_est_post_omit`, {})).isEstimated).toBe(false);
   });
 });
 

@@ -3,7 +3,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { eq, inArray, like } from "drizzle-orm";
 import { db } from "../db";
 import { foods, logEntries } from "../db/schema";
-import { createGrocery } from "./groceries";
+import { createGrocery, listGroceries } from "./groceries";
 import { runTool } from "./tools";
 
 const TEST_DATE = "2099-03-03";
@@ -38,6 +38,21 @@ describe("add_grocery tool", () => {
     expect(row).toBeTruthy();
     expect(Number(row.servingGrams)).toBe(14);
     expect(row.isEstimated).toBe(false);
+  });
+
+  it("records is_estimated=true so Groceries lists the food as estimated", async () => {
+    const run = await runTool("add_grocery", {
+      name: "ZZTOOL_GUESSED",
+      serving_grams: 100,
+      kcal: 200,
+      protein_g: 10,
+      carbs_g: 20,
+      fat_g: 5,
+      is_estimated: true,
+    });
+    expect(run.summary).toMatch(/Added grocery/);
+    const listed = (await listGroceries()).find((g) => g.name === "ZZTOOL_GUESSED");
+    expect(listed?.isEstimated).toBe(true);
   });
 });
 

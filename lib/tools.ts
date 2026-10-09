@@ -75,7 +75,7 @@ export const TOOLS: Anthropic.Tool[] = [
   {
     name: "add_grocery",
     description:
-      "Add a real grocery item to the owner's library (the source of truth) from its label. Use when the owner ate something not yet in the library: ask for the brand and the label's nutrition facts (serving size in grams + per-serving macros), then call this, then log_food by weight. Never invent macros.",
+      "Add a real grocery item to the owner's library (the source of truth) from its label. Use when the owner ate something not yet in the library: ask for the brand and the label's nutrition facts (serving size in grams + per-serving macros), then call this, then log_food by weight. Never invent macros. The one exception is an off-plan food whose estimate the owner approved out loud: save it with is_estimated=true.",
     input_schema: {
       type: "object",
       properties: {
@@ -91,6 +91,11 @@ export const TOOLS: Anthropic.Tool[] = [
         fat_g: { type: "number", description: "Fat grams per serving." },
         purchase_weight_g: { type: "number", description: "Optional total package weight in grams." },
         price: { type: "number", description: "Optional price paid (USD)." },
+        is_estimated: {
+          type: "boolean",
+          description:
+            "true when any macro was inferred rather than read off a label or returned by a nutrition lookup (search_nutrition or a fetched nutrition page). Omit for label or lookup data.",
+        },
       },
       required: ["name", "serving_grams", "kcal"],
     },
@@ -483,6 +488,7 @@ export async function runTool(name: string, input: Input): Promise<ToolRun> {
         fatG: num(input.fat_g) ?? 0,
         purchaseWeightG: num(input.purchase_weight_g) ?? null,
         price: num(input.price) ?? null,
+        isEstimated: input.is_estimated === true,
       });
       return ok({ id: g.id, name: g.name }, `Added grocery ${g.name} (id ${g.id})`, {
         card: {
