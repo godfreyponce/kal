@@ -71,6 +71,26 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Chat can record estimated macros on library foods — #44 (2026-10-09) — COMMITTED & pushed to main; owner-accepted
+
+`add_grocery` used to write every food with `is_estimated=false`, so an off-plan estimate the
+owner chose to keep in the library read as label data and #9's tilde never showed on it. The
+tool now takes an optional `is_estimated` boolean (mapped `=== true`, the `log_food` idiom, so an
+omitted flag stays `false`). Its description names the one exception to "Never invent macros",
+and the property text says lookup data (`search_nutrition`, a fetched page) is not an estimate.
+Off-plan ladder step 3 in the system prompt's static `RULES` block gains one sentence: to keep an
+approved estimate for next time, save it with `add_grocery` and `is_estimated=true`, then
+`log_food` by weight. Ordinary groceries stay label-first. `POST /api/groceries` already mapped
+`isEstimated` (landed with #9); this ticket only added the route test. Gate-2 review fix: the
+property's closing clause became "Omit for label or lookup data." No test covers whether the
+model sets the flag at the right moments (#57 plans an eval case once #41 lands). Duplicate
+prevention is left to #57, whose Done when already has `add_grocery` refuse a duplicate
+normalized name and return the existing id; once it lands, a call that matches an existing row
+does not write the flag it was given, and which flag wins overlaps with #10. Deferred from
+review: the `serving_grams` description still says "label serving".
+
+---
+
 ## Design variants committed and linked from their ticket — #47 (2026-10-09) — COMMITTED & pushed to main; owner-accepted
 
 Variant HTML used to stay untracked: #29's two files and #9's one were one clean-up away from
