@@ -71,6 +71,21 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Design variants committed and linked from their ticket — #47 (2026-10-09) — COMMITTED & pushed to main; owner-accepted
+
+Variant HTML used to stay untracked: #29's two files and #9's one were one clean-up away from
+gone, and nothing tied them to the ticket or said which design won. `AGENTS.md` now says, under
+`# Visual rule`, that every `design/` file a ticket makes rides that ticket's accept-time docs
+commit, and that once the push lands the issue gets a SHA permalink to each file plus the name of
+the winner. The docs-commit bullet points there, because that list is where #29 and #9 dropped
+their files; the accept checklist under `# One ticket = two sessions` names the link step too (a
+gate-2 review fix: without it an agent would `/clear` with the comment unposted). The three
+orphans landed in this commit, with pointer comments on #29 and #9. `design-directions/` (the #18
+prototype, hidden by a local git exclude that a plugin writes) is #77. Skillbook's global
+`build-ticket.md` accept steps still end at push then `/clear`, with no link step.
+
+---
+
 ## Phone-width screenshot pass for gate-2 evidence — #50 (2026-08-08) — COMMITTED & pushed to main; owner-accepted
 
 Every UI ticket since #29 has shipped with "phone pass still owed" in its acceptance note,

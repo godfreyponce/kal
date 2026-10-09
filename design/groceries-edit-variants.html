@@ -1,0 +1,513 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal, Groceries edit revamp (3 variants, issue #29)</title>
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    /* live app tokens */
+    --canvas:#f7f6f3; --surface:#fff; --surface-2:#f0efeb;
+    --ink:#1f2421; --muted:#787774; --faint:#9b9a96; --border:#e6e4df;
+    --sm-choc:#3f2a1a; --sm-pill:#48291a; --sm-caramel:#a97a24; --sm-red:#ac2318;
+    --sm-band:#f6efe2; --sm-band-deep:#f1e7d3; --sm-muted:#b3a390;
+    --sm-border:#e2d9c9; --sm-ink-soft:#8a7a66;
+    --protein:#9f2f2d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#b9b7b2; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:460px;margin:0 auto}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .note{
+    font-family:var(--mono);font-size:11px;line-height:1.7;margin:16px 0 26px;
+    border-left:2px solid rgba(244,243,240,.5);padding-left:12px;opacity:.92;
+  }
+  .note b{color:#fff;font-weight:500}
+  .col-tag{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#fff;margin:38px 0 4px;font-weight:500}
+  .col-cap{font-family:var(--mono);font-size:10.5px;line-height:1.65;opacity:.85;margin-bottom:12px}
+  .col-cap b{color:#fff;font-weight:500}
+  .phone{
+    position:relative;border-radius:22px;padding:24px 20px 30px;overflow:hidden;
+    box-shadow:0 16px 44px rgba(31,36,33,.24);background:var(--canvas);color:var(--ink);
+  }
+  .fph{mix-blend-mode:multiply;filter:saturate(1.04)}
+  button,input,select{font-family:inherit;-webkit-tap-highlight-color:transparent}
+  button{cursor:pointer}
+  @keyframes enter{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  @keyframes reveal{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .anim{animation:enter .34s cubic-bezier(.32,.72,.33,1) backwards}
+  .rv{animation:reveal .22s cubic-bezier(.32,.72,.33,1)}
+  @media (prefers-reduced-motion: reduce){.anim,.rv{animation:none}}
+  .hide{display:none !important}
+
+  /* shared bits of the app's form language */
+  .fld{
+    font-family:var(--mono);font-size:13px;padding:9px 10px;
+    border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--ink);width:100%;
+  }
+  .btn-dark{
+    background:var(--sm-choc);color:#fff;border:0;border-radius:8px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:10px 18px;
+  }
+  .btn-ghost{
+    background:none;border:0;font-family:var(--mono);font-size:12px;color:var(--muted);padding:10px 4px;
+  }
+  .btn-del{
+    background:none;border:0;font-family:var(--mono);font-size:12px;color:var(--sm-red);
+    padding:10px 4px;margin-left:auto;
+  }
+  .kick{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+  }
+  .back{
+    display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+    color:var(--sm-ink-soft);background:none;border:0;padding:0;margin-bottom:18px;text-transform:uppercase;
+  }
+
+  /* fake product shot: a flat vector so the file stays self contained */
+  .shot{display:block}
+
+  /* ================= VARIANT A, LABEL ================= */
+  .a-hero{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:22px}
+  .a-name{font-size:24px;font-weight:800;letter-spacing:-.01em;text-transform:uppercase;line-height:1.1;color:var(--sm-choc);margin-top:6px}
+  .a-sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--sm-muted);margin-top:8px}
+  .a-figs{display:flex;border-top:1px solid var(--sm-border);border-bottom:1px solid var(--sm-border);margin-bottom:20px}
+  .a-fig{flex:1;padding:16px 0;text-align:center}
+  .a-fig + .a-fig{border-left:1px solid var(--sm-border)}
+  .a-fig .v{font-size:22px;font-weight:800;color:var(--sm-choc);letter-spacing:-.02em;line-height:1}
+  .a-fig .l{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sm-muted);margin-top:7px}
+  .a-macros{display:flex;justify-content:center;gap:8px;margin-bottom:24px}
+  .a-pill{
+    font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--sm-pill);color:#fff;border-radius:999px;padding:5px 12px;
+  }
+  .a-pill.pro{background:var(--sm-caramel)}
+  .a-foot{font-family:var(--mono);font-size:10.5px;color:var(--sm-muted);text-align:center;margin-bottom:22px;line-height:1.8}
+  .a-acts{display:flex;align-items:center;gap:10px}
+  .a-form{display:flex;flex-direction:column;gap:8px}
+  .a-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:6px}
+  .a-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .a-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .a-more{
+    font-family:var(--mono);font-size:11px;color:var(--sm-ink-soft);background:none;border:0;
+    text-align:left;padding:12px 0 4px;
+  }
+
+  /* ================= VARIANT B, BANDS ================= */
+  .b-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+  .b-name{font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:.01em;line-height:1.2;color:var(--sm-choc)}
+  .b-sub{font-family:var(--mono);font-size:10px;color:var(--sm-muted);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+  .b-band{border-radius:10px;overflow:hidden;margin-bottom:8px;background:var(--sm-band)}
+  .b-bar{
+    display:flex;align-items:center;justify-content:space-between;width:100%;
+    background:none;border:0;padding:11px 12px;text-align:left;
+    font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sm-choc);
+  }
+  .b-bar small{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--sm-caramel);text-transform:none}
+  .b-car{transition:transform .18s;font-size:11px;color:var(--sm-caramel);margin-left:10px}
+  .b-band.open .b-car{transform:rotate(90deg)}
+  .b-body{padding:4px 12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--canvas)}
+  .b-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .b-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .b-row{display:flex;align-items:center;gap:8px}
+  .b-row .fld{flex:1}
+  .b-row select.fld{flex:0 0 auto;width:auto}
+  .b-hint{font-family:var(--mono);font-size:10px;color:var(--faint);white-space:nowrap}
+  .b-tool{
+    display:block;width:100%;text-align:center;font-family:var(--mono);font-size:11px;
+    color:var(--sm-ink-soft);background:#fff;border:1px solid var(--sm-border);border-radius:8px;padding:10px;
+  }
+  .b-acts{display:flex;align-items:center;gap:10px;margin-top:16px}
+
+  /* ================= VARIANT C, TAP THE VALUE ================= */
+  .c-hero{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+  .c-name{font-size:19px;font-weight:800;text-transform:uppercase;line-height:1.15;color:var(--sm-choc)}
+  .c-name .u{border-bottom:1.5px dashed var(--sm-border);padding-bottom:2px}
+  .c-sub{font-family:var(--mono);font-size:10px;color:var(--sm-muted);letter-spacing:.06em;text-transform:uppercase;margin-top:6px}
+  .c-lines{border-top:1px solid var(--sm-border)}
+  .c-line{
+    display:flex;align-items:baseline;justify-content:space-between;width:100%;
+    background:none;border:0;border-bottom:1px solid var(--sm-border);padding:13px 2px;text-align:left;
+  }
+  .c-line .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sm-muted)}
+  .c-line .v{font-size:16px;font-weight:700;color:var(--sm-choc);border-bottom:1.5px dashed var(--sm-border);padding-bottom:1px}
+  .c-line.on .v{border-bottom-color:var(--sm-caramel);color:var(--sm-caramel)}
+  .c-line .v small{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--sm-muted);margin-left:4px}
+  .c-foot{display:flex;gap:16px;margin-top:18px;flex-wrap:wrap}
+  .c-foot button{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--sm-ink-soft);background:none;border:0;padding:6px 0}
+  .c-pad{
+    position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--sm-border);
+    border-radius:16px 16px 0 0;padding:16px 20px 22px;box-shadow:0 -14px 34px rgba(63,42,26,.14);
+  }
+  @keyframes padup{from{transform:translateY(100%)}to{transform:none}}
+  .c-pad{animation:padup .2s cubic-bezier(.32,.72,.33,1)}
+  @media (prefers-reduced-motion: reduce){.c-pad{animation:none}}
+  .c-pad-l{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sm-muted)}
+  .c-pad-row{display:flex;align-items:center;gap:10px;margin:10px 0 14px}
+  .c-pad-row input{
+    flex:1;font-size:28px;font-weight:700;letter-spacing:-.02em;color:var(--sm-choc);
+    border:0;border-bottom:2px solid var(--sm-caramel);background:none;padding:2px 0;width:100%;
+  }
+  .c-pad-row input:focus{outline:none}
+  .c-unit{display:flex;gap:6px}
+  .c-unit button{
+    font-family:var(--mono);font-size:11px;padding:7px 12px;border-radius:999px;
+    border:1px solid var(--sm-border);background:#fff;color:var(--sm-ink-soft);
+  }
+  .c-unit button.on{background:var(--sm-choc);color:#fff;border-color:var(--sm-choc)}
+  .c-pad-acts{display:flex;align-items:center;gap:10px}
+  .c-dirty{
+    display:flex;align-items:center;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid var(--sm-border);
+  }
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Groceries edit revamp</h1>
+    <p>Issue #29, three directions for what a row tap opens</p>
+  </div>
+
+  <div class="note">
+    <b>The problem.</b> Today a row tap drops all ten blocks at once: nutrition lookup,
+    label photo, name, brand, store, category, link, product photo, serving, my serving,
+    four macro boxes, package weight, price. About eighteen controls.<br><br>
+    <b>The observation each direction reacts to.</b> Lookup and label photo are
+    <i>creation</i> tools. On an item that already exists you almost never touch them,
+    yet they sit at the very top.<br><br>
+    These are tappable. Open the bands, tap the values, hit Edit.
+  </div>
+
+  <!-- ============================ A ============================ -->
+  <div class="col-tag">VARIANT A, LABEL</div>
+  <div class="col-cap">
+    A tap opens a <b>read only label</b>, big photo, the two numbers that matter, macros.
+    Edit flips the same card into fields. Lookup and label photo live only in the add flow.
+    <b>Costs one extra tap</b> when you did want to edit.
+  </div>
+  <div class="phone anim" id="pa">
+    <button class="back">&larr; Groceries</button>
+
+    <div id="a-read">
+      <div class="a-hero">
+        <svg class="shot" width="150" height="120" viewBox="0 0 150 120" aria-hidden="true">
+          <ellipse cx="75" cy="104" rx="52" ry="7" fill="#3f2a1a" opacity=".07"/>
+          <path d="M30 62c4-24 22-38 45-38s41 14 45 38c3 20-16 38-45 38S27 82 30 62z" fill="#e9c9ae"/>
+          <path d="M44 58c6-16 18-25 31-25s25 9 31 25c2 6-10 3-31 3s-33 3-31-3z" fill="#f2ddc9"/>
+          <path d="M52 76c10 6 36 6 46 0" stroke="#d8b294" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="a-name">Chicken breast</div>
+        <div class="a-sub">Kirkland, Costco</div>
+      </div>
+
+      <div class="a-figs">
+        <div class="a-fig"><div class="v">170 g</div><div class="l">My serving</div></div>
+        <div class="a-fig"><div class="v">280</div><div class="l">Calories</div></div>
+      </div>
+
+      <div class="a-macros">
+        <span class="a-pill pro">53 P</span>
+        <span class="a-pill">0 C</span>
+        <span class="a-pill">6 F</span>
+      </div>
+
+      <div class="a-foot">
+        Serving 170 g, Protein<br>
+        2.72 kg pack, $24.99
+      </div>
+
+      <div class="a-acts">
+        <button class="btn-dark" data-a="edit">Edit</button>
+        <button class="btn-del">Delete</button>
+      </div>
+    </div>
+
+    <div id="a-edit" class="hide">
+      <div class="a-form rv">
+        <div class="a-lbl">Name</div>
+        <input class="fld" value="Chicken breast">
+        <div class="a-lbl">Serving, mine</div>
+        <div class="a-2">
+          <input class="fld" value="170 g">
+          <input class="fld" value="170 g">
+        </div>
+        <div class="a-lbl">Calories and macros</div>
+        <div class="a-4">
+          <input class="fld" value="280">
+          <input class="fld" value="53">
+          <input class="fld" value="0">
+          <input class="fld" value="6">
+        </div>
+        <button class="a-more" data-a="more">&plus; Brand, store, category, link, photo, pack and price</button>
+        <div id="a-more" class="hide">
+          <div class="a-form rv">
+            <div class="a-2">
+              <input class="fld" value="Kirkland">
+              <input class="fld" value="Costco">
+            </div>
+            <div class="a-2">
+              <select class="fld"><option>Protein</option><option>Carb</option></select>
+              <input class="fld" placeholder="Product link">
+            </div>
+            <button class="b-tool">Change product photo</button>
+            <div class="b-row">
+              <input class="fld" value="2.72">
+              <select class="fld"><option>kg</option><option>lb</option></select>
+              <input class="fld" value="24.99">
+            </div>
+            <button class="b-tool">Re read the nutrition label</button>
+          </div>
+        </div>
+        <div class="a-acts" style="margin-top:14px">
+          <button class="btn-dark">Save</button>
+          <button class="btn-ghost" data-a="cancel">Cancel</button>
+          <button class="btn-del">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ B ============================ -->
+  <div class="col-tag">VARIANT B, BANDS</div>
+  <div class="col-cap">
+    Still one form, but folded into <b>collapsible bands</b> with only Basics open,
+    the same pattern the Plan screen already uses. Every field is exactly one tap away
+    and each bar <b>summarises what is inside</b>, so you can read the item without opening anything.
+  </div>
+  <div class="phone anim" id="pb">
+    <button class="back">&larr; Groceries</button>
+
+    <div class="b-head">
+      <svg class="shot" width="76" height="62" viewBox="0 0 150 120" aria-hidden="true">
+        <ellipse cx="75" cy="104" rx="52" ry="7" fill="#3f2a1a" opacity=".07"/>
+        <path d="M30 62c4-24 22-38 45-38s41 14 45 38c3 20-16 38-45 38S27 82 30 62z" fill="#e9c9ae"/>
+        <path d="M44 58c6-16 18-25 31-25s25 9 31 25c2 6-10 3-31 3s-33 3-31-3z" fill="#f2ddc9"/>
+        <path d="M52 76c10 6 36 6 46 0" stroke="#d8b294" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="b-name">Chicken breast</div>
+        <div class="b-sub">Kirkland, Costco</div>
+      </div>
+    </div>
+
+    <div class="b-band open" data-band>
+      <button class="b-bar"><span>Basics</span><span><small>Chicken breast, Protein</small><span class="b-car">&rsaquo;</span></span></button>
+      <div class="b-body">
+        <input class="fld" value="Chicken breast">
+        <div class="b-2">
+          <input class="fld" value="Kirkland">
+          <input class="fld" value="Costco">
+        </div>
+        <div class="b-2">
+          <select class="fld"><option>Protein</option><option>Carb</option></select>
+          <input class="fld" placeholder="Product link">
+        </div>
+      </div>
+    </div>
+
+    <div class="b-band" data-band>
+      <button class="b-bar"><span>Serving</span><span><small>170 g, mine 170 g</small><span class="b-car">&rsaquo;</span></span></button>
+      <div class="b-body hide">
+        <div class="b-row">
+          <input class="fld" value="170">
+          <select class="fld"><option>g</option><option>oz</option></select>
+          <span class="b-hint">per serving</span>
+        </div>
+        <div class="b-row">
+          <input class="fld" value="170">
+          <select class="fld"><option>g</option><option>oz</option></select>
+          <span class="b-hint">shown on the card</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="b-band" data-band>
+      <button class="b-bar"><span>Macros</span><span><small>280 cal, 53P 0C 6F</small><span class="b-car">&rsaquo;</span></span></button>
+      <div class="b-body hide">
+        <div class="b-4">
+          <input class="fld" value="280">
+          <input class="fld" value="53">
+          <input class="fld" value="0">
+          <input class="fld" value="6">
+        </div>
+        <button class="b-tool">Look up nutrition, or read a label photo</button>
+      </div>
+    </div>
+
+    <div class="b-band" data-band>
+      <button class="b-bar"><span>Photo</span><span><small>set</small><span class="b-car">&rsaquo;</span></span></button>
+      <div class="b-body hide">
+        <button class="b-tool">Take or choose a product photo</button>
+        <input class="fld" placeholder="or paste an image URL">
+      </div>
+    </div>
+
+    <div class="b-band" data-band>
+      <button class="b-bar"><span>Shopping</span><span><small>2.72 kg, $24.99</small><span class="b-car">&rsaquo;</span></span></button>
+      <div class="b-body hide">
+        <div class="b-row">
+          <input class="fld" value="2.72">
+          <select class="fld"><option>kg</option><option>lb</option><option>oz</option></select>
+          <input class="fld" value="24.99">
+        </div>
+      </div>
+    </div>
+
+    <div class="b-acts">
+      <button class="btn-dark">Save</button>
+      <button class="btn-ghost">Cancel</button>
+      <button class="btn-del">Delete</button>
+    </div>
+  </div>
+
+  <!-- ============================ C ============================ -->
+  <div class="col-tag">VARIANT C, TAP THE VALUE</div>
+  <div class="col-cap">
+    No form at all. The card <b>is</b> the editor: values are dashed, tap one and a small pad
+    slides up with that single number, big, and nothing else. Save only appears once something changed.
+    This is the one <b>past your stated taste</b>, it trades the familiar form for one thing at a time.
+  </div>
+  <div class="phone anim" id="pc" style="padding-bottom:150px">
+    <button class="back">&larr; Groceries</button>
+
+    <div class="c-hero">
+      <svg class="shot" width="104" height="84" viewBox="0 0 150 120" aria-hidden="true">
+        <ellipse cx="75" cy="104" rx="52" ry="7" fill="#3f2a1a" opacity=".07"/>
+        <path d="M30 62c4-24 22-38 45-38s41 14 45 38c3 20-16 38-45 38S27 82 30 62z" fill="#e9c9ae"/>
+        <path d="M44 58c6-16 18-25 31-25s25 9 31 25c2 6-10 3-31 3s-33 3-31-3z" fill="#f2ddc9"/>
+        <path d="M52 76c10 6 36 6 46 0" stroke="#d8b294" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="c-name"><span class="u">Chicken breast</span></div>
+        <div class="c-sub">Kirkland, Costco</div>
+      </div>
+    </div>
+
+    <div class="c-lines">
+      <button class="c-line" data-c="Serving" data-v="170" data-u="g">
+        <span class="l">Serving</span><span class="v">170<small>g</small></span>
+      </button>
+      <button class="c-line" data-c="My serving" data-v="170" data-u="g">
+        <span class="l">My serving</span><span class="v">170<small>g</small></span>
+      </button>
+      <button class="c-line" data-c="Calories" data-v="280" data-u="cal">
+        <span class="l">Calories</span><span class="v">280<small>cal</small></span>
+      </button>
+      <button class="c-line" data-c="Protein" data-v="53" data-u="g">
+        <span class="l">Protein</span><span class="v">53<small>g</small></span>
+      </button>
+      <button class="c-line" data-c="Carbs" data-v="0" data-u="g">
+        <span class="l">Carbs</span><span class="v">0<small>g</small></span>
+      </button>
+      <button class="c-line" data-c="Fat" data-v="6" data-u="g">
+        <span class="l">Fat</span><span class="v">6<small>g</small></span>
+      </button>
+    </div>
+
+    <div class="c-foot">
+      <button>Photo</button>
+      <button>Category</button>
+      <button>Shopping</button>
+      <button>Nutrition lookup</button>
+      <button style="color:var(--sm-red)">Delete</button>
+    </div>
+
+    <div id="c-dirty" class="c-dirty hide">
+      <button class="btn-dark">Save</button>
+      <button class="btn-ghost">Discard</button>
+    </div>
+
+    <div id="c-pad" class="c-pad hide">
+      <div class="c-pad-l" id="c-pad-l">My serving</div>
+      <div class="c-pad-row">
+        <input id="c-pad-i" value="170" inputmode="decimal">
+        <div class="c-unit" id="c-pad-u">
+          <button class="on">g</button><button>oz</button>
+        </div>
+      </div>
+      <div class="c-pad-acts">
+        <button class="btn-dark" data-c-done>Done</button>
+        <button class="btn-ghost" data-c-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:34px">
+    <b>What is the same in all three.</b> Nothing becomes uneditable, every field still has a
+    home. The add flow (the &plus; button) keeps its lookup and label photo up top, because when
+    the item does not exist yet those really are the first thing you want.<br><br>
+    <b>Tell me which one, and what to steal from the others.</b> Combining is cheap at this stage,
+    for example B's bands with A's read only first screen.
+  </div>
+</div>
+
+<script>
+  // Variant A: read <-> edit, and the More disclosure
+  const aRead = document.getElementById('a-read');
+  const aEdit = document.getElementById('a-edit');
+  const aMore = document.getElementById('a-more');
+  document.getElementById('pa').addEventListener('click', (e) => {
+    const act = e.target.closest('[data-a]')?.dataset.a;
+    if (act === 'edit') { aRead.classList.add('hide'); aEdit.classList.remove('hide'); }
+    if (act === 'cancel') { aEdit.classList.add('hide'); aRead.classList.remove('hide'); aMore.classList.add('hide'); }
+    if (act === 'more') { aMore.classList.toggle('hide'); }
+  });
+
+  // Variant B: one band at a time stays honest about height, but allow many open
+  document.querySelectorAll('#pb [data-band]').forEach((band) => {
+    band.querySelector('.b-bar').addEventListener('click', () => {
+      band.classList.toggle('open');
+      const body = band.querySelector('.b-body');
+      body.classList.toggle('hide');
+      if (!body.classList.contains('hide')) body.classList.add('rv');
+    });
+  });
+
+  // Variant C: tap a value, pad slides up
+  const pad = document.getElementById('c-pad');
+  const padL = document.getElementById('c-pad-l');
+  const padI = document.getElementById('c-pad-i');
+  const padU = document.getElementById('c-pad-u');
+  const dirty = document.getElementById('c-dirty');
+  let active = null;
+
+  document.querySelectorAll('#pc .c-line').forEach((line) => {
+    line.addEventListener('click', () => {
+      document.querySelectorAll('#pc .c-line').forEach((l) => l.classList.remove('on'));
+      line.classList.add('on');
+      active = line;
+      padL.textContent = line.dataset.c;
+      padI.value = line.dataset.v;
+      padU.style.display = line.dataset.u === 'cal' ? 'none' : 'flex';
+      pad.classList.remove('hide');
+      pad.style.animation = 'none'; void pad.offsetWidth; pad.style.animation = '';
+    });
+  });
+
+  padU.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON') return;
+    padU.querySelectorAll('button').forEach((b) => b.classList.remove('on'));
+    e.target.classList.add('on');
+  });
+
+  function closePad() {
+    pad.classList.add('hide');
+    document.querySelectorAll('#pc .c-line').forEach((l) => l.classList.remove('on'));
+    active = null;
+  }
+
+  pad.querySelector('[data-c-done]').addEventListener('click', () => {
+    if (active) {
+      const unit = padU.style.display === 'none' ? active.dataset.u : padU.querySelector('.on').textContent;
+      active.dataset.v = padI.value;
+      active.dataset.u = unit;
+      active.querySelector('.v').innerHTML = padI.value + '<small>' + unit + '</small>';
+      dirty.classList.remove('hide');
+    }
+    closePad();
+  });
+  pad.querySelector('[data-c-cancel]').addEventListener('click', closePad);
+</script>

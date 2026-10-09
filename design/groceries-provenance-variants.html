@@ -1,0 +1,737 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal, is_estimated provenance in Groceries (3 variants, issue #9)</title>
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    /* live app tokens */
+    --canvas:#f7f6f3; --surface:#fff; --surface-2:#f0efeb;
+    --ink:#1f2421; --muted:#787774; --faint:#9b9a96; --border:#e6e4df;
+    --sm-choc:#3f2a1a; --sm-pill:#48291a; --sm-caramel:#a97a24; --sm-red:#ac2318;
+    --sm-band:#f6efe2; --sm-band-deep:#f1e7d3; --sm-muted:#b3a390;
+    --sm-border:#e2d9c9; --sm-ink-soft:#8a7a66;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#b9b7b2; color:#f4f3f0; font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; padding:26px 16px 80px;
+  }
+  .wrap{max-width:460px;margin:0 auto}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:23px;letter-spacing:-0.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .note{
+    font-family:var(--mono);font-size:11px;line-height:1.75;margin:16px 0 8px;
+    border-left:2px solid rgba(244,243,240,.5);padding-left:12px;opacity:.92;
+  }
+  .note + .note{margin-top:12px}
+  .note b{color:#fff;font-weight:500}
+  .note .warn{color:#ffd9a0;font-weight:500}
+  .col-tag{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#fff;margin:42px 0 4px;font-weight:500}
+  .col-cap{font-family:var(--mono);font-size:10.5px;line-height:1.7;opacity:.85;margin-bottom:12px}
+  .col-cap b{color:#fff;font-weight:500}
+  .sub-tag{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:rgba(244,243,240,.75);margin:14px 0 8px;
+  }
+  .phone{
+    position:relative;border-radius:22px;padding:24px 20px 30px;overflow:hidden;
+    box-shadow:0 16px 44px rgba(31,36,33,.24);background:var(--canvas);color:var(--ink);
+  }
+  .phone + .phone{margin-top:10px}
+  button{cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
+
+  /* ============ live app classes, copied from globals.css ============ */
+  .gro-modes{display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+  .gro-modes button{
+    font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    background:none;border:1px solid var(--sm-border);border-radius:999px;
+    padding:7px 13px;color:var(--sm-ink-soft);
+  }
+  .gro-modes button.on{background:var(--sm-choc);color:#fff;border-color:var(--sm-choc)}
+  .gro-shelf{margin-top:26px}
+  .gro-kick{
+    display:flex;align-items:baseline;justify-content:space-between;
+    background:var(--sm-band);border-radius:10px;padding:9px 12px;
+    font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--sm-choc);
+  }
+  .gro-kick small{color:var(--sm-caramel);font-weight:700;letter-spacing:.1em;font-size:10px}
+  .gro-list{list-style:none;margin:0;padding:0}
+  .gro-row{
+    display:flex;align-items:center;gap:20px;width:100%;padding:24px 0;
+    border:0;background:none;text-align:left;color:inherit;font-family:var(--sans);
+  }
+  .gro-fall{
+    width:110px;height:110px;flex-shrink:0;margin:0 8px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:40px;color:rgba(63,42,26,.4);
+  }
+  .gro-t-protein{background:#f6e0d2}
+  .gro-t-carb{background:#f2e8cd}
+  .gro-t-fat{background:#f3ead7}
+  .gro-t-fruit{background:#f4e3e0}
+  .gro-t-veg{background:#ebefdb}
+  .gro-txt{min-width:0}
+  .gro-pills{display:flex;gap:5px;margin-bottom:7px;align-items:center}
+  .gro-pill{
+    display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;background:var(--sm-pill);color:#fff;
+    border-radius:999px;padding:4px 10px;
+  }
+  .gro-pill.pro{background:var(--sm-caramel)}
+  .gro-nm{
+    display:block;font-size:17px;font-weight:800;letter-spacing:.01em;
+    text-transform:uppercase;line-height:1.2;color:var(--sm-choc);
+  }
+
+  .gre-back{
+    display:inline-block;font-family:var(--mono);font-size:10.5px;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--sm-ink-soft);
+    background:none;border:0;padding:0;margin-bottom:18px;
+  }
+  .gre-hero{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:20px}
+  .gre-name{
+    font-size:24px;font-weight:800;letter-spacing:-.01em;text-transform:uppercase;
+    line-height:1.1;color:var(--sm-choc);background:none;border:0;margin-top:6px;
+    padding:2px 0;border-bottom:1.5px dashed var(--sm-border);font-family:var(--sans);
+  }
+  .gre-sub{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--sm-muted);background:none;border:0;margin-top:10px;padding:2px 0;
+    border-bottom:1.5px dashed var(--sm-border);
+  }
+  .gre-figs{
+    display:flex;border-top:1px solid var(--sm-border);
+    border-bottom:1px solid var(--sm-border);margin-bottom:18px;
+  }
+  .gre-fig{flex:1;padding:18px 0 16px;text-align:center;background:none;border:0}
+  .gre-fig + .gre-fig{border-left:1px solid var(--sm-border)}
+  .gre-fig .v{
+    display:inline-block;font-size:23px;font-weight:800;color:var(--sm-choc);
+    letter-spacing:-.02em;line-height:1;border-bottom:1.5px dashed var(--sm-border);padding-bottom:3px;
+  }
+  .gre-fig .v small{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--sm-muted);margin-left:3px}
+  .gre-fig .l{
+    display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--sm-muted);margin-top:9px;
+  }
+  .gre-macros{display:flex;justify-content:center;gap:9px;margin-bottom:20px;flex-wrap:wrap}
+  .gre-pill{
+    font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.09em;
+    text-transform:uppercase;background:var(--sm-pill);color:#fff;border:0;
+    border-radius:999px;padding:9px 15px;
+  }
+  .gre-pill.pro{background:var(--sm-caramel)}
+  .gre-more-btn{
+    display:block;width:100%;font-family:var(--mono);font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--sm-ink-soft);
+    background:none;border:0;border-top:1px solid var(--sm-border);
+    padding:15px 0 4px;text-align:center;
+  }
+  .gre-lines{border-top:1px solid var(--sm-border);margin-top:12px}
+  .gre-line{
+    display:flex;align-items:baseline;justify-content:space-between;width:100%;
+    background:none;border:0;border-bottom:1px solid var(--sm-border);
+    padding:14px 2px;text-align:left;
+  }
+  .gre-line .l{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--sm-muted);
+  }
+  .gre-line .v{
+    font-size:15px;font-weight:700;color:var(--sm-choc);
+    border-bottom:1.5px dashed var(--sm-border);padding-bottom:1px;
+  }
+  .gre-foot{display:flex;align-items:center;margin-top:18px}
+
+  /* the shared pad shell */
+  .pad{
+    margin-top:18px;background:#fff;border:1px solid var(--sm-border);
+    border-radius:16px;padding:16px 18px 20px;box-shadow:0 -6px 24px rgba(63,42,26,.08);
+  }
+  .pad-l{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sm-muted)}
+  .pad-choices{display:flex;flex-direction:column;gap:8px;margin:12px 0 14px}
+  .pad-choice{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:none;border:1px solid var(--sm-border);border-radius:10px;padding:12px 13px;
+  }
+  .pad-choice .dot{
+    width:14px;height:14px;border-radius:50%;border:1.5px solid var(--sm-border);flex-shrink:0;
+  }
+  .pad-choice.on{border-color:var(--sm-caramel);background:#fdf8ef}
+  .pad-choice.on .dot{border-color:var(--sm-caramel);background:var(--sm-caramel);box-shadow:inset 0 0 0 2.5px #fff}
+  .pad-choice .t{font-size:14px;font-weight:700;color:var(--sm-choc)}
+  .pad-choice .d{font-family:var(--mono);font-size:10px;color:var(--sm-muted);margin-top:2px;line-height:1.5}
+  .btn-dark{
+    background:var(--sm-choc);color:#fff;border:0;border-radius:8px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:10px 18px;
+  }
+  .gr-cancel{background:none;border:0;font-family:var(--mono);font-size:12px;color:var(--muted);padding:10px 4px}
+  .pad-acts{display:flex;align-items:center;gap:10px}
+
+  /* ================= VARIANT A, the outline pill ================= */
+  .a-est{
+    display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;background:none;color:var(--sm-caramel);
+    border:1px solid var(--sm-caramel);border-radius:999px;padding:3px 9px;
+  }
+  .a-est-big{
+    font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.09em;
+    text-transform:uppercase;background:none;color:var(--sm-caramel);
+    border:1px solid var(--sm-caramel);border-radius:999px;padding:8px 14px;
+  }
+
+  /* ================= VARIANT B, the tilde ================= */
+  .b-foot{
+    font-family:var(--mono);font-size:10.5px;color:var(--sm-muted);
+    text-align:center;line-height:1.7;margin:-6px 0 18px;
+  }
+  .b-foot button{
+    display:block;margin:6px auto 0;background:none;border:0;padding:4px 0;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--sm-caramel);border-bottom:1px solid var(--sm-border);
+  }
+
+  /* ================= VARIANT C, the worklist ================= */
+  .c-count{
+    font-family:var(--mono);font-size:10px;color:var(--sm-ink-soft);
+    padding:10px 2px 0;line-height:1.6;
+  }
+  .c-count b{color:var(--sm-caramel);font-weight:700}
+  .c-mark{
+    display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;background:var(--sm-band-deep);color:var(--sm-choc);
+    border-radius:999px;padding:4px 10px;
+  }
+
+  .caption{
+    font-family:var(--mono);font-size:10px;line-height:1.65;opacity:.8;
+    margin:8px 0 0;padding-left:2px;
+  }
+  .caption b{color:#fff;font-weight:500}
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Surfacing where a grocery's macros came from</h1>
+    <p>Issue #9, three directions</p>
+  </div>
+
+  <div class="note">
+    <b>What is true right now.</b> 14 groceries, 6 carry <b>is_estimated = true</b>. All six are seed
+    rows: Large Eggs, Canola oil, Chicken breast, White rice, Frozen mixed vegetables, Banana.
+    The flag never reaches the browser today, so nothing on screen shows it.
+  </div>
+
+  <div class="note">
+    <span class="warn">The ticket's premise is wrong.</span> It says add_grocery sets the flag.
+    It does not, there is no such parameter, so every grocery the chat creates is written as
+    label-sourced whether or not the model guessed. Your library already shows this: "unsalted
+    butter, 100 cal per tbsp" and a duplicate "White rice, cooked" both read as label-sourced.
+    Whichever look you pick, the badge only tells the truth about seed rows until that write
+    path is fixed.
+  </div>
+
+  <div class="note">
+    Photos are drawn as the letter circle fallback so this file stays self contained. In the real
+    app most of these rows carry a product shot.
+  </div>
+
+  <!-- ==================================================================== -->
+  <div class="col-tag">A, the outline pill</div>
+  <div class="col-cap">
+    Provenance joins the pills it already lives next to. A hollow caramel pill reads as a
+    different kind of thing from the filled macro pills. <b>Loudest and most scannable</b>, and it
+    reuses a pattern the screen already has, but four of these seven rows light up.
+  </div>
+
+  <div class="sub-tag">Browse</div>
+  <div class="phone">
+    <div class="gro-modes">
+      <button class="on">Today's meals</button>
+      <button>By category</button>
+    </div>
+
+    <div class="gro-shelf">
+      <div class="gro-kick">Protein <small>3 items</small></div>
+      <ul class="gro-list">
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">C</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">165 cal</span>
+              <span class="gro-pill pro">31P</span>
+              <span class="a-est">est</span>
+            </span>
+            <span class="gro-nm">Chicken breast, 170 g</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">L</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">70 cal</span>
+              <span class="gro-pill pro">6P</span>
+              <span class="a-est">est</span>
+            </span>
+            <span class="gro-nm">Large eggs, 1 egg</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">M</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">240 cal</span>
+              <span class="gro-pill pro">21P</span>
+            </span>
+            <span class="gro-nm">Grass fed ground beef, 112 g</span>
+          </span>
+        </button></li>
+      </ul>
+    </div>
+
+    <div class="gro-shelf">
+      <div class="gro-kick">Carb <small>2 items</small></div>
+      <ul class="gro-list">
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-carb">W</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">130 cal</span>
+              <span class="gro-pill pro">3P</span>
+              <span class="a-est">est</span>
+            </span>
+            <span class="gro-nm">White rice, 400 g</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-carb">W</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">60 cal</span>
+              <span class="gro-pill pro">4P</span>
+            </span>
+            <span class="gro-nm">Whole wheat bread, 1 slice</span>
+          </span>
+        </button></li>
+      </ul>
+    </div>
+
+    <div class="gro-shelf">
+      <div class="gro-kick">Fat &amp; oil <small>2 items</small></div>
+      <ul class="gro-list">
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-fat">C</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">120 cal</span>
+              <span class="a-est">est</span>
+            </span>
+            <span class="gro-nm">Canola oil, 1 tbsp</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-fat">P</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">95 cal</span>
+              <span class="gro-pill pro">4P</span>
+            </span>
+            <span class="gro-nm">Peanut butter, 2 tbsp</span>
+          </span>
+        </button></li>
+      </ul>
+    </div>
+  </div>
+  <p class="caption">Four of seven rows carry the pill. In the full library it is 6 of 14.</p>
+
+  <div class="sub-tag">Editor, tap the pill to change it</div>
+  <div class="phone">
+    <button class="gre-back">&larr; Groceries</button>
+    <div class="gre-hero">
+      <span class="gro-fall gro-t-protein">C</span>
+      <button class="gre-name">Chicken breast, cooked</button>
+      <button class="gre-sub">Protein</button>
+    </div>
+    <div class="gre-figs">
+      <button class="gre-fig"><span class="v">170<small>g</small></span><span class="l">My serving</span></button>
+      <button class="gre-fig"><span class="v">165<small>cal</small></span><span class="l">Calories</span></button>
+    </div>
+    <div class="gre-macros">
+      <button class="gre-pill pro">31 P</button>
+      <button class="gre-pill">0 C</button>
+      <button class="gre-pill">3.6 F</button>
+      <button class="a-est-big" onclick="togglePad('padA')">est</button>
+    </div>
+    <button class="gre-more-btn">More</button>
+    <div class="gre-foot"></div>
+
+    <div class="pad" id="padA" style="display:none">
+      <div class="pad-l">Where these numbers came from</div>
+      <div class="pad-choices">
+        <button class="pad-choice" onclick="pick(this)">
+          <span class="dot"></span>
+          <span><span class="t">Off the label</span><span class="d">Typed from the package nutrition facts</span></span>
+        </button>
+        <button class="pad-choice on" onclick="pick(this)">
+          <span class="dot"></span>
+          <span><span class="t">Estimated</span><span class="d">A best guess, still worth replacing with a real label</span></span>
+        </button>
+      </div>
+      <div class="pad-acts">
+        <button class="btn-dark" onclick="togglePad('padA')">Done</button>
+        <button class="gr-cancel" onclick="togglePad('padA')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <div class="col-tag">B, the tilde</div>
+  <div class="col-cap">
+    No new element anywhere. An estimated food just writes its calories as <b>~165</b>, the ordinary
+    maths sign for roughly. <b>Quietest of the three</b> and it scales to any number of rows without
+    changing the shelf's weight. The risk is that it is easy to miss, and it can read as a typo
+    until you know what it means.
+  </div>
+
+  <div class="sub-tag">Browse</div>
+  <div class="phone">
+    <div class="gro-modes">
+      <button class="on">Today's meals</button>
+      <button>By category</button>
+    </div>
+
+    <div class="gro-shelf">
+      <div class="gro-kick">Protein <small>3 items</small></div>
+      <ul class="gro-list">
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">C</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">~165 cal</span>
+              <span class="gro-pill pro">~31P</span>
+            </span>
+            <span class="gro-nm">Chicken breast, 170 g</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">L</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">~70 cal</span>
+              <span class="gro-pill pro">~6P</span>
+            </span>
+            <span class="gro-nm">Large eggs, 1 egg</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">M</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">240 cal</span>
+              <span class="gro-pill pro">21P</span>
+            </span>
+            <span class="gro-nm">Grass fed ground beef, 112 g</span>
+          </span>
+        </button></li>
+      </ul>
+    </div>
+
+    <div class="gro-shelf">
+      <div class="gro-kick">Carb <small>2 items</small></div>
+      <ul class="gro-list">
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-carb">W</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">~130 cal</span>
+              <span class="gro-pill pro">~3P</span>
+            </span>
+            <span class="gro-nm">White rice, 400 g</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-carb">W</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">60 cal</span>
+              <span class="gro-pill pro">4P</span>
+            </span>
+            <span class="gro-nm">Whole wheat bread, 1 slice</span>
+          </span>
+        </button></li>
+      </ul>
+    </div>
+
+    <div class="gro-shelf">
+      <div class="gro-kick">Fat &amp; oil <small>2 items</small></div>
+      <ul class="gro-list">
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-fat">C</span>
+          <span class="gro-txt">
+            <span class="gro-pills"><span class="gro-pill">~120 cal</span></span>
+            <span class="gro-nm">Canola oil, 1 tbsp</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-fat">P</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">95 cal</span>
+              <span class="gro-pill pro">4P</span>
+            </span>
+            <span class="gro-nm">Peanut butter, 2 tbsp</span>
+          </span>
+        </button></li>
+      </ul>
+    </div>
+  </div>
+  <p class="caption">Same four rows, no extra element. Compare the shelf weight against A.</p>
+
+  <div class="sub-tag">Editor, a footnote under the macros</div>
+  <div class="phone">
+    <button class="gre-back">&larr; Groceries</button>
+    <div class="gre-hero">
+      <span class="gro-fall gro-t-protein">C</span>
+      <button class="gre-name">Chicken breast, cooked</button>
+      <button class="gre-sub">Protein</button>
+    </div>
+    <div class="gre-figs">
+      <button class="gre-fig"><span class="v">170<small>g</small></span><span class="l">My serving</span></button>
+      <button class="gre-fig"><span class="v">~165<small>cal</small></span><span class="l">Calories</span></button>
+    </div>
+    <div class="gre-macros">
+      <button class="gre-pill pro">~31 P</button>
+      <button class="gre-pill">~0 C</button>
+      <button class="gre-pill">~3.6 F</button>
+    </div>
+    <div class="b-foot">
+      Estimated, not off a label
+      <button onclick="togglePad('padB')">Mark as label</button>
+    </div>
+    <button class="gre-more-btn">More</button>
+    <div class="gre-foot"></div>
+
+    <div class="pad" id="padB" style="display:none">
+      <div class="pad-l">Where these numbers came from</div>
+      <div class="pad-choices">
+        <button class="pad-choice" onclick="pick(this)">
+          <span class="dot"></span>
+          <span><span class="t">Off the label</span><span class="d">Typed from the package nutrition facts</span></span>
+        </button>
+        <button class="pad-choice on" onclick="pick(this)">
+          <span class="dot"></span>
+          <span><span class="t">Estimated</span><span class="d">A best guess, still worth replacing with a real label</span></span>
+        </button>
+      </div>
+      <div class="pad-acts">
+        <button class="btn-dark" onclick="togglePad('padB')">Done</button>
+        <button class="gr-cancel" onclick="togglePad('padB')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <div class="col-tag">C, the worklist</div>
+  <div class="col-cap">
+    Provenance is not decoration on every row, it is a <b>third browse mode</b>. The default shelves
+    stay exactly as they ship today. A quiet line under the mode buttons says how many are still
+    guesses, and tapping through shelves only those. This is the one that actually serves #10,
+    replacing estimates with real labels, because it gives you the queue.
+  </div>
+
+  <div class="sub-tag">Browse, default mode is untouched</div>
+  <div class="phone">
+    <div class="gro-modes">
+      <button class="on">Today's meals</button>
+      <button>By category</button>
+      <button>Needs a label</button>
+    </div>
+    <div class="c-count"><b>6 of 14</b> still run on estimated macros</div>
+
+    <div class="gro-shelf">
+      <div class="gro-kick">Protein <small>3 items</small></div>
+      <ul class="gro-list">
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">C</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">165 cal</span>
+              <span class="gro-pill pro">31P</span>
+            </span>
+            <span class="gro-nm">Chicken breast, 170 g</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">L</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">70 cal</span>
+              <span class="gro-pill pro">6P</span>
+            </span>
+            <span class="gro-nm">Large eggs, 1 egg</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">M</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">240 cal</span>
+              <span class="gro-pill pro">21P</span>
+            </span>
+            <span class="gro-nm">Grass fed ground beef, 112 g</span>
+          </span>
+        </button></li>
+      </ul>
+    </div>
+  </div>
+  <p class="caption">Zero visual change to the shelves you look at every day.</p>
+
+  <div class="sub-tag">Browse, the "Needs a label" mode</div>
+  <div class="phone">
+    <div class="gro-modes">
+      <button>Today's meals</button>
+      <button>By category</button>
+      <button class="on">Needs a label</button>
+    </div>
+    <div class="c-count">Macros here are best guesses. Open one to type the real label.</div>
+
+    <div class="gro-shelf">
+      <div class="gro-kick">Estimated <small>6 items</small></div>
+      <ul class="gro-list">
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">C</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">165 cal</span>
+              <span class="gro-pill pro">31P</span>
+              <span class="c-mark">est</span>
+            </span>
+            <span class="gro-nm">Chicken breast, 170 g</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-protein">L</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">70 cal</span>
+              <span class="gro-pill pro">6P</span>
+              <span class="c-mark">est</span>
+            </span>
+            <span class="gro-nm">Large eggs, 1 egg</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-carb">W</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">130 cal</span>
+              <span class="gro-pill pro">3P</span>
+              <span class="c-mark">est</span>
+            </span>
+            <span class="gro-nm">White rice, 400 g</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-fat">C</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">120 cal</span>
+              <span class="c-mark">est</span>
+            </span>
+            <span class="gro-nm">Canola oil, 1 tbsp</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-veg">F</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">55 cal</span>
+              <span class="gro-pill pro">3P</span>
+              <span class="c-mark">est</span>
+            </span>
+            <span class="gro-nm">Frozen mixed veg, 250 g</span>
+          </span>
+        </button></li>
+        <li><button class="gro-row">
+          <span class="gro-fall gro-t-fruit">B</span>
+          <span class="gro-txt">
+            <span class="gro-pills">
+              <span class="gro-pill">105 cal</span>
+              <span class="gro-pill pro">1P</span>
+              <span class="c-mark">est</span>
+            </span>
+            <span class="gro-nm">Banana, 1 banana</span>
+          </span>
+        </button></li>
+      </ul>
+    </div>
+  </div>
+  <p class="caption">The whole #10 backlog in one screen, and it empties as you fix them.</p>
+
+  <div class="sub-tag">Editor, a Source line inside More</div>
+  <div class="phone">
+    <button class="gre-back">&larr; Groceries</button>
+    <div class="gre-hero">
+      <span class="gro-fall gro-t-protein">C</span>
+      <button class="gre-name">Chicken breast, cooked</button>
+      <button class="gre-sub">Protein</button>
+    </div>
+    <div class="gre-figs">
+      <button class="gre-fig"><span class="v">170<small>g</small></span><span class="l">My serving</span></button>
+      <button class="gre-fig"><span class="v">165<small>cal</small></span><span class="l">Calories</span></button>
+    </div>
+    <div class="gre-macros">
+      <button class="gre-pill pro">31 P</button>
+      <button class="gre-pill">0 C</button>
+      <button class="gre-pill">3.6 F</button>
+    </div>
+    <button class="gre-more-btn">Less</button>
+    <div class="gre-lines">
+      <button class="gre-line" onclick="togglePad('padC')">
+        <span class="l">Source</span>
+        <span class="v">Estimated</span>
+      </button>
+      <button class="gre-line"><span class="l">Serving size</span><span class="v">100<small>g</small></span></button>
+      <button class="gre-line"><span class="l">Category</span><span class="v">Protein</span></button>
+      <button class="gre-line"><span class="l">Store</span><span class="v">Walmart</span></button>
+    </div>
+
+    <div class="pad" id="padC" style="display:none">
+      <div class="pad-l">Source</div>
+      <div class="pad-choices">
+        <button class="pad-choice" onclick="pick(this)">
+          <span class="dot"></span>
+          <span><span class="t">Off the label</span><span class="d">Typed from the package nutrition facts</span></span>
+        </button>
+        <button class="pad-choice on" onclick="pick(this)">
+          <span class="dot"></span>
+          <span><span class="t">Estimated</span><span class="d">A best guess, still worth replacing with a real label</span></span>
+        </button>
+      </div>
+      <div class="pad-acts">
+        <button class="btn-dark" onclick="togglePad('padC')">Done</button>
+        <button class="gr-cancel" onclick="togglePad('padC')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:40px">
+    <b>These are not exclusive.</b> C's browse mode and A's or B's per-row mark compose fine, and
+    every variant needs the same plumbing underneath: isEstimated added to GroceryView, and PATCH
+    accepting it if you want the control to be more than a read-only label.
+  </div>
+</div>
+
+<script>
+  function togglePad(id){
+    var el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+  function pick(btn){
+    var group = btn.parentElement.querySelectorAll('.pad-choice');
+    group.forEach(function(b){ b.classList.remove('on'); });
+    btn.classList.add('on');
+  }
+</script>

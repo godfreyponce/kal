@@ -1,0 +1,393 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kal, Groceries edit revamp (A + C combined, issue #29)</title>
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+    --serif:"Newsreader",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --canvas:#f7f6f3; --surface:#fff; --surface-2:#f0efeb;
+    --ink:#1f2421; --muted:#787774; --faint:#9b9a96; --border:#e6e4df;
+    --sm-choc:#3f2a1a; --sm-pill:#48291a; --sm-caramel:#a97a24; --sm-red:#ac2318;
+    --sm-band:#f6efe2; --sm-band-deep:#f1e7d3; --sm-muted:#b3a390;
+    --sm-border:#e2d9c9; --sm-ink-soft:#8a7a66;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#b9b7b2;color:#f4f3f0;font-family:var(--sans);line-height:1.6;
+    -webkit-font-smoothing:antialiased;padding:26px 16px 80px;
+  }
+  .wrap{max-width:460px;margin:0 auto}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:23px;letter-spacing:-.02em;color:#fff}
+  .page-head p{font-family:var(--mono);font-size:11px;opacity:.85;margin-top:5px}
+  .note{
+    font-family:var(--mono);font-size:11px;line-height:1.7;margin:16px 0 26px;
+    border-left:2px solid rgba(244,243,240,.5);padding-left:12px;opacity:.92;
+  }
+  .note b{color:#fff;font-weight:500}
+  .col-tag{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#fff;margin:38px 0 4px;font-weight:500}
+  .col-cap{font-family:var(--mono);font-size:10.5px;line-height:1.65;opacity:.85;margin-bottom:12px}
+  .col-cap b{color:#fff;font-weight:500}
+  .phone{
+    position:relative;border-radius:22px;padding:24px 20px 30px;overflow:hidden;
+    box-shadow:0 16px 44px rgba(31,36,33,.24);background:var(--canvas);color:var(--ink);
+  }
+  button,input,select{font-family:inherit;-webkit-tap-highlight-color:transparent}
+  button{cursor:pointer}
+  @keyframes enter{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  @keyframes reveal{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  @keyframes padup{from{transform:translateY(100%)}to{transform:none}}
+  .anim{animation:enter .34s cubic-bezier(.32,.72,.33,1) backwards}
+  .rv{animation:reveal .22s cubic-bezier(.32,.72,.33,1)}
+  @media (prefers-reduced-motion: reduce){.anim,.rv,.pad{animation:none}}
+  .hide{display:none !important}
+
+  .fld{
+    font-family:var(--mono);font-size:13px;padding:9px 10px;
+    border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--ink);width:100%;
+  }
+  .btn-dark{
+    background:var(--sm-choc);color:#fff;border:0;border-radius:8px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:11px 20px;
+  }
+  .btn-ghost{background:none;border:0;font-family:var(--mono);font-size:12px;color:var(--muted);padding:11px 4px}
+  .btn-del{background:none;border:0;font-family:var(--mono);font-size:12px;color:var(--sm-red);padding:11px 4px;margin-left:auto}
+  .back{
+    display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+    color:var(--sm-ink-soft);background:none;border:0;padding:0;margin-bottom:18px;text-transform:uppercase;
+  }
+  .shot{display:block;mix-blend-mode:multiply;filter:saturate(1.04)}
+
+  /* ---- the hybrid: A's label, every value tappable like C ---- */
+  .hero{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:20px}
+  .name{
+    font-size:24px;font-weight:800;letter-spacing:-.01em;text-transform:uppercase;line-height:1.1;
+    color:var(--sm-choc);background:none;border:0;margin-top:6px;padding:2px 0;
+    border-bottom:1.5px dashed var(--sm-border);
+  }
+  .sub{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--sm-muted);background:none;border:0;margin-top:10px;padding:2px 0;
+    border-bottom:1.5px dashed var(--sm-border);
+  }
+  .figs{display:flex;border-top:1px solid var(--sm-border);border-bottom:1px solid var(--sm-border);margin-bottom:18px}
+  .fig{flex:1;padding:18px 0 16px;text-align:center;background:none;border:0}
+  .fig + .fig{border-left:1px solid var(--sm-border)}
+  .fig .v{
+    display:inline-block;font-size:23px;font-weight:800;color:var(--sm-choc);letter-spacing:-.02em;
+    line-height:1;border-bottom:1.5px dashed var(--sm-border);padding-bottom:3px;
+  }
+  .fig .v small{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--sm-muted);margin-left:3px}
+  .fig .l{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--sm-muted);margin-top:9px}
+  .macros{display:flex;justify-content:center;gap:9px;margin-bottom:20px}
+  .pill{
+    font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+    background:var(--sm-pill);color:#fff;border:0;border-radius:999px;padding:9px 15px;
+  }
+  .pill.pro{background:var(--sm-caramel)}
+  .on-edit{outline:2px solid var(--sm-caramel);outline-offset:3px;border-radius:4px}
+
+  .more-btn{
+    display:block;width:100%;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--sm-ink-soft);background:none;border:0;
+    border-top:1px solid var(--sm-border);padding:15px 0 4px;text-align:center;
+  }
+  .lines{border-top:1px solid var(--sm-border);margin-top:12px}
+  .line{
+    display:flex;align-items:baseline;justify-content:space-between;width:100%;
+    background:none;border:0;border-bottom:1px solid var(--sm-border);padding:14px 2px;text-align:left;
+  }
+  .line .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sm-muted)}
+  .line .v{font-size:15px;font-weight:700;color:var(--sm-choc);border-bottom:1.5px dashed var(--sm-border);padding-bottom:1px}
+  .line .v.empty{color:var(--sm-muted);font-weight:500;font-family:var(--mono);font-size:12px}
+  .line .v small{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--sm-muted);margin-left:3px}
+  .tools{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+  .tool{
+    display:block;width:100%;text-align:center;font-family:var(--mono);font-size:11px;
+    color:var(--sm-ink-soft);background:#fff;border:1px solid var(--sm-border);border-radius:8px;padding:11px;
+  }
+  .foot-acts{display:flex;align-items:center;margin-top:18px}
+
+  /* the pad, straight from C */
+  .pad{
+    position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--sm-border);
+    border-radius:16px 16px 0 0;padding:16px 20px 22px;box-shadow:0 -14px 34px rgba(63,42,26,.14);
+    animation:padup .2s cubic-bezier(.32,.72,.33,1);z-index:3;
+  }
+  .pad-l{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sm-muted)}
+  .pad-row{display:flex;align-items:center;gap:10px;margin:10px 0 14px}
+  .pad-row input{
+    flex:1;font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--sm-choc);
+    border:0;border-bottom:2px solid var(--sm-caramel);background:none;padding:3px 0;width:100%;
+  }
+  .pad-row input.txt{font-size:19px}
+  .pad-row input:focus{outline:none}
+  .pad-row select{
+    font-family:var(--mono);font-size:15px;color:var(--sm-choc);border:0;
+    border-bottom:2px solid var(--sm-caramel);background:none;padding:6px 0;flex:1;
+  }
+  .unit{display:flex;gap:6px}
+  .unit button{
+    font-family:var(--mono);font-size:11px;padding:8px 13px;border-radius:999px;
+    border:1px solid var(--sm-border);background:#fff;color:var(--sm-ink-soft);
+  }
+  .unit button.on{background:var(--sm-choc);color:#fff;border-color:var(--sm-choc)}
+  .pad-acts{display:flex;align-items:center;gap:10px}
+
+  /* the dirty bar */
+  .dirty{
+    position:sticky;bottom:0;display:flex;align-items:center;gap:10px;
+    margin-top:22px;padding:14px 0 2px;border-top:1px solid var(--sm-border);background:var(--canvas);
+  }
+
+  /* add flow */
+  .add-tools{display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--sm-band);border-radius:10px;margin-bottom:14px}
+  .add-row{display:flex;gap:8px}
+  .add-row .fld{flex:1}
+  .add-form{display:flex;flex-direction:column;gap:8px}
+  .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:6px}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Groceries edit, A with C's pad</h1>
+    <p>Issue #29, the combined direction</p>
+  </div>
+
+  <div class="note">
+    <b>What combining means.</b> A's label is no longer a preview you leave to edit, it
+    <i>is</i> the editor. Every dashed value opens C's pad. So the Edit button is gone, and with it
+    the whole second screen of stacked inputs.<br><br>
+    <b>Save appears only once something changed.</b> Tap around and nothing commits, so the sheet is
+    safe to open just to read the item, which is most of the time.<br><br>
+    Tap the name, the two big figures, the macro pills, and open More.
+  </div>
+
+  <div class="col-tag">ROW TAP</div>
+  <div class="col-cap">
+    Six tappable values on first contact, down from about eighteen controls.
+    Lookup, photo and the shopping fields are one tap away under <b>More</b>.
+  </div>
+  <div class="phone anim" id="p1" style="padding-bottom:40px">
+    <button class="back">&larr; Groceries</button>
+
+    <div class="hero">
+      <svg class="shot" width="150" height="120" viewBox="0 0 150 120" aria-hidden="true">
+        <ellipse cx="75" cy="104" rx="52" ry="7" fill="#3f2a1a" opacity=".07"/>
+        <path d="M30 62c4-24 22-38 45-38s41 14 45 38c3 20-16 38-45 38S27 82 30 62z" fill="#e9c9ae"/>
+        <path d="M44 58c6-16 18-25 31-25s25 9 31 25c2 6-10 3-31 3s-33 3-31-3z" fill="#f2ddc9"/>
+        <path d="M52 76c10 6 36 6 46 0" stroke="#d8b294" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <button class="name" data-edit data-k="Name" data-t="text" data-v="Chicken breast">Chicken breast</button>
+      <button class="sub" data-edit data-k="Brand" data-t="text" data-v="Kirkland">Kirkland, Costco</button>
+    </div>
+
+    <div class="figs">
+      <button class="fig" data-edit data-k="My serving" data-t="num" data-v="170" data-u="g" data-units="g,oz">
+        <span class="v" data-out>170<small>g</small></span>
+        <span class="l">My serving</span>
+      </button>
+      <button class="fig" data-edit data-k="Calories" data-t="num" data-v="280" data-u="cal">
+        <span class="v" data-out>280<small>cal</small></span>
+        <span class="l">Calories</span>
+      </button>
+    </div>
+
+    <div class="macros">
+      <button class="pill pro" data-edit data-k="Protein" data-t="num" data-v="53" data-u="g"><span data-out>53 P</span></button>
+      <button class="pill" data-edit data-k="Carbs" data-t="num" data-v="0" data-u="g"><span data-out>0 C</span></button>
+      <button class="pill" data-edit data-k="Fat" data-t="num" data-v="6" data-u="g"><span data-out>6 F</span></button>
+    </div>
+
+    <button class="more-btn" data-more>&plus; More</button>
+
+    <div id="more" class="hide">
+      <div class="rv">
+        <div class="lines">
+          <button class="line" data-edit data-k="Serving size" data-t="num" data-v="170" data-u="g" data-units="g,oz">
+            <span class="l">Serving size</span><span class="v" data-out>170<small>g</small></span>
+          </button>
+          <button class="line" data-edit data-k="Category" data-t="select" data-v="Protein">
+            <span class="l">Category</span><span class="v" data-out>Protein</span>
+          </button>
+          <button class="line" data-edit data-k="Store" data-t="text" data-v="Costco">
+            <span class="l">Store</span><span class="v" data-out>Costco</span>
+          </button>
+          <button class="line" data-edit data-k="Package" data-t="num" data-v="2.72" data-u="kg" data-units="kg,lb,oz">
+            <span class="l">Package</span><span class="v" data-out>2.72<small>kg</small></span>
+          </button>
+          <button class="line" data-edit data-k="Price" data-t="num" data-v="24.99" data-u="$">
+            <span class="l">Price</span><span class="v" data-out>$24.99</span>
+          </button>
+          <button class="line" data-edit data-k="Product link" data-t="text" data-v="">
+            <span class="l">Product link</span><span class="v empty" data-out>not set</span>
+          </button>
+        </div>
+        <div class="tools">
+          <button class="tool">Change the product photo</button>
+          <button class="tool">Look up nutrition, or read a label photo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot-acts">
+      <button class="btn-del" style="margin-left:0">Delete</button>
+    </div>
+
+    <div id="dirty" class="dirty hide">
+      <button class="btn-dark">Save</button>
+      <button class="btn-ghost" data-discard>Discard</button>
+    </div>
+
+    <div id="pad" class="pad hide">
+      <div class="pad-l" id="pad-l">My serving</div>
+      <div class="pad-row">
+        <input id="pad-i" value="170" inputmode="decimal">
+        <select id="pad-s" class="hide"><option>Protein</option><option>Carb</option><option>Fat and oil</option><option>Dairy</option><option>Fruit</option><option>Veg</option><option>Other</option></select>
+        <div class="unit hide" id="pad-u"></div>
+      </div>
+      <div class="pad-acts">
+        <button class="btn-dark" data-done>Done</button>
+        <button class="btn-ghost" data-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-tag">ADD, THE &plus; BUTTON</div>
+  <div class="col-cap">
+    Unchanged in spirit. When the item does not exist yet, lookup and the label photo genuinely
+    <b>are</b> the first thing you want, so they stay on top. It only loses the rare fields to More,
+    and after the first save the item opens as the label above.
+  </div>
+  <div class="phone anim">
+    <button class="back">&larr; Groceries</button>
+
+    <div class="add-tools">
+      <div class="add-row">
+        <input class="fld" placeholder="Look up nutrition by name or barcode">
+        <button class="btn-dark" style="white-space:nowrap;padding:9px 14px">Find</button>
+      </div>
+      <button class="tool">Read a nutrition label photo</button>
+    </div>
+
+    <div class="add-form">
+      <input class="fld" placeholder="Name">
+      <div class="lbl">Serving, mine</div>
+      <div class="g2">
+        <input class="fld" placeholder="Serving size">
+        <input class="fld" placeholder="My serving">
+      </div>
+      <div class="lbl">Calories and macros</div>
+      <div class="g4">
+        <input class="fld" placeholder="kcal">
+        <input class="fld" placeholder="P">
+        <input class="fld" placeholder="C">
+        <input class="fld" placeholder="F">
+      </div>
+      <button class="more-btn" style="margin-top:10px">&plus; More</button>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px">
+        <button class="btn-dark">Add</button>
+        <button class="btn-ghost">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:34px">
+    <b>Two things to look at while you tap.</b><br><br>
+    1. The macro pills are the smallest targets on the screen. They are 9 px type in a 15 px pill,
+    which reads well but is near the floor for a thumb. If they feel fiddly, they can become a third
+    row of the figures block instead.<br><br>
+    2. Save is a sticky bar, so it sits at the bottom of the sheet the moment you change anything.
+    The alternative is committing each value as you tap Done on the pad, no Save at all. That is
+    fewer taps but has no undo.
+  </div>
+</div>
+
+<script>
+  const pad = document.getElementById('pad');
+  const padL = document.getElementById('pad-l');
+  const padI = document.getElementById('pad-i');
+  const padS = document.getElementById('pad-s');
+  const padU = document.getElementById('pad-u');
+  const dirty = document.getElementById('dirty');
+  let active = null;
+
+  document.getElementById('p1').addEventListener('click', (e) => {
+    if (e.target.closest('[data-more]')) {
+      const m = document.getElementById('more');
+      m.classList.toggle('hide');
+      e.target.closest('[data-more]').innerHTML = m.classList.contains('hide') ? '&plus; More' : '&minus; Less';
+      return;
+    }
+    if (e.target.closest('[data-discard]')) { dirty.classList.add('hide'); return; }
+    const el = e.target.closest('[data-edit]');
+    if (!el) return;
+    openPad(el);
+  });
+
+  function openPad(el) {
+    document.querySelectorAll('#p1 .on-edit').forEach((n) => n.classList.remove('on-edit'));
+    el.classList.add('on-edit');
+    active = el;
+    padL.textContent = el.dataset.k;
+    const type = el.dataset.t;
+
+    padI.classList.toggle('hide', type === 'select');
+    padS.classList.toggle('hide', type !== 'select');
+    padI.classList.toggle('txt', type === 'text');
+    padI.value = el.dataset.v;
+    padI.inputMode = type === 'num' ? 'decimal' : 'text';
+    if (type === 'select') padS.value = el.dataset.v;
+
+    padU.innerHTML = '';
+    const units = el.dataset.units ? el.dataset.units.split(',') : [];
+    padU.classList.toggle('hide', units.length === 0);
+    units.forEach((u) => {
+      const b = document.createElement('button');
+      b.textContent = u;
+      if (u === el.dataset.u) b.classList.add('on');
+      b.addEventListener('click', () => {
+        padU.querySelectorAll('button').forEach((x) => x.classList.remove('on'));
+        b.classList.add('on');
+      });
+      padU.appendChild(b);
+    });
+
+    pad.classList.remove('hide');
+    pad.style.animation = 'none'; void pad.offsetWidth; pad.style.animation = '';
+  }
+
+  function closePad() {
+    pad.classList.add('hide');
+    document.querySelectorAll('#p1 .on-edit').forEach((n) => n.classList.remove('on-edit'));
+    active = null;
+  }
+
+  pad.querySelector('[data-done]').addEventListener('click', () => {
+    if (active) {
+      const type = active.dataset.t;
+      const val = type === 'select' ? padS.value : padI.value;
+      const unit = padU.querySelector('.on')?.textContent ?? active.dataset.u;
+      active.dataset.v = val;
+      if (unit) active.dataset.u = unit;
+
+      const out = active.querySelector('[data-out]') ?? active;
+      const k = active.dataset.k;
+      if (k === 'Name') { out.textContent = val; }
+      else if (k === 'Brand') { out.textContent = val + ', Costco'; }
+      else if (k === 'Protein') { out.textContent = val + ' P'; }
+      else if (k === 'Carbs') { out.textContent = val + ' C'; }
+      else if (k === 'Fat') { out.textContent = val + ' F'; }
+      else if (k === 'Price') { out.textContent = '$' + val; }
+      else if (k === 'Calories') { out.innerHTML = val + '<small>cal</small>'; }
+      else if (type === 'num') { out.innerHTML = val + '<small>' + unit + '</small>'; }
+      else { out.textContent = val || 'not set'; out.classList.toggle('empty', !val); }
+
+      dirty.classList.remove('hide');
+    }
+    closePad();
+  });
+  pad.querySelector('[data-cancel]').addEventListener('click', closePad);
+</script>
