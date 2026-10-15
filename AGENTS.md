@@ -71,8 +71,11 @@ design, and a second concurrent runner races the same live rows.
 - **While iterating, run only the test files for the modules you touched**
   (`npx vitest run lib/foo.test.ts`). The full check (below) runs once, at the end of
   `/build-ticket` — and again at the commit gate. Not after every change.
-- **One test runner and one dev server at a time.** Subagents must never run
-  `npm test`/`vitest` or start dev servers — the suite only serializes within a single run.
+- **At most one dev server per worktree, on a free port, and one `npm test`/`vitest` run at a
+  time across every worktree, each stopped by whoever started it.** The suite only serializes
+  within a single run, so two worktrees' runs race the same live rows. The session that builds the
+  ticket may start them (under `/rt`, that is the build subagent); helper subagents it spawns may
+  not.
 - **Stop what you started.** Kill any dev server, `next start`, or `tailscale serve` you
   launched before ending the session.
 
