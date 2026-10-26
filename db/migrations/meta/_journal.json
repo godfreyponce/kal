@@ -43,6 +43,13 @@
       "when": 1783607985429,
       "tag": "0005_mean_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792980536438,
+      "tag": "0006_cold_grim_reaper",
+      "breakpoints": true
     }
   ]
 }
