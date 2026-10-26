@@ -71,6 +71,32 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Spend ledger, one row per Anthropic call — #63 (2026-10-25) — COMMITTED & pushed to main; owner-accepted
+
+Kal kept no record of its Anthropic spend: the chat's `usage` SSE event lived only in React
+state, and label reads reported nothing. A new `api_calls` table (migration `0006`) holds one row
+per API call: model, purpose (`chat` or `label`), input, output, cache-read and cache-write
+tokens, and `cost_usd numeric(12,6)`, null when the model is not in `PRICING`. The chat route
+awaits `recordApiCall(CHAT_MODEL, "chat", final.usage)` after each `finalMessage()` inside the
+tool loop, so a three-stream turn writes three rows; `readLabelImage` writes one `label` row per
+read. The row stores the requested model id, not the response's, so a dated snapshot id cannot
+come back unpriced. `recordApiCall` logs a failed insert and never throws; a call that throws
+before usage is known writes no row. `PRICING` gains `claude-opus-5-5` (4 / 20, cache read
+0.20) and `claude-sonnet-5-5` (2 / 10, cache read 0.10), checked against Anthropic's pricing
+page on 2026-10-25, plus an optional per-model `cacheRead`, because cache hits on the 5.5 models
+cost 0.05x input, not the old flat 0.1x. `monthToDateSpendUsd()` sums priced rows since the
+credit cycle's start: 00:00 UTC on `SPEND_CYCLE_START_DAY` (env, default 1, clamped to the
+month's last day, rolling back a month when the day is still ahead). Gate-2 review fixes: a
+missing or bad `SPEND_CYCLE_START_DAY` (an empty string, a non-integer, outside 1-31) falls back
+to day 1 through one `currentCycleStart()`, and `npx tsx scripts/spend.ts` prints a model with
+only unpriced calls as `unpriced`, never `$0.00`. The local manual check of a real tool turn was
+not run (the local API key was empty); it was owed to the first prod chat. The commit gate was red on
+`lib/today.test.ts` (#81: the live plan holds an empty Snack meal); the owner kept the meal and
+its history, and the test now allows a meal with no items, landed first on the ticket branch.
+Full check on main: tsc clean, 230/230 tests.
+
+---
+
 ## Chat can record estimated macros on library foods — #44 (2026-10-09) — COMMITTED & pushed to main; owner-accepted
 
 `add_grocery` used to write every food with `is_estimated=false`, so an off-plan estimate the
