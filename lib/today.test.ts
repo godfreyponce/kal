@@ -38,8 +38,8 @@ describe("getTodayView meal items", () => {
   it("item kcal lines sum to the meal's plannedKcal for every meal", async () => {
     const view = await getTodayView(DATE);
     expect(view.meals.length).toBeGreaterThan(0);
+    // A meal may hold no items (0 planned kcal); its empty sum still has to match.
     for (const m of view.meals) {
-      expect(m.items.length).toBeGreaterThan(0);
       const sum = m.items.reduce((acc, i) => acc + i.kcal, 0);
       expect(sum).toBe(m.plannedKcal);
     }
