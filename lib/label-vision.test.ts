@@ -1,3 +1,4 @@
+import "../db/env";
 import { describe, it, expect } from "vitest";
 import { parseLabelNutrition } from "./label-vision";
 
