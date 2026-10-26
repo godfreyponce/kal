@@ -1,4 +1,5 @@
 import { getAnthropic, CHAT_MODEL } from "./anthropic";
+import { recordApiCall } from "./spend";
 
 // Reads a Nutrition Facts photo with Claude vision and returns one serving's macros.
 // This is the universal fallback for items the nutrition databases don't cover.
@@ -65,6 +66,7 @@ export async function readLabelImage(base64: string, mediaType: ImageMediaType):
       },
     ],
   });
+  await recordApiCall(CHAT_MODEL, "label", res.usage);
   const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
   return parseLabelNutrition(text);
 }

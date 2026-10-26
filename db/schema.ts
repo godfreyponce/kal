@@ -165,3 +165,16 @@ export const chatMessages = pgTable("chat_messages", {
   content: jsonb("content").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// One row per Anthropic API call (not per tool call; that is #61). cost_usd null = unpriced.
+export const apiCalls = pgTable("api_calls", {
+  id: serial("id").primaryKey(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  model: text("model").notNull(),
+  purpose: text("purpose").notNull(), // 'chat' | 'label'
+  inputTokens: integer("input_tokens").notNull(),
+  outputTokens: integer("output_tokens").notNull(),
+  cacheReadTokens: integer("cache_read_tokens").notNull(),
+  cacheWriteTokens: integer("cache_write_tokens").notNull(),
+  costUsd: numeric("cost_usd", { precision: 12, scale: 6 }),
+});

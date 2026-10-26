@@ -4,6 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { chatMessages } from "@/db/schema";
 import { CHAT_MODEL, MAX_TOOL_ITERATIONS, getAnthropic, usageCostUsd } from "@/lib/anthropic";
+import { recordApiCall } from "@/lib/spend";
 import { assembleSystemPrompt } from "@/lib/system-prompt";
 import { TOOLS, runTool } from "@/lib/tools";
 import { todayInAppTz } from "@/lib/time";
@@ -133,6 +134,7 @@ export async function POST(req: NextRequest) {
           }
 
           const final = await ms.finalMessage();
+          await recordApiCall(CHAT_MODEL, "chat", final.usage);
           acc.input += final.usage.input_tokens ?? 0;
           acc.output += final.usage.output_tokens ?? 0;
           acc.cacheRead += final.usage.cache_read_input_tokens ?? 0;
