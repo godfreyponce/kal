@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { FOODS_V2, MEAL_ITEMS_V2, computeTargets } from "./seed-data";
+import { LABEL_FOODS, perBasis } from "./label-data";
 
 describe("seed v2 data", () => {
   it("stores weighed foods per 100 g and count foods per natural unit", () => {
@@ -37,12 +38,30 @@ describe("seed v2 data", () => {
     expect(peanuts).toMatchObject({ kcal: 643, p: 28.6, c: 14.3, f: 53.6, isEstimated: false });
   });
 
+  it("has no estimated foods left", () => {
+    expect(FOODS_V2.filter((f) => f.isEstimated).map((f) => f.name)).toEqual([]);
+  });
+
+  it("the six former estimates carry their label-table numbers", () => {
+    for (const name of ["Large Eggs", "Banana, medium", "Chicken breast, cooked", "White rice, cooked", "Canola oil", "Frozen mixed vegetables, cooked"]) {
+      const label = LABEL_FOODS.find((l) => l.name === name)!;
+      expect(FOODS_V2.find((f) => f.name === name)).toMatchObject({ ...perBasis(label), brand: label.brand, servingDesc: label.servingDesc });
+    }
+  });
+
+  it("cooked foods convert with the seed's yield", () => {
+    for (const name of ["Chicken breast, cooked", "White rice, cooked"]) {
+      const label = LABEL_FOODS.find((l) => l.name === name)!;
+      expect(label.cookedPerRaw).toBe(FOODS_V2.find((f) => f.name === name)!.rawToCookedYield);
+    }
+  });
+
   it("computes targets from the food data (not hand-picked numbers)", () => {
     expect(computeTargets()).toEqual({
-      targetKcal: 3603,
-      targetProteinG: 216,
-      targetCarbsG: 421,
-      targetFatG: 125,
+      targetKcal: 3536,
+      targetProteinG: 210,
+      targetCarbsG: 408,
+      targetFatG: 120,
     });
   });
 });
