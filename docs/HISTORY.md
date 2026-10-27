@@ -71,6 +71,26 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Real label macros for the estimated staples — #10 (2026-10-27) — COMMITTED & pushed to main; owner-accepted
+
+Eight foods ran on guessed macros. Six now carry package labels (Lucerne eggs and mozzarella,
+Kirkland Signature rice and canola oil, Signature Select vegetables, Horizon Organic 2% milk),
+and two carry USDA SR Legacy values (banana, FDC 173944; raw chicken breast, FDC 171077), all
+with `is_estimated = false` in the live DB. `db/label-data.ts` holds each label as printed, and
+`perBasis()` converts it to the food's existing basis (raw chicken at 0.75, dry rice at 3.0), so
+no `serving_desc` or plan quantity moved. The Groceries label card was not used, because it
+rewrites a weighed food's basis to the label grams without rescaling `meal_items`.
+`db/apply-label-data.ts` wrote the rows by id behind a name and `serving_desc` guard. It also
+set brand and store, and it renamed "Whole milk" to "Horizon Organic 2% milk (DHA)". Live
+targets were left as they were (owner's call): 3712/175/400/146, while the plan sum moved from
+3712/206/400/146 to 3585/202/385/141. Kcal, carbs, and fat lag the plan sum until the next plan
+edit, which also resets protein from the 175 floor to the plan sum. The six seed staples carry
+the same numbers in `db/seed-data.ts`, and `computeTargets()` now gives 3536/210/408/120 (was
+3603/216/421/125). `lib/today.test.ts` no longer pins live chicken macros; it checks the plate
+against the 1-serving basis × 1.7. Ground beef 80/20 and corned beef wait on package photos
+(#82). Duplicate rice and banana rows were left for #57. Live-Neon test timeouts seen during
+the build went to #83. Full check on main: tsc clean, 250/250 tests.
+
 ## Chat on Opus 5.5 with a monthly spend guard (Sonnet 5.5 fallback) — #64 (2026-10-26) — COMMITTED & pushed to main; owner-accepted
 
 The chat ran on Haiku 4.5 and gave weak estimates and tool mistakes. #62 Q14 moved it to
