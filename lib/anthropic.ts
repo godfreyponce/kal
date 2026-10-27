@@ -38,6 +38,16 @@ export function usageCostUsd(model: string, u: Usage): number | null {
   return (input * p.in + output * p.out + cacheRead * (p.cacheRead ?? p.in * 0.1) + cacheWrite * p.in * 1.25) / 1e6;
 }
 
+// Thinking signatures bind the whole request prefix, and Kal rebuilds `system` on every request,
+// so earlier turns' thinking would 400. Removing them is the form the API keeps valid.
+export function withoutThinking(messages: Anthropic.MessageParam[]): Anthropic.MessageParam[] {
+  return messages.flatMap((m) => {
+    if (!Array.isArray(m.content) || m.role !== "assistant") return [m];
+    const content = m.content.filter((b) => b.type !== "thinking" && b.type !== "redacted_thinking");
+    return content.length > 0 ? [{ ...m, content }] : [];
+  });
+}
+
 let client: Anthropic | null = null;
 
 /** Lazily construct the client so a missing key only fails the chat route, not import. */

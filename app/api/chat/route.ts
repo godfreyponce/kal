@@ -3,17 +3,17 @@ import type { NextRequest } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { chatMessages } from "@/db/schema";
-import { CHAT_MODEL, MAX_TOOL_ITERATIONS, getAnthropic, usageCostUsd } from "@/lib/anthropic";
-import { recordApiCall } from "@/lib/spend";
+import { MAX_TOOL_ITERATIONS, getAnthropic, usageCostUsd, withoutThinking } from "@/lib/anthropic";
+import { currentChatModel, recordApiCall } from "@/lib/spend";
 import { assembleSystemPrompt } from "@/lib/system-prompt";
 import { TOOLS, runTool } from "@/lib/tools";
 import { todayInAppTz } from "@/lib/time";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const HISTORY_CAP = 30;
-const MAX_TOKENS = 2048;
+const MAX_TOKENS = 64_000;
 
 const IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 type ImageMediaType = (typeof IMAGE_MEDIA_TYPES)[number];
@@ -41,7 +41,7 @@ async function loadHistory(sessionId: string): Promise<Msg[]> {
   while (msgs.length && (msgs[0].role === "assistant" || isToolResultTurn(msgs[0].content))) {
     msgs.shift();
   }
-  return msgs;
+  return withoutThinking(msgs);
 }
 
 async function persist(sessionId: string, role: "user" | "assistant", content: unknown) {
@@ -109,19 +109,24 @@ export async function POST(req: NextRequest) {
   await persist(sessionId, "user", userBlocks);
   const messages: Msg[] = [...history, { role: "user", content: userBlocks }];
 
+  // Picked once, so a turn never switches models mid-loop even if spend crosses the threshold.
+  const model = await currentChatModel();
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
 
+      send({ type: "model", model });
       const acc = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
       try {
         for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
           setRollingCacheMark(messages);
           const ms = client.messages.stream({
-            model: CHAT_MODEL,
+            model,
             max_tokens: MAX_TOKENS,
+            thinking: { type: "adaptive" },
+            output_config: { effort: "low" },
             system,
             tools,
             messages,
@@ -134,7 +139,7 @@ export async function POST(req: NextRequest) {
           }
 
           const final = await ms.finalMessage();
-          await recordApiCall(CHAT_MODEL, "chat", final.usage);
+          await recordApiCall(model, "chat", final.usage);
           acc.input += final.usage.input_tokens ?? 0;
           acc.output += final.usage.output_tokens ?? 0;
           acc.cacheRead += final.usage.cache_read_input_tokens ?? 0;
@@ -173,7 +178,7 @@ export async function POST(req: NextRequest) {
         send({
           type: "usage",
           tokens: acc,
-          costUsd: usageCostUsd(CHAT_MODEL, {
+          costUsd: usageCostUsd(model, {
             input_tokens: acc.input,
             output_tokens: acc.output,
             cache_read_input_tokens: acc.cacheRead,

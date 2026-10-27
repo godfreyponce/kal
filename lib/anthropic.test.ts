@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { usageCostUsd } from "./anthropic";
+import { usageCostUsd, withoutThinking } from "./anthropic";
 
 describe("usageCostUsd", () => {
   it("prices Opus 5.5 with its 0.05x cache-read rate", () => {
@@ -21,5 +21,37 @@ describe("usageCostUsd", () => {
   });
   it("returns null for an unknown model", () => {
     expect(usageCostUsd("claude-nope", { input_tokens: 10 })).toBeNull();
+  });
+});
+
+describe("withoutThinking", () => {
+  it("drops thinking and redacted_thinking, keeps text and tool_use in order", () => {
+    const out = withoutThinking([
+      { role: "user", content: [{ type: "text", text: "log 2 eggs" }] },
+      {
+        role: "assistant",
+        content: [
+          { type: "thinking", thinking: "", signature: "sig" },
+          { type: "text", text: "Logging." },
+          { type: "redacted_thinking", data: "x" },
+          { type: "tool_use", id: "t1", name: "log_food", input: {} },
+        ],
+      },
+      { role: "user", content: [{ type: "tool_result", tool_use_id: "t1", content: "ok" }] },
+    ]);
+    expect(out[1].content).toEqual([
+      { type: "text", text: "Logging." },
+      { type: "tool_use", id: "t1", name: "log_food", input: {} },
+    ]);
+    expect(out[2]).toEqual({ role: "user", content: [{ type: "tool_result", tool_use_id: "t1", content: "ok" }] });
+  });
+  it("drops an assistant message left empty, and one stored empty", () => {
+    const out = withoutThinking([
+      { role: "user", content: "hi" },
+      { role: "assistant", content: [{ type: "thinking", thinking: "", signature: "sig" }] },
+      { role: "assistant", content: [] },
+      { role: "user", content: "again" },
+    ]);
+    expect(out).toEqual([{ role: "user", content: "hi" }, { role: "user", content: "again" }]);
   });
 });
