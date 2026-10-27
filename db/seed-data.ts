@@ -31,14 +31,20 @@ export type SeedFood = {
 // NB: no ground beef — the owner removed it from the live library (2026-07-07);
 // keeping it here would resurrect it on any re-apply.
 export const FOODS_V2: SeedFood[] = [
-  { name: "Large Eggs",                      brand: null,                    servingDesc: "1 egg",    servingGrams: null, kcal: 70,  p: 6.0,  c: 0.5,  f: 5.0,  isEstimated: true,  rawToCookedYield: null, displayQty: null, category: "protein" },
+  // Real Lucerne label (70 kcal / 6P / 0C / 5F per 1 egg, 50 g) scaled to 1 egg.
+  { name: "Large Eggs",                      brand: "Lucerne",               servingDesc: "1 egg",    servingGrams: null, kcal: 70,  p: 6.0,  c: 0.0,  f: 5.0,  isEstimated: false, rawToCookedYield: null, displayQty: null, category: "protein" },
   { name: "Whole wheat bread",               brand: "Nature's Own 100%",     servingDesc: "1 slice",  servingGrams: null, kcal: 60,  p: 4.0,  c: 11.0, f: 1.0,  isEstimated: false, rawToCookedYield: null, displayQty: null, category: "carb" },
   { name: "Peanut butter",                   brand: "SKIPPY Extra Crunchy",  servingDesc: "1 tbsp",   servingGrams: null, kcal: 95,  p: 3.5,  c: 3.5,  f: 8.0,  isEstimated: false, rawToCookedYield: null, displayQty: 2,    category: "fat" },
-  { name: "Banana, medium",                  brand: null,                    servingDesc: "1 banana", servingGrams: null, kcal: 105, p: 1.3,  c: 27.0, f: 0.4,  isEstimated: true,  rawToCookedYield: null, displayQty: null, category: "fruit" },
-  { name: "Chicken breast, cooked",          brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 165, p: 31.0, c: 0.0,  f: 3.6,  isEstimated: true,  rawToCookedYield: 0.75, displayQty: 1.7,  category: "protein" },
-  { name: "White rice, cooked",              brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 130, p: 2.7,  c: 28.0, f: 0.3,  isEstimated: true,  rawToCookedYield: 3.0,  displayQty: 4,    category: "carb" },
-  { name: "Canola oil",                      brand: null,                    servingDesc: "1 tbsp",   servingGrams: null, kcal: 120, p: 0.0,  c: 0.0,  f: 14.0, isEstimated: true,  rawToCookedYield: null, displayQty: null, category: "fat" },
-  { name: "Frozen mixed vegetables, cooked", brand: null,                    servingDesc: "100 g",    servingGrams: 100,  kcal: 55,  p: 2.5,  c: 11.0, f: 0.4,  isEstimated: true,  rawToCookedYield: null, displayQty: 2.5,  category: "veg" },
+  // USDA SR Legacy "Bananas, raw" (105 kcal / 1.29P / 26.95C / 0.39F per medium 118 g) scaled to 1 banana.
+  { name: "Banana, medium",                  brand: null,                    servingDesc: "1 banana", servingGrams: null, kcal: 105, p: 1.3,  c: 27.0, f: 0.4,  isEstimated: false, rawToCookedYield: null, displayQty: null, category: "fruit" },
+  // USDA SR Legacy raw chicken breast (120 kcal / 22.5P / 0C / 2.62F per 100 g raw) scaled to 100 g cooked at the 0.75 yield.
+  { name: "Chicken breast, cooked",          brand: "Signature Select",      servingDesc: "100 g",    servingGrams: 100,  kcal: 160, p: 30.0, c: 0.0,  f: 3.5,  isEstimated: false, rawToCookedYield: 0.75, displayQty: 1.7,  category: "protein" },
+  // Real Kirkland Signature Jasmine rice label (180 kcal / 4P / 40C / 0F per 52 g dry) scaled to 100 g cooked at the 3.0 yield.
+  { name: "White rice, cooked",              brand: "Kirkland Signature",    servingDesc: "100 g",    servingGrams: 100,  kcal: 115, p: 2.6,  c: 25.6, f: 0.0,  isEstimated: false, rawToCookedYield: 3.0,  displayQty: 4,    category: "carb" },
+  // Real Kirkland Signature canola oil label (120 kcal / 0P / 0C / 14F per 1 tbsp, 14 g) scaled to 1 tbsp.
+  { name: "Canola oil",                      brand: "Kirkland Signature",    servingDesc: "1 tbsp",   servingGrams: null, kcal: 120, p: 0.0,  c: 0.0,  f: 14.0, isEstimated: false, rawToCookedYield: null, displayQty: null, category: "fat" },
+  // Real Signature Select mixed vegetables label (60 kcal / 2P / 11C / 0F per 87 g) scaled to 100 g.
+  { name: "Frozen mixed vegetables, cooked", brand: "Signature Select",      servingDesc: "100 g",    servingGrams: 100,  kcal: 69,  p: 2.3,  c: 12.6, f: 0.0,  isEstimated: false, rawToCookedYield: null, displayQty: 2.5,  category: "veg" },
   // Real GV label (180 kcal / 8P / 4C / 15F per 28 g) scaled to 100 g — supersedes the plan doc's 590-kcal estimate.
   { name: "Dry-roasted peanuts, salted",     brand: "Great Value",           servingDesc: "100 g",    servingGrams: 100,  kcal: 643, p: 28.6, c: 14.3, f: 53.6, isEstimated: false, rawToCookedYield: null, displayQty: 0.4,  category: "fat" },
 ];
