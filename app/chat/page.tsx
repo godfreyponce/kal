@@ -1,6 +1,8 @@
-import { CHAT_MODEL } from "@/lib/anthropic";
+import { currentChatModel } from "@/lib/spend";
 import { Chat } from "./chat";
 
-export default function ChatPage() {
-  return <Chat model={CHAT_MODEL} />;
+export const dynamic = "force-dynamic";
+
+export default async function ChatPage() {
+  return <Chat model={await currentChatModel()} />;
 }

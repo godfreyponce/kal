@@ -32,6 +32,7 @@ export function Chat({ model }: { model: string }) {
   const [costUsd, setCostUsd] = useState(0);
   const [tokens, setTokens] = useState(0);
   const [costKnown, setCostKnown] = useState(true);
+  const [shownModel, setShownModel] = useState(model);
   const [photo, setPhoto] = useState<Photo | null>(null);
   const [attachOpen, setAttachOpen] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -158,6 +159,8 @@ export function Chat({ model }: { model: string }) {
                 { id: nid(), kind: "card", card: evt.card, writeBatchId: evt.writeBatchId ?? null },
               ]);
             }
+          } else if (evt.type === "model") {
+            setShownModel(evt.model);
           } else if (evt.type === "usage") {
             setTokens((t) => t + (evt.tokens?.input ?? 0) + (evt.tokens?.output ?? 0));
             if (evt.costUsd == null) setCostKnown(false);
@@ -191,7 +194,7 @@ export function Chat({ model }: { model: string }) {
       </header>
 
       <div className="chat-meta anim" style={{ animationDelay: "0.04s" }}>
-        <span className="cm-model">{model}</span>
+        <span className="cm-model">{shownModel}</span>
         <span className="cm-cost">
           <span className="cm-c">{costKnown ? `$${costUsd.toFixed(4)}` : "cost n/a"}</span>
           <span className="cm-t">{tokens.toLocaleString("en-US")} tok</span>
