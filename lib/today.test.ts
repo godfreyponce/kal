@@ -17,11 +17,11 @@ describe("getTodayView meal items", () => {
     // resolved amount for the plate — never a multiplier
     expect(chicken!.amountLabel).toBe("170 g (6 oz)");
     expect(chicken!.rawLabel).toBe("raw ≈ 227 g (8 oz)");
-    expect(chicken!.kcal).toBe(281);
-    expect(chicken!.proteinG).toBeCloseTo(52.7, 5);
-    // 1-serving basis for the tap-to-expand row
+    // 1-serving basis for the tap-to-expand row; the plate is that basis × 1.7.
+    // Relative, not pinned: the live macros are the owner's data and change (#10).
     expect(chicken!.servingLabel).toBe("100 g (3.5 oz)");
-    expect(chicken!.serving).toEqual({ kcal: 165, proteinG: 31, carbsG: 0, fatG: 3.6 });
+    expect(chicken!.kcal).toBe(Math.round(chicken!.serving.kcal * 1.7));
+    expect(chicken!.proteinG).toBeCloseTo(chicken!.serving.proteinG * 1.7, 1);
   });
 
   it("keeps counted foods in their natural unit", async () => {
