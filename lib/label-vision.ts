@@ -1,5 +1,7 @@
-import { getAnthropic, CHAT_MODEL } from "./anthropic";
+import { getAnthropic } from "./anthropic";
 import { recordApiCall } from "./spend";
+
+const LABEL_MODEL = "claude-haiku-4-5";
 
 // Reads a Nutrition Facts photo with Claude vision and returns one serving's macros.
 // This is the universal fallback for items the nutrition databases don't cover.
@@ -54,7 +56,7 @@ type ImageMediaType = "image/jpeg" | "image/png" | "image/webp" | "image/gif";
 /** Send a base64 label image to Claude and parse the macros, or null on failure. */
 export async function readLabelImage(base64: string, mediaType: ImageMediaType): Promise<LabelNutrition | null> {
   const res = await getAnthropic().messages.create({
-    model: CHAT_MODEL,
+    model: LABEL_MODEL,
     max_tokens: 400,
     messages: [
       {
@@ -66,7 +68,7 @@ export async function readLabelImage(base64: string, mediaType: ImageMediaType):
       },
     ],
   });
-  await recordApiCall(CHAT_MODEL, "label", res.usage);
+  await recordApiCall(LABEL_MODEL, "label", res.usage);
   const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
   return parseLabelNutrition(text);
 }
