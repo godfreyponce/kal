@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-// Cheapest-capable principle: Haiku runs the chat tool-loop by default, overridable
-// via env. Bump to a reasoning tier only if Haiku fumbles multi-step tool use.
-export const CHAT_MODEL = process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5";
+// #62 Q14 moved the chat to Opus 5.5; the spend guard in lib/spend.ts falls back to Sonnet 5.5.
+export const CHAT_MODEL = "claude-opus-5-5";
+export const FALLBACK_CHAT_MODEL = "claude-sonnet-5-5";
 
 // Hard cap on the agentic loop so a misbehaving model can't run forever.
 export const MAX_TOOL_ITERATIONS = 8;
