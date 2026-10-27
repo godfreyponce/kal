@@ -71,6 +71,33 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Chat on Opus 5.5 with a monthly spend guard (Sonnet 5.5 fallback) — #64 (2026-10-26) — COMMITTED & pushed to main; owner-accepted
+
+The chat ran on Haiku 4.5 and gave weak estimates and tool mistakes. #62 Q14 moved it to
+`claude-opus-5-5` with adaptive thinking at low effort (`thinking: { type: "adaptive" }`,
+`output_config: { effort: "low" }`, both typed by the installed SDK 0.105.0, no cast).
+`currentChatModel()` in `lib/spend.ts` picks the model once per request: it compares #63's
+`monthToDateSpendUsd()` to `SPEND_FALLBACK_USD` (env only, no amount in the repo) and answers on
+`claude-sonnet-5-5` once spend reaches it (`>=`). A missing, empty, zero, negative, or
+non-numeric `SPEND_FALLBACK_USD` also means Sonnet, so a forgotten env var shows in the header
+and costs less. The `ANTHROPIC_MODEL` override is gone. The route sends a `{ type: "model" }`
+event first in each stream, and `/chat` (now `force-dynamic`) renders `currentChatModel()` in the
+header, so a fallback is visible. Inside one request's tool loop, assistant `final.content` goes
+back unchanged, thinking blocks included; `chat_messages` stores every block. `loadHistory`
+strips `thinking` / `redacted_thinking` from earlier turns through `withoutThinking()` and drops
+an assistant row left empty, because thinking signatures bind the request prefix and Kal
+rebuilds `system` every request. `MAX_TOKENS` is 64,000 (the claude-api skill's streaming
+default; thinking and reply share it) and `maxDuration` is 300 (Vercel's highest value valid on
+every plan). Label reading is pinned to `claude-haiku-4-5` and no longer reads `CHAT_MODEL`.
+Before the build the owner confirmed the key (`claude-kal`) sits in the org that holds the
+credit and that auto-reload is off. Gate-2 local check: `/chat` header read
+`claude-sonnet-5-5` with no `SPEND_FALLBACK_USD` and `claude-opus-5-5` with a high one; the
+live multi-tool turn on Opus was not yet run at landing (local `ANTHROPIC_API_KEY` is empty;
+owed on prod, see STATE.md Now).
+Full check on main: tsc clean, 243/243 tests.
+
+---
+
 ## Spend ledger, one row per Anthropic call — #63 (2026-10-25) — COMMITTED & pushed to main; owner-accepted
 
 Kal kept no record of its Anthropic spend: the chat's `usage` SSE event lived only in React
