@@ -1,7 +1,7 @@
 import { and, gte, lt, sql } from "drizzle-orm";
 import { db } from "../db";
 import { apiCalls } from "../db/schema";
-import { usageCostUsd, type Usage } from "./anthropic";
+import { CHAT_MODEL, FALLBACK_CHAT_MODEL, usageCostUsd, type Usage } from "./anthropic";
 
 export type ApiPurpose = "chat" | "label";
 
@@ -75,6 +75,22 @@ export async function monthToDateSpendUsd(
     unpricedCalls: byModel.reduce((acc, m) => acc + m.unpricedCalls, 0),
     since,
   };
+}
+
+/** `SPEND_FALLBACK_USD` as a positive amount, or null when it is missing, empty, or not a positive number. */
+export function spendFallbackUsd(): number | null {
+  const usd = Number(process.env.SPEND_FALLBACK_USD);
+  return Number.isFinite(usd) && usd > 0 ? usd : null;
+}
+
+/** No threshold means Sonnet: a forgotten env var shows in the chat header and costs less. */
+export function chatModelFor(spendUsd: number, thresholdUsd: number | null): string {
+  return thresholdUsd === null || spendUsd >= thresholdUsd ? FALLBACK_CHAT_MODEL : CHAT_MODEL;
+}
+
+/** The model the chat answers on now, from cycle-to-date spend against `SPEND_FALLBACK_USD`. */
+export async function currentChatModel(now = new Date()): Promise<string> {
+  return chatModelFor((await monthToDateSpendUsd(now)).costUsd, spendFallbackUsd());
 }
 
 /** One script line. A row with no priced calls says `unpriced`, never `$0.00`. */

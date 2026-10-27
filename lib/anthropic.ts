@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-// Cheapest-capable principle: Haiku runs the chat tool-loop by default, overridable
-// via env. Bump to a reasoning tier only if Haiku fumbles multi-step tool use.
-export const CHAT_MODEL = process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5";
+// #62 Q14 moved the chat to Opus 5.5; the spend guard in lib/spend.ts falls back to Sonnet 5.5.
+export const CHAT_MODEL = "claude-opus-5-5";
+export const FALLBACK_CHAT_MODEL = "claude-sonnet-5-5";
 
 // Hard cap on the agentic loop so a misbehaving model can't run forever.
 export const MAX_TOOL_ITERATIONS = 8;
@@ -36,6 +36,16 @@ export function usageCostUsd(model: string, u: Usage): number | null {
   const cacheRead = u.cache_read_input_tokens ?? 0;
   const cacheWrite = u.cache_creation_input_tokens ?? 0;
   return (input * p.in + output * p.out + cacheRead * (p.cacheRead ?? p.in * 0.1) + cacheWrite * p.in * 1.25) / 1e6;
+}
+
+// Thinking signatures bind the whole request prefix, and Kal rebuilds `system` on every request,
+// so earlier turns' thinking would 400. Removing them is the form the API keeps valid.
+export function withoutThinking(messages: Anthropic.MessageParam[]): Anthropic.MessageParam[] {
+  return messages.flatMap((m) => {
+    if (!Array.isArray(m.content) || m.role !== "assistant") return [m];
+    const content = m.content.filter((b) => b.type !== "thinking" && b.type !== "redacted_thinking");
+    return content.length > 0 ? [{ ...m, content }] : [];
+  });
 }
 
 let client: Anthropic | null = null;

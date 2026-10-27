@@ -23,8 +23,9 @@ Unauthenticated API calls get a 401, pages redirect to `/login`. The login page 
    which is how a full conversation stays around three cents.
 
 `usageCostUsd` prices each turn from a small table in `lib/anthropic.ts` and the client
-shows the running total. The model is `claude-haiku-4-5` unless `ANTHROPIC_MODEL` says
-otherwise: cheapest-capable, bump it only if Haiku fumbles.
+shows the running total. The chat runs `claude-opus-5-5` with adaptive thinking at low effort, falls back to
+`claude-sonnet-5-5` once cycle spend reaches `SPEND_FALLBACK_USD`, and label reading stays on
+`claude-haiku-4-5`.
 
 ## the tools
 

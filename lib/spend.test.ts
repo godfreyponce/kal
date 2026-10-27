@@ -3,7 +3,17 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq, like, lt, or, sql } from "drizzle-orm";
 import { db } from "../db";
 import { apiCalls } from "../db/schema";
-import { currentCycleStart, cycleStart, monthToDateSpendUsd, recordApiCall, spendByModel, spendLine } from "./spend";
+import {
+  chatModelFor,
+  currentChatModel,
+  currentCycleStart,
+  cycleStart,
+  monthToDateSpendUsd,
+  recordApiCall,
+  spendByModel,
+  spendFallbackUsd,
+  spendLine,
+} from "./spend";
 
 // Live-DB rows sit in a 2001 sentinel window; recordApiCall rows land at now() under ZZTEST_ ids.
 const cleanup = () =>
@@ -40,6 +50,33 @@ describe("currentCycleStart", () => {
   });
 });
 
+describe("chatModelFor", () => {
+  it("stays on Opus below the threshold", () => expect(chatModelFor(4.99, 5)).toBe("claude-opus-5-5"));
+  it("falls back to Sonnet at the threshold", () => expect(chatModelFor(5, 5)).toBe("claude-sonnet-5-5"));
+  it("falls back to Sonnet above the threshold", () => expect(chatModelFor(5.01, 5)).toBe("claude-sonnet-5-5"));
+  it("falls back to Sonnet with no threshold", () => expect(chatModelFor(0, null)).toBe("claude-sonnet-5-5"));
+});
+
+describe("spendFallbackUsd", () => {
+  const saved = process.env.SPEND_FALLBACK_USD;
+  afterAll(() => {
+    if (saved === undefined) delete process.env.SPEND_FALLBACK_USD;
+    else process.env.SPEND_FALLBACK_USD = saved;
+  });
+  it.each(["", "abc", "0", "-1"])("is null for SPEND_FALLBACK_USD=%j", (value) => {
+    process.env.SPEND_FALLBACK_USD = value;
+    expect(spendFallbackUsd()).toBeNull();
+  });
+  it("is null when unset", () => {
+    delete process.env.SPEND_FALLBACK_USD;
+    expect(spendFallbackUsd()).toBeNull();
+  });
+  it("reads a positive amount", () => {
+    process.env.SPEND_FALLBACK_USD = "12.5";
+    expect(spendFallbackUsd()).toBe(12.5);
+  });
+});
+
 describe("spendLine", () => {
   it("prints an all-unpriced model as unpriced, not $0.00", () => {
     expect(spendLine("claude-nope", { calls: 3, unpricedCalls: 3, costUsd: 0 })).toBe("claude-nope  3 calls  unpriced");
@@ -57,6 +94,7 @@ describe("spendLine", () => {
 
 describe("ledger (live DB, 2001 sentinel window)", () => {
   const savedDay = process.env.SPEND_CYCLE_START_DAY;
+  const savedFallback = process.env.SPEND_FALLBACK_USD;
   const row = (createdAt: string, model: string, costUsd: string | null) => ({
     createdAt: new Date(createdAt), model, purpose: "chat",
     inputTokens: 1, outputTokens: 1, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd,
@@ -75,6 +113,8 @@ describe("ledger (live DB, 2001 sentinel window)", () => {
     await cleanup();
     if (savedDay === undefined) delete process.env.SPEND_CYCLE_START_DAY;
     else process.env.SPEND_CYCLE_START_DAY = savedDay;
+    if (savedFallback === undefined) delete process.env.SPEND_FALLBACK_USD;
+    else process.env.SPEND_FALLBACK_USD = savedFallback;
   });
 
   it("monthToDateSpendUsd sums priced rows since the cycle start", async () => {
@@ -90,6 +130,14 @@ describe("ledger (live DB, 2001 sentinel window)", () => {
     expect(r.unpricedCalls).toBe(1);
     const byModel = await spendByModel(new Date("2001-06-15T00:00:00Z"), new Date("2001-06-25T00:00:00Z"));
     expect(byModel.find((m) => m.model === "claude-haiku-4-5")).toMatchObject({ calls: 1, unpricedCalls: 1, costUsd: 0 });
+  });
+
+  it("currentChatModel falls back once ledger spend reaches SPEND_FALLBACK_USD", async () => {
+    process.env.SPEND_CYCLE_START_DAY = "15";
+    process.env.SPEND_FALLBACK_USD = "0.75";
+    expect(await currentChatModel(new Date("2001-06-25T00:00:00Z"))).toBe("claude-sonnet-5-5");
+    process.env.SPEND_FALLBACK_USD = "0.76";
+    expect(await currentChatModel(new Date("2001-06-25T00:00:00Z"))).toBe("claude-opus-5-5");
   });
 
   it("recordApiCall writes one row", async () => {

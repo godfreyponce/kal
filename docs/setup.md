@@ -20,7 +20,7 @@ Everything goes in `.env.local`. Required:
 
 Optional:
 
-- `ANTHROPIC_MODEL`: swaps the chat model. Default is `claude-haiku-4-5`.
+- `SPEND_FALLBACK_USD`: the cycle spend in USD at which the chat moves from `claude-opus-5-5` to `claude-sonnet-5-5`. A missing value means Sonnet.
 - `FDC_API_KEY`: USDA FoodData Central key for `search_nutrition`. OpenFoodFacts needs no key.
 - `DATABASE_URL_UNPOOLED`: if set, drizzle-kit uses it for migrations instead of the pooled URL.
 - `BLOB_READ_WRITE_TOKEN`: Vercel Blob store for grocery product photos. Uploads fail without it.
