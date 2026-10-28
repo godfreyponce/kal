@@ -71,6 +71,22 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Anthropic key behind server-only — #80 (2026-10-27) — COMMITTED & pushed to main; owner-accepted
+
+`getAnthropic()`, the one place that reads `ANTHROPIC_API_KEY` and constructs the SDK client,
+moved from `lib/anthropic.ts` to a new `lib/anthropic-client.ts` whose first line is
+`import "server-only"`. A client component that imports it now fails `next build` (checked at
+gate 2 with a temporary import in `app/chat/chat.tsx`: Turbopack refused with the server-only
+error). `lib/anthropic.ts` keeps the model ids, the price table, `usageCostUsd`, and
+`withoutThinking`, none of which read the key, so `scripts/spend.ts` still runs under plain
+`npx tsx`. The chat route and `lib/label-vision.ts` import `getAnthropic` from the new file.
+Vitest aliases `server-only` to the package's `empty.js`, because the package gives the empty
+module only under the `react-server` condition. Side effect: `parseLabelNutrition` and
+`LabelNutrition` now sit behind the guard too; the one client use (`grocery-editor.tsx`) is
+type-only. The Console and Vercel steps (Kal workspace with a spend limit, auto-reload off, new
+key via `vercel env add`, old key revoked) are owner steps. Full check on main: tsc clean,
+250/250 tests.
+
 ## Real label macros for the estimated staples — #10 (2026-10-27) — COMMITTED & pushed to main; owner-accepted
 
 Eight foods ran on guessed macros. Six now carry package labels (Lucerne eggs and mozzarella,
