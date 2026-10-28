@@ -7,6 +7,12 @@ import { defineConfig } from "vitest/config";
 // Per-file sentinel dates remain as defense in depth.
 export default defineConfig({
   // Mirrors tsconfig's "@/*" -> "./*" so tests can import app/api route handlers directly.
-  resolve: { alias: { "@": path.resolve(__dirname) } },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname),
+      // server-only maps to its empty module only under the react-server condition, which vitest does not set.
+      "server-only": path.resolve(__dirname, "node_modules/server-only/empty.js"),
+    },
+  },
   test: { fileParallelism: false },
 });

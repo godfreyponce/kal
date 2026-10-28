@@ -47,14 +47,3 @@ export function withoutThinking(messages: Anthropic.MessageParam[]): Anthropic.M
     return content.length > 0 ? [{ ...m, content }] : [];
   });
 }
-
-let client: Anthropic | null = null;
-
-/** Lazily construct the client so a missing key only fails the chat route, not import. */
-export function getAnthropic(): Anthropic {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY is not set");
-  }
-  client ??= new Anthropic();
-  return client;
-}

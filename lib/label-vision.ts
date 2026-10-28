@@ -1,4 +1,4 @@
-import { getAnthropic } from "./anthropic";
+import { getAnthropic } from "./anthropic-client";
 import { recordApiCall } from "./spend";
 
 const LABEL_MODEL = "claude-haiku-4-5";
