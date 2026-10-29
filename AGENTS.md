@@ -25,6 +25,9 @@ a fresh session builds from it.
 - **`/build-ticket [#N]`** — build from the plan file, run the suite, **paste the real output**,
   stop before landing anything on main. UI tickets also run `npx tsx scripts/screenshot-pass.ts`
   (against your running dev server) and attach the phone-width screenshots as gate-2 evidence.
+  Tickets that touch `lib/system-prompt.ts`, `lib/tools.ts`, `lib/anthropic.ts`, or
+  `lib/chat-turn.ts` also run `npm run eval` and paste its output as gate-2 evidence (it bills
+  real calls and needs a real `ANTHROPIC_API_KEY` in `.env.local`; never put it in the commit hook).
   Multi-task plans build on a ticket branch with one commit
   per approved task; single-task plans stay uncommitted in the working tree. The owner reads the
   diff (**gate 2**).

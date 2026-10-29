@@ -1,8 +1,8 @@
 import { asc, desc, eq, gte } from "drizzle-orm";
 import { db } from "../db";
 import { foods, mealItems, meals, mealStatus, memoryFacts, profile, weighIns } from "../db/schema";
-import { getDaySummary } from "./day-summary";
-import { getOverridesForDate } from "./overrides";
+import { getDaySummary, type DaySummary } from "./day-summary";
+import { getOverridesForDate, type OverrideLine } from "./overrides";
 import { buildPlanBlock, type PlanMeal } from "./resolve-item";
 
 const m = (x: number) => Math.round(x);
@@ -31,6 +31,30 @@ const RULES = `- All food amounts are provided to you fully resolved, with expli
 - When the same substitution keeps coming up (e.g. a usual travel dinner), save it with add_memory_fact so future chats already know it.`;
 
 export type SystemPromptBlocks = { staticText: string; dynamicText: string };
+
+export type PromptContext = {
+  profile: typeof profile.$inferSelect;
+  summary: DaySummary;
+  /** Already in sortOrder. */
+  meals: Pick<typeof meals.$inferSelect, "id" | "name">[];
+  items: {
+    mealId: number;
+    quantity: string;
+    foodName: string;
+    servingDesc: string;
+    kcal: number;
+    proteinG: string;
+    carbsG: string;
+    fatG: string;
+    rawToCookedYield: string | null;
+  }[];
+  statuses: { mealId: number; status: string }[];
+  /** Newest first, at most 10, last 30 days. */
+  weights: { date: string; weightLb: string }[];
+  /** Oldest first. */
+  memoryFacts: { content: string }[];
+  overrides: Map<number, OverrideLine[]>;
+};
 
 /**
  * Build the system prompt for a chat request: profile, targets, today's consumed/
@@ -77,6 +101,30 @@ export async function assembleSystemPrompt(date: string): Promise<SystemPromptBl
       .orderBy(asc(memoryFacts.createdAt), asc(memoryFacts.id)),
     getOverridesForDate(date),
   ]);
+  return renderSystemPrompt(date, {
+    profile: p,
+    summary,
+    meals: mealRows,
+    items,
+    statuses: statusRows,
+    weights,
+    memoryFacts: facts,
+    overrides,
+  });
+}
+
+/** The pure half of assembleSystemPrompt: the prompt text from already-read rows. */
+export function renderSystemPrompt(date: string, ctx: PromptContext): SystemPromptBlocks {
+  const {
+    profile: p,
+    summary,
+    meals: mealRows,
+    items,
+    statuses: statusRows,
+    weights,
+    memoryFacts: facts,
+    overrides,
+  } = ctx;
   const itemsByMeal = new Map<number, PlanMeal["items"]>();
   for (const it of items) {
     const list = itemsByMeal.get(it.mealId) ?? [];
