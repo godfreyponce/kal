@@ -3,18 +3,18 @@ import type { NextRequest } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { chatMessages } from "@/db/schema";
-import { MAX_TOOL_ITERATIONS, usageCostUsd, withoutThinking } from "@/lib/anthropic";
+import { usageCostUsd, withoutThinking } from "@/lib/anthropic";
 import { getAnthropic } from "@/lib/anthropic-client";
+import { chatRequest, runChatTurn } from "@/lib/chat-turn";
 import { currentChatModel, recordApiCall } from "@/lib/spend";
 import { assembleSystemPrompt } from "@/lib/system-prompt";
-import { TOOLS, runTool } from "@/lib/tools";
+import { runTool } from "@/lib/tools";
 import { todayInAppTz } from "@/lib/time";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
 const HISTORY_CAP = 30;
-const MAX_TOKENS = 64_000;
 
 const IMAGE_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 type ImageMediaType = (typeof IMAGE_MEDIA_TYPES)[number];
@@ -49,23 +49,6 @@ async function persist(sessionId: string, role: "user" | "assistant", content: u
   await db.insert(chatMessages).values({ sessionId, role, content });
 }
 
-// Breakpoint (3): keep one rolling cache marker on the conversation's last block
-// so each tool-loop iteration (which replays the whole history) reads everything
-// before it from cache. Old marks are stripped first — max 4 breakpoints total.
-function setRollingCacheMark(messages: Msg[]) {
-  for (const msg of messages) {
-    if (Array.isArray(msg.content)) {
-      for (const b of msg.content) delete (b as { cache_control?: unknown }).cache_control;
-    }
-  }
-  const last = messages[messages.length - 1];
-  if (Array.isArray(last?.content) && last.content.length > 0) {
-    (last.content[last.content.length - 1] as { cache_control?: unknown }).cache_control = {
-      type: "ephemeral",
-    };
-  }
-}
-
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) ?? {};
   const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
@@ -88,15 +71,7 @@ export async function POST(req: NextRequest) {
 
   const date = todayInAppTz();
   const { staticText, dynamicText } = await assembleSystemPrompt(date);
-  // Cache breakpoints: (1) last tool, (2) static system block. The dynamic block
-  // sits after them so per-day numbers never bust the tools+static prefix.
-  const system: Anthropic.TextBlockParam[] = [
-    { type: "text", text: staticText, cache_control: { type: "ephemeral" } },
-    { type: "text", text: dynamicText },
-  ];
-  const tools: Anthropic.Tool[] = TOOLS.map((t, i) =>
-    i === TOOLS.length - 1 ? { ...t, cache_control: { type: "ephemeral" } } : t,
-  );
+  const { system, tools } = chatRequest(staticText, dynamicText);
 
   const history = await loadHistory(sessionId);
   const userBlocks: Anthropic.ContentBlockParam[] = [];
@@ -119,63 +94,31 @@ export async function POST(req: NextRequest) {
       const send = (obj: unknown) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
 
       send({ type: "model", model });
-      const acc = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
       try {
-        for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
-          setRollingCacheMark(messages);
-          const ms = client.messages.stream({
-            model,
-            max_tokens: MAX_TOKENS,
-            thinking: { type: "adaptive" },
-            output_config: { effort: "low" },
-            system,
-            tools,
-            messages,
-          });
-
-          for await (const event of ms) {
-            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-              send({ type: "text", text: event.delta.text });
-            }
-          }
-
-          const final = await ms.finalMessage();
-          await recordApiCall(model, "chat", final.usage);
-          acc.input += final.usage.input_tokens ?? 0;
-          acc.output += final.usage.output_tokens ?? 0;
-          acc.cacheRead += final.usage.cache_read_input_tokens ?? 0;
-          acc.cacheWrite += final.usage.cache_creation_input_tokens ?? 0;
-          await persist(sessionId, "assistant", final.content);
-          messages.push({ role: "assistant", content: final.content });
-
-          if (final.stop_reason !== "tool_use") break;
-
-          const toolUses = final.content.filter(
-            (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
-          );
-          const results: Anthropic.ContentBlockParam[] = [];
-          for (const tu of toolUses) {
-            send({ type: "tool_use", id: tu.id, name: tu.name, input: tu.input });
-            const run = await runTool(tu.name, tu.input as Record<string, unknown>);
-            send({
-              type: "tool_result",
-              id: tu.id,
-              name: tu.name,
-              summary: run.summary,
-              writeBatchId: run.writeBatchId,
-              card: run.card ?? null,
-              remaining: run.remaining ?? null,
-            });
-            results.push({ type: "tool_result", tool_use_id: tu.id, content: run.forModel });
-          }
-
-          await persist(sessionId, "user", results);
-          messages.push({ role: "user", content: results });
-
-          if (i === MAX_TOOL_ITERATIONS - 1) {
-            send({ type: "error", message: "Reached tool-iteration limit." });
-          }
-        }
+        const { tokens: acc, hitToolLimit } = await runChatTurn(
+          { client, model, system, tools, messages },
+          {
+            runTool,
+            onText: (text) => send({ type: "text", text }),
+            onMessage: async (final) => {
+              await recordApiCall(model, "chat", final.usage);
+              await persist(sessionId, "assistant", final.content);
+            },
+            onToolUse: (tu) => send({ type: "tool_use", id: tu.id, name: tu.name, input: tu.input }),
+            onToolResult: (tu, run) =>
+              send({
+                type: "tool_result",
+                id: tu.id,
+                name: tu.name,
+                summary: run.summary,
+                writeBatchId: run.writeBatchId,
+                card: run.card ?? null,
+                remaining: run.remaining ?? null,
+              }),
+            onToolResults: (results) => persist(sessionId, "user", results),
+          },
+        );
+        if (hitToolLimit) send({ type: "error", message: "Reached tool-iteration limit." });
         send({
           type: "usage",
           tokens: acc,
