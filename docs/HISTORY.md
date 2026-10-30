@@ -71,6 +71,29 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Chat tool-call evals, scored on calls not prose — #41 (2026-10-29) — COMMITTED & pushed to main; owner-accepted
+
+`npm run eval` runs five chat cases against the real API on `CHAT_MODEL` and
+`FALLBACK_CHAT_MODEL` and scores the tool calls each model makes: which tools, which arguments,
+and which calls must not happen. Prose is never scored. Two seams came out of the live chat
+path so the eval drives the real code: `renderSystemPrompt(date, ctx)` is the pure half of
+`assembleSystemPrompt`, and `runChatTurn()` in `lib/chat-turn.ts` is the route's tool loop
+(model params, rolling cache mark, iteration cap) with an injectable `runTool` and hooks for
+SSE, persistence, and the spend ledger. The route's SSE event order did not change. `evals/`
+holds a synthetic fixture (invented profile, four-meal plan, seven foods), stateful tool stubs
+that copy the live result shapes and write nothing, a scorer (must, must-not, arg checks,
+ranges, optional order), the cases, and the runner. The cases come from #57 (plan foods
+reused), #59 (a structural proxy: `get_day_summary` after the last `log_food`; #59 rewrites it),
+#44/#57 (no duplicate grocery), #64 (two foods, then a follow-up), and #40 (memory fence,
+known-fail until #40 lands). `--repeat N` reports a pass rate; the run prints a score per model
+and its token cost, and it exits 0 when cases fail. The eval never calls `recordApiCall`, and
+it points `DATABASE_URL` at a `.invalid` host. AGENTS.md now asks any ticket that touches
+`lib/system-prompt.ts`, `lib/tools.ts`, `lib/anthropic.ts`, or `lib/chat-turn.ts` to paste
+`npm run eval` output at gate 2. The first live run is an owner step, because the local
+`ANTHROPIC_API_KEY` is `""`. Full check on main: tsc clean, 268/268 tests on the owner's rerun.
+The first run on main timed out once in the live-Neon spend-fallback test, which this ticket
+does not touch (#83).
+
 ## Anthropic key behind server-only — #80 (2026-10-27) — COMMITTED & pushed to main; owner-accepted
 
 `getAnthropic()`, the one place that reads `ANTHROPIC_API_KEY` and constructs the SDK client,
