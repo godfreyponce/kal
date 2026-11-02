@@ -71,6 +71,29 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Undo restores what a replacing meal write deleted — #85 (2026-11-02) — COMMITTED & pushed to main; owner-accepted
+
+Undo on a chat card for a meal adjustment or a status change used to delete that write's rows
+and leave nothing behind, because the write had already deleted the earlier state it replaced
+(`setMealOverride` deletes the meal's override rows for the date; `setMealStatus` deletes the
+earlier batch's auto-logged entries and overwrites the one status row). Both writes now first
+copy the rows they remove into a new table, `replaced_writes` (migration `0007_free_groot.sql`,
+additive), keyed by the new write's batch id (`saveReplaced` in `lib/undo.ts`). A Today untap
+(`pending`) has no batch, so its copy has `batch_id` null. `revertWriteBatch(B)` now returns
+`{ reverted: true, revertedEntries }` or `{ reverted: false, reason: "replaced" }`. It refuses,
+and changes nothing, when a saved copy names B as the replaced batch (a newer write sits on top
+of B). Otherwise it deletes B's rows, claims B's saved copies in one `DELETE ... RETURNING` (so a
+double-tapped Undo restores once; the final review found the restore could run twice), and puts
+the rows back with their original batch ids, so a chain of writes undoes one step at a time. The
+one-off food GC also skips foods named in any `replaced_writes.food_ids`. `POST /api/undo`
+returns 409 with `reason: "replaced"` on a refusal, and the chat card then shows its label with a
+disabled `Replaced` button in the existing `.undone` style. Accepted gap: after Undo of a newer
+card, an older card that already shows `Replaced` stays that way until a reload. No read path
+changed. The branch merged main (#84, #86) to pick up the `lib/today.test.ts` fix for the owner's
+Lunch edit. Found on the way: #88 (deleting a grocery can break Undo of an adjustment that
+replaced it) and #89 (saved copies that can never be undone are never pruned). Commits
+a335a98, 0170f59, 8c6aae1. Full check on main: tsc clean, 288/288 tests.
+
 ## Interrupted chat turns no longer break the session — #84 (2026-11-01) — COMMITTED & pushed to main; owner-accepted
 
 A chat turn cut off between an assistant `tool_use` and its saved `tool_result` used to make
