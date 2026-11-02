@@ -67,7 +67,11 @@ export async function revertWriteBatch(batchId: string): Promise<RevertResult> {
   await db.delete(mealStatus).where(eq(mealStatus.writeBatchId, batchId));
   await db.delete(mealOverrides).where(eq(mealOverrides.writeBatchId, batchId));
 
-  const saved = await db.select().from(replacedWrites).where(eq(replacedWrites.batchId, batchId));
+  // Claim the saved copies in one statement, so a double-tapped Undo restores once.
+  const saved = await db
+    .delete(replacedWrites)
+    .where(eq(replacedWrites.batchId, batchId))
+    .returning();
   for (const s of saved) {
     // jsonb hands timestamps back as ISO strings.
     if (s.rows.kind === "override") {
@@ -83,7 +87,6 @@ export async function revertWriteBatch(batchId: string): Promise<RevertResult> {
           .values(entries.map((r) => ({ ...r, createdAt: new Date(r.createdAt) })));
       }
     }
-    await db.delete(replacedWrites).where(eq(replacedWrites.id, s.id));
   }
 
   await db.delete(foods).where(

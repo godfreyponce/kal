@@ -165,6 +165,15 @@ describe("undo", () => {
     expect(await linesFor(meal.id)).toEqual([[f1.id, 1]]);
   });
 
+  it("two concurrent reverts of one batch restore the replaced list once", async () => {
+    const [f1, f2] = await anyTwoFoods();
+    const meal = await firstMeal();
+    await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 1 }]);
+    const b = await setMealOverride(DATE, meal.id, [{ foodId: f2.id, quantity: 3 }]);
+    await Promise.all([revertWriteBatch(b.writeBatchId), revertWriteBatch(b.writeBatchId)]);
+    expect(await linesFor(meal.id)).toEqual([[f1.id, 1]]);
+  });
+
   it("GC keeps a one-off food that only a saved copy references", async () => {
     const [f1] = await anyTwoFoods();
     const meal = await firstMeal();
