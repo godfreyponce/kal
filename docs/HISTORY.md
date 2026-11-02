@@ -71,6 +71,29 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Interrupted chat turns no longer break the session — #84 (2026-11-01) — COMMITTED & pushed to main; owner-accepted
+
+A chat turn cut off between an assistant `tool_use` and its saved `tool_result` used to make
+every later message in that session fail with a 400. `closeOrphanToolUses()` in the new
+`lib/chat-history.ts` runs on the full message list the route sends (stored history plus the new
+user message). It gives each unanswered `tool_use` an in-memory `tool_result` with
+`is_error: true` and the text "Interrupted before this tool's result was saved. It may have run:
+check the log before doing it again." The synthetic blocks go ahead of any text in the next user
+message, or into a new user message when nothing follows. It also drops a `tool_result` whose
+`tool_use` is not in the message just before it: the final review found that a turn that kept
+running after a disconnect could save its result after the user's resend. Nothing is written to
+`chat_messages`; each load repairs the history again. The second seam is `sseStream()` in the new
+`lib/sse-stream.ts`, which now owns the route's SSE stream. After the reader cancels, `send`
+does nothing and the final `close()` is skipped, so the turn runs to the end and saves its tool
+results and answer (before, the first `send` after a disconnect threw and the turn stopped).
+`lib/chat-turn.ts` did not change, so no eval ran. On Vercel the turn finishing after a disconnect
+rests on request cancellation staying off (the default); nothing registers it with
+`after()`/`waitUntil`. Errors after a disconnect are not logged. The branch also carries #86:
+`lib/today.test.ts` no longer pins the live plan's chicken grams (the owner's plan edit had turned
+the suite red); it checks the plate against its 1-serving basis instead. Found on the way: #87
+(the test-gate hook skips the suite when add and commit share one Bash call; Task 1's commit
+97b0dec went in that way). Full check on main: tsc clean, 279/279 tests.
+
 ## Chat tool-call evals, scored on calls not prose — #41 (2026-10-29) — COMMITTED & pushed to main; owner-accepted
 
 `npm run eval` runs five chat cases against the real API on `CHAT_MODEL` and
