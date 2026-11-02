@@ -10,10 +10,33 @@ function blocksOf(content: Msg["content"]): Block[] {
   return typeof content === "string" ? [{ type: "text", text: content }] : content;
 }
 
+// A turn that kept running after its client left can save a tool_result after the
+// user's resend, where no tool_use in the message before it matches.
+function dropStrayToolResults(messages: Msg[]): Msg[] {
+  const out: Msg[] = [];
+  for (const msg of messages) {
+    const prev = out[out.length - 1];
+    if (msg.role !== "user" || typeof msg.content === "string") {
+      out.push(msg);
+      continue;
+    }
+    const asked = new Set(
+      prev?.role === "assistant"
+        ? blocksOf(prev.content).flatMap((b) => (b.type === "tool_use" ? [b.id] : []))
+        : [],
+    );
+    const kept = msg.content.filter((b) => b.type !== "tool_result" || asked.has(b.tool_use_id));
+    if (kept.length === msg.content.length) out.push(msg);
+    else if (kept.length) out.push({ ...msg, content: kept });
+  }
+  return out;
+}
+
 // A turn cut off between an assistant tool_use and its saved tool_result leaves the
 // session's history invalid, and the API 400s every later request. Answer each
 // orphan in memory only: the DB keeps the truth, and each load repairs it again.
-export function closeOrphanToolUses(messages: Msg[]): Msg[] {
+export function closeOrphanToolUses(input: Msg[]): Msg[] {
+  const messages = dropStrayToolResults(input);
   const out: Msg[] = [];
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];

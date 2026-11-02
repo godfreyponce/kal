@@ -91,6 +91,23 @@ describe("closeOrphanToolUses", () => {
     expect(out[2].content).toEqual([synthetic("a"), { type: "text", text: "did it log?" }]);
   });
 
+  it("drops a tool_result saved after a resend, where it answers no tool_use before it", () => {
+    // A disconnected turn kept running and saved its result after the user resent.
+    const input: Msg[] = [
+      userText("log 2 eggs"),
+      { role: "assistant", content: [toolUse("a")] },
+      userText("hello?"),
+      { role: "user", content: [realResult("a")] },
+      assistantText("Logged."),
+    ];
+    expect(closeOrphanToolUses(input)).toEqual([
+      input[0],
+      input[1],
+      { role: "user", content: [synthetic("a"), { type: "text", text: "hello?" }] },
+      input[4],
+    ]);
+  });
+
   it("returns a clean history unchanged", () => {
     const input: Msg[] = [
       userText("log 2 eggs"),
