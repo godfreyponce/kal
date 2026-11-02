@@ -14,14 +14,20 @@ describe("getTodayView meal items", () => {
     expect(lunch).toBeDefined();
     const chicken = lunch!.items.find((i) => i.foodName === "Chicken breast, cooked");
     expect(chicken).toBeDefined();
-    // resolved amount for the plate — never a multiplier
-    expect(chicken!.amountLabel).toBe("170 g (6 oz)");
-    expect(chicken!.rawLabel).toBe("raw ≈ 227 g (8 oz)");
-    // 1-serving basis for the tap-to-expand row; the plate is that basis × 1.7.
-    // Relative, not pinned: the live macros are the owner's data and change (#10).
+    // Relative, not pinned: the live plan amounts and macros are the owner's data
+    // and change (#10, #86). The plate is an absolute amount, never a multiplier.
+    const plate = chicken!.amountLabel.match(/^(\d+(?:\.\d+)?) g \(\d+(?:\.\d+)? oz\)$/);
+    expect(plate).not.toBeNull();
+    const plateGrams = Number(plate![1]);
+    // A cooked meat weighs less than it did raw.
+    const raw = chicken!.rawLabel?.match(/^raw ≈ (\d+) g \(\d+(?:\.\d+)? oz\)$/);
+    expect(raw).toBeTruthy();
+    expect(Number(raw![1])).toBeGreaterThan(plateGrams);
+    // 1-serving basis for the tap-to-expand row; the plate is that basis × plateGrams/100.
     expect(chicken!.servingLabel).toBe("100 g (3.5 oz)");
-    expect(chicken!.kcal).toBe(Math.round(chicken!.serving.kcal * 1.7));
-    expect(chicken!.proteinG).toBeCloseTo(chicken!.serving.proteinG * 1.7, 1);
+    const servings = plateGrams / 100;
+    expect(chicken!.kcal).toBe(Math.round(chicken!.serving.kcal * servings));
+    expect(chicken!.proteinG).toBeCloseTo(chicken!.serving.proteinG * servings, 1);
   });
 
   it("keeps counted foods in their natural unit", async () => {
