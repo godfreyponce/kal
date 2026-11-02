@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { chatMessages } from "@/db/schema";
 import { usageCostUsd, withoutThinking } from "@/lib/anthropic";
 import { getAnthropic } from "@/lib/anthropic-client";
+import { closeOrphanToolUses } from "@/lib/chat-history";
 import { chatRequest, runChatTurn } from "@/lib/chat-turn";
 import { currentChatModel, recordApiCall } from "@/lib/spend";
 import { assembleSystemPrompt } from "@/lib/system-prompt";
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
   }
   if (message) userBlocks.push({ type: "text", text: message });
   await persist(sessionId, "user", userBlocks);
-  const messages: Msg[] = [...history, { role: "user", content: userBlocks }];
+  const messages: Msg[] = closeOrphanToolUses([...history, { role: "user", content: userBlocks }]);
 
   // Picked once, so a turn never switches models mid-loop even if spend crosses the threshold.
   const model = await currentChatModel();
