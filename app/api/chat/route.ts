@@ -8,6 +8,7 @@ import { getAnthropic } from "@/lib/anthropic-client";
 import { closeOrphanToolUses } from "@/lib/chat-history";
 import { chatRequest, runChatTurn } from "@/lib/chat-turn";
 import { currentChatModel, recordApiCall } from "@/lib/spend";
+import { sseStream } from "@/lib/sse-stream";
 import { assembleSystemPrompt } from "@/lib/system-prompt";
 import { runTool } from "@/lib/tools";
 import { todayInAppTz } from "@/lib/time";
@@ -88,55 +89,47 @@ export async function POST(req: NextRequest) {
 
   // Picked once, so a turn never switches models mid-loop even if spend crosses the threshold.
   const model = await currentChatModel();
-  const encoder = new TextEncoder();
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      const send = (obj: unknown) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
-
-      send({ type: "model", model });
-      try {
-        const { tokens: acc, hitToolLimit } = await runChatTurn(
-          { client, model, system, tools, messages },
-          {
-            runTool,
-            onText: (text) => send({ type: "text", text }),
-            onMessage: async (final) => {
-              await recordApiCall(model, "chat", final.usage);
-              await persist(sessionId, "assistant", final.content);
-            },
-            onToolUse: (tu) => send({ type: "tool_use", id: tu.id, name: tu.name, input: tu.input }),
-            onToolResult: (tu, run) =>
-              send({
-                type: "tool_result",
-                id: tu.id,
-                name: tu.name,
-                summary: run.summary,
-                writeBatchId: run.writeBatchId,
-                card: run.card ?? null,
-                remaining: run.remaining ?? null,
-              }),
-            onToolResults: (results) => persist(sessionId, "user", results),
+  const stream = sseStream(async (send) => {
+    send({ type: "model", model });
+    try {
+      const { tokens: acc, hitToolLimit } = await runChatTurn(
+        { client, model, system, tools, messages },
+        {
+          runTool,
+          onText: (text) => send({ type: "text", text }),
+          onMessage: async (final) => {
+            await recordApiCall(model, "chat", final.usage);
+            await persist(sessionId, "assistant", final.content);
           },
-        );
-        if (hitToolLimit) send({ type: "error", message: "Reached tool-iteration limit." });
-        send({
-          type: "usage",
-          tokens: acc,
-          costUsd: usageCostUsd(model, {
-            input_tokens: acc.input,
-            output_tokens: acc.output,
-            cache_read_input_tokens: acc.cacheRead,
-            cache_creation_input_tokens: acc.cacheWrite,
-          }),
-        });
-        send({ type: "done" });
-      } catch (e) {
-        send({ type: "error", message: e instanceof Error ? e.message : "chat failed" });
-      } finally {
-        controller.close();
-      }
-    },
+          onToolUse: (tu) => send({ type: "tool_use", id: tu.id, name: tu.name, input: tu.input }),
+          onToolResult: (tu, run) =>
+            send({
+              type: "tool_result",
+              id: tu.id,
+              name: tu.name,
+              summary: run.summary,
+              writeBatchId: run.writeBatchId,
+              card: run.card ?? null,
+              remaining: run.remaining ?? null,
+            }),
+          onToolResults: (results) => persist(sessionId, "user", results),
+        },
+      );
+      if (hitToolLimit) send({ type: "error", message: "Reached tool-iteration limit." });
+      send({
+        type: "usage",
+        tokens: acc,
+        costUsd: usageCostUsd(model, {
+          input_tokens: acc.input,
+          output_tokens: acc.output,
+          cache_read_input_tokens: acc.cacheRead,
+          cache_creation_input_tokens: acc.cacheWrite,
+        }),
+      });
+      send({ type: "done" });
+    } catch (e) {
+      send({ type: "error", message: e instanceof Error ? e.message : "chat failed" });
+    }
   });
 
   return new Response(stream, {
