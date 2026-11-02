@@ -140,6 +140,33 @@ export const mealOverrides = pgTable("meal_overrides", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** The rows a replacing write deleted, as saved for Undo to put back. */
+export type ReplacedRows =
+  | { kind: "override"; overrides: Array<Omit<typeof mealOverrides.$inferSelect, "id">> }
+  | {
+      kind: "status";
+      status: Omit<typeof mealStatus.$inferSelect, "id">;
+      logEntries: Array<Omit<typeof logEntries.$inferSelect, "id">>;
+    };
+
+// Saved copies of rows that setMealOverride / setMealStatus deleted or overwrote.
+// batch_id is the replacing write (null = a Today untap, which has no Undo card);
+// replaced_batch_id is the batch the saved rows belonged to. Undo of batch_id
+// puts the rows back; a row naming a batch as replaced_batch_id blocks its Undo.
+// food_ids keeps the one-off food GC from deleting a food only a saved copy uses.
+export const replacedWrites = pgTable("replaced_writes", {
+  id: serial("id").primaryKey(),
+  date: date("date").notNull(),
+  mealId: integer("meal_id")
+    .notNull()
+    .references(() => meals.id, { onDelete: "cascade" }),
+  batchId: uuid("batch_id"),
+  replacedBatchId: uuid("replaced_batch_id"),
+  foodIds: integer("food_ids").array().notNull(),
+  rows: jsonb("rows").$type<ReplacedRows>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const weighIns = pgTable("weigh_ins", {
   id: serial("id").primaryKey(),
   date: date("date").notNull().unique(),

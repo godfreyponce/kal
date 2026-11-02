@@ -4,6 +4,7 @@ import { db } from "../db";
 import { foods, mealOverrides, meals } from "../db/schema";
 import { NotFoundError, ValidationError } from "./errors";
 import { formatMacros, formatPlanLine, resolveItem, sumResolved } from "./resolve-item";
+import { saveReplaced } from "./undo";
 
 export type OverrideItemInput = { foodId: number; quantity: number };
 
@@ -47,7 +48,8 @@ function toBasis(f: FoodRow) {
 /**
  * Replace a meal's planned items FOR ONE DATE ONLY (the template is untouched).
  * Deletes any prior override rows for (date, meal) — last write wins — and
- * inserts the new list under a fresh write_batch_id for batch Undo.
+ * inserts the new list under a fresh write_batch_id for batch Undo. The deleted
+ * rows are saved first, so Undo of this write puts them back.
  * (neon-http has no interactive txns; sequential statements, fine single-user.)
  */
 export async function setMealOverride(
@@ -69,9 +71,15 @@ export async function setMealOverride(
   }
 
   const writeBatchId = randomUUID();
-  await db
-    .delete(mealOverrides)
-    .where(and(eq(mealOverrides.date, date), eq(mealOverrides.mealId, mealId)));
+  const thisMeal = and(eq(mealOverrides.date, date), eq(mealOverrides.mealId, mealId));
+  const prior = await db.select().from(mealOverrides).where(thisMeal).orderBy(asc(mealOverrides.id));
+  await saveReplaced({
+    date,
+    mealId,
+    batchId: writeBatchId,
+    rows: { kind: "override", overrides: prior.map(({ id: _id, ...r }) => r) },
+  });
+  await db.delete(mealOverrides).where(thisMeal);
   await db.insert(mealOverrides).values(
     items.map((it) => ({
       date,
