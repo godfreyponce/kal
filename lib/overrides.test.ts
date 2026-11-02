@@ -1,8 +1,16 @@
 import "../db/env";
+import { randomUUID } from "node:crypto";
 import { describe, it, expect, afterEach, afterAll } from "vitest";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db";
-import { foods, logEntries, mealOverrides, meals, mealStatus } from "../db/schema";
+import {
+  foods,
+  logEntries,
+  mealOverrides,
+  meals,
+  mealStatus,
+  replacedWrites,
+} from "../db/schema";
 import { getOverridesForDate, setMealOverride } from "./overrides";
 import { getTodayView } from "./today";
 import { revertWriteBatch } from "./undo";
@@ -15,6 +23,7 @@ async function cleanup() {
   await db.delete(mealOverrides).where(eq(mealOverrides.date, DATE));
   await db.delete(logEntries).where(eq(logEntries.date, DATE));
   await db.delete(mealStatus).where(eq(mealStatus.date, DATE));
+  await db.delete(replacedWrites).where(eq(replacedWrites.date, DATE));
 }
 afterEach(cleanup);
 afterAll(cleanup);
@@ -94,6 +103,104 @@ describe("undo", () => {
     await revertWriteBatch(res.writeBatchId);
     const map = await getOverridesForDate(DATE);
     expect(map.has(meal.id)).toBe(false);
+  });
+
+  // Each line as (foodId, quantity), so a restored list compares by value.
+  async function linesFor(mealId: number) {
+    const map = await getOverridesForDate(DATE);
+    return (map.get(mealId) ?? []).map((l) => [l.foodId, l.quantity]);
+  }
+
+  it("undoing a second override restores the first list", async () => {
+    const [f1, f2] = await anyTwoFoods();
+    const meal = await firstMeal();
+    const a = await setMealOverride(DATE, meal.id, [
+      { foodId: f1.id, quantity: 1 },
+      { foodId: f2.id, quantity: 1 },
+    ]);
+    const b = await setMealOverride(DATE, meal.id, [{ foodId: f2.id, quantity: 3 }]);
+    expect(await revertWriteBatch(b.writeBatchId)).toMatchObject({ reverted: true });
+    expect(await linesFor(meal.id)).toEqual([
+      [f1.id, 1],
+      [f2.id, 1],
+    ]);
+    const rows = await db.select().from(mealOverrides).where(eq(mealOverrides.date, DATE));
+    expect(rows.every((r) => r.writeBatchId === a.writeBatchId)).toBe(true);
+  });
+
+  it("undo on a replaced override is refused and changes nothing", async () => {
+    const [f1, f2] = await anyTwoFoods();
+    const meal = await firstMeal();
+    const a = await setMealOverride(DATE, meal.id, [
+      { foodId: f1.id, quantity: 1 },
+      { foodId: f2.id, quantity: 1 },
+    ]);
+    await setMealOverride(DATE, meal.id, [{ foodId: f2.id, quantity: 3 }]);
+    expect(await revertWriteBatch(a.writeBatchId)).toEqual({
+      reverted: false,
+      reason: "replaced",
+    });
+    expect(await linesFor(meal.id)).toEqual([[f2.id, 3]]);
+  });
+
+  it("undo walks back a chain of three overrides", async () => {
+    const [f1, f2] = await anyTwoFoods();
+    const meal = await firstMeal();
+    await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 1 }]);
+    const b = await setMealOverride(DATE, meal.id, [{ foodId: f2.id, quantity: 2 }]);
+    const c = await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 3 }]);
+    expect(await revertWriteBatch(c.writeBatchId)).toMatchObject({ reverted: true });
+    expect(await linesFor(meal.id)).toEqual([[f2.id, 2]]);
+    expect(await revertWriteBatch(b.writeBatchId)).toMatchObject({ reverted: true });
+    expect(await linesFor(meal.id)).toEqual([[f1.id, 1]]);
+  });
+
+  it("a second revert of the same batch is a no-op", async () => {
+    const [f1, f2] = await anyTwoFoods();
+    const meal = await firstMeal();
+    await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 1 }]);
+    const b = await setMealOverride(DATE, meal.id, [{ foodId: f2.id, quantity: 3 }]);
+    await revertWriteBatch(b.writeBatchId);
+    expect(await revertWriteBatch(b.writeBatchId)).toEqual({ reverted: true, revertedEntries: 0 });
+    expect(await linesFor(meal.id)).toEqual([[f1.id, 1]]);
+  });
+
+  it("two concurrent reverts of one batch restore the replaced list once", async () => {
+    const [f1, f2] = await anyTwoFoods();
+    const meal = await firstMeal();
+    await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 1 }]);
+    const b = await setMealOverride(DATE, meal.id, [{ foodId: f2.id, quantity: 3 }]);
+    await Promise.all([revertWriteBatch(b.writeBatchId), revertWriteBatch(b.writeBatchId)]);
+    expect(await linesFor(meal.id)).toEqual([[f1.id, 1]]);
+  });
+
+  it("GC keeps a one-off food that only a saved copy references", async () => {
+    const [f1] = await anyTwoFoods();
+    const meal = await firstMeal();
+    const [oneOff] = await db
+      .insert(foods)
+      .values({
+        name: "ZZDEV replaced one-off",
+        servingDesc: "1 bowl",
+        kcal: 100,
+        proteinG: "10",
+        carbsG: "10",
+        fatG: "1",
+        oneOff: true,
+      })
+      .returning();
+    try {
+      await setMealOverride(DATE, meal.id, [{ foodId: oneOff.id, quantity: 1 }]);
+      const b = await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 1 }]);
+      await revertWriteBatch(randomUUID()); // runs only the GC
+      const kept = await db.select().from(foods).where(eq(foods.id, oneOff.id));
+      expect(kept).toHaveLength(1);
+      expect(await revertWriteBatch(b.writeBatchId)).toMatchObject({ reverted: true });
+      expect(await linesFor(meal.id)).toEqual([[oneOff.id, 1]]);
+    } finally {
+      await cleanup();
+      await db.delete(foods).where(eq(foods.id, oneOff.id));
+    }
   });
 });
 

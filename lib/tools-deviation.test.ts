@@ -2,7 +2,7 @@ import "../db/env";
 import { describe, it, expect, afterAll } from "vitest";
 import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
-import { foods, logEntries, mealOverrides, meals } from "../db/schema";
+import { foods, logEntries, mealOverrides, meals, replacedWrites } from "../db/schema";
 import { runTool } from "./tools";
 import { revertWriteBatch } from "./undo";
 
@@ -11,6 +11,7 @@ const DATE = "2099-06-06"; // own sentinel — parallel test files
 afterAll(async () => {
   await db.delete(mealOverrides).where(eq(mealOverrides.date, DATE));
   await db.delete(logEntries).where(eq(logEntries.date, DATE));
+  await db.delete(replacedWrites).where(eq(replacedWrites.date, DATE));
   // Crash-safe net for the log_food test: its rows log on DATE (deleted above),
   // so the food row can always be removed even if the test failed mid-way.
   await db.delete(foods).where(eq(foods.name, "ZZDEV test bowl"));

@@ -11,7 +11,7 @@ type Photo = { base64: string; mediaType: "image/jpeg"; preview: string };
 type Item =
   | { id: string; kind: "user"; text: string; imageUrl?: string }
   | { id: string; kind: "ai"; text: string; error?: boolean }
-  | { id: string; kind: "card"; card: Card; writeBatchId: string | null; undone?: boolean }
+  | { id: string; kind: "card"; card: Card; writeBatchId: string | null; undone?: boolean; replaced?: boolean }
   | { id: string; kind: "rstrip"; remaining: Remaining };
 
 const n = (x: number) => Math.round(x).toLocaleString("en-US");
@@ -90,12 +90,13 @@ export function Chat({ model }: { model: string }) {
   }
 
   async function undo(itemId: string, batchId: string) {
-    await fetch("/api/undo", {
+    const res = await fetch("/api/undo", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ writeBatchId: batchId }),
-    }).catch(() => {});
-    setItems((p) => p.map((it) => (it.id === itemId && it.kind === "card" ? { ...it, undone: true } : it)));
+    }).catch(() => null);
+    const mark = res?.status === 409 ? { replaced: true } : { undone: true };
+    setItems((p) => p.map((it) => (it.id === itemId && it.kind === "card" ? { ...it, ...mark } : it)));
   }
 
   async function send() {
@@ -239,7 +240,7 @@ export function Chat({ model }: { model: string }) {
             );
           // card
           return (
-            <div key={it.id} className={`tool-card anim${it.undone ? " undone" : ""}`}>
+            <div key={it.id} className={`tool-card anim${it.undone || it.replaced ? " undone" : ""}`}>
               <div className="tc-top">
                 <span className="chip"><span className="d" />{it.undone ? "Undone" : it.card.label}</span>
               </div>
@@ -247,8 +248,8 @@ export function Chat({ model }: { model: string }) {
               {it.card.detail && <div className="tc-detail">{it.card.detail}</div>}
               {it.writeBatchId && (
                 <div className="tc-foot">
-                  <button className="tc-undo" disabled={it.undone} onClick={() => undo(it.id, it.writeBatchId!)}>
-                    {it.undone ? "Undone" : "Undo"}
+                  <button className="tc-undo" disabled={it.undone || it.replaced} onClick={() => undo(it.id, it.writeBatchId!)}>
+                    {it.replaced ? "Replaced" : it.undone ? "Undone" : "Undo"}
                   </button>
                 </div>
               )}

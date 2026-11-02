@@ -3,6 +3,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../db";
 import { foods, logEntries, mealItems, mealStatus } from "../db/schema";
 import { getOverridesForDate } from "./overrides";
+import { saveReplaced } from "./undo";
 
 export type MealStatusValue = "eaten" | "missed" | "substituted" | "pending";
 
@@ -38,7 +39,9 @@ export async function setMealStatus(
   mealId: number,
   status: MealStatusValue,
 ): Promise<SetMealStatusResult> {
-  await clearExistingBatch(date, mealId);
+  // pending has no Undo card, so it gets no batch.
+  const writeBatchId = status === "pending" ? null : randomUUID();
+  await clearExistingBatch(date, mealId, writeBatchId);
 
   if (status !== "eaten") {
     if (status === "pending") {
@@ -47,12 +50,9 @@ export async function setMealStatus(
         .where(and(eq(mealStatus.date, date), eq(mealStatus.mealId, mealId)));
       return { status, writeBatchId: null, loggedFoodIds: [] };
     }
-    const writeBatchId = randomUUID();
     await upsertStatus(date, mealId, status, writeBatchId);
     return { status, writeBatchId, loggedFoodIds: [] };
   }
-
-  const writeBatchId = randomUUID();
 
   const [templatePlanned, existing, overridesMap] = await Promise.all([
     db
@@ -131,13 +131,31 @@ export async function setMealStatus(
 
 // Remove the log_entries previously auto-created for this (date, meal) — identified
 // by the status row's write_batch_id — so re-marking or undoing doesn't accumulate.
-async function clearExistingBatch(date: string, mealId: number): Promise<void> {
+// The prior status row and those entries are saved first under nextBatchId, so
+// Undo of the next write puts them back.
+async function clearExistingBatch(
+  date: string,
+  mealId: number,
+  nextBatchId: string | null,
+): Promise<void> {
   const [prev] = await db
-    .select({ writeBatchId: mealStatus.writeBatchId })
+    .select()
     .from(mealStatus)
     .where(and(eq(mealStatus.date, date), eq(mealStatus.mealId, mealId)));
+  if (!prev) return;
 
-  if (prev?.writeBatchId) {
+  const entries = prev.writeBatchId
+    ? await db.select().from(logEntries).where(eq(logEntries.writeBatchId, prev.writeBatchId))
+    : [];
+  const { id: _id, ...status } = prev;
+  await saveReplaced({
+    date,
+    mealId,
+    batchId: nextBatchId,
+    rows: { kind: "status", status, logEntries: entries.map(({ id: _id, ...r }) => r) },
+  });
+
+  if (prev.writeBatchId) {
     await db.delete(logEntries).where(eq(logEntries.writeBatchId, prev.writeBatchId));
   }
 }
