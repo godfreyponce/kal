@@ -71,6 +71,30 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Assistant bubbles render markdown — #53 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
+
+Assistant chat bubbles showed the model's markdown as literal characters, such as `**` around a
+logged meal. A small parser, `parseChatMarkdown` in `lib/chat-markdown.ts`, now turns the bubble
+text into text blocks and `- ` lists, with bold, italic and inline code inside them, and
+`app/chat/chat-markdown.tsx` maps that tree to `<strong>`, `<em>`, `<code>` and `<ul>`. React
+escapes all text, so model output never reaches the page as HTML (no `dangerouslySetInnerHTML`).
+A marker with no closing partner stays literal, so a reply cut off mid-`**` while it streams reads
+as plain text and turns bold when the closing `**` arrives. A single `*` with a letter or digit on
+both sides stays literal, so `4*95 = 380, 9*95 = 855` is not read as italic (the final review
+found that case). Not parsed, by the owner's gate-1 pick: `_x_`, `__x__`, `* ` bullets, numbered
+lists, headings, links, and nesting. User bubbles, photo captions and error bubbles stay plain
+text. `app/globals.css` gives `.bub-ai ul` disc bullets (Tailwind's preflight removes them) and
+a small indent, and `.bub-ai code` the mono font. No new dependency; the system prompt did not
+change. `lib/chat-markdown.test.ts` covers the parser on fixed strings (12 tests). Proof: a
+one-off Playwright script (not committed) stubbed `/api/chat` with three streamed text chunks at
+iPhone 13 width and checked one `strong`, one `em`, one `code`, one `ul` with two `li`, and no `*`
+or backtick in the bubble. Deferred minors from the final review: nested markers show their inner
+asterisks, a blank line before a list shows for one chunk while the `- ` line streams in, and
+`*x*` followed by `*` flips back to literal. Commit b76ac56. Full check on main: tsc clean,
+315/315 tests (worktree: 314/314).
+
+---
+
 ## Groceries delete refuses a food a saved Undo copy needs — #88 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
 
 `replaced_writes.food_ids` (#85) has no foreign key, so a grocery could be deleted while a saved
