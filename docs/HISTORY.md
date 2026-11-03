@@ -71,6 +71,26 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Test gate counts same-call staging and ignores quoted text — #87 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
+
+`.claude/hooks/test-gate.sh` runs before the Bash command, so `git add x.ts && git commit` in one
+call used to show it an empty stage: the commit looked doc-only and went in without the suite
+(97b0dec in #84). It also matched `git commit` anywhere in the text, so a `printf` that quoted
+the words was gated. The hook now strips quoted strings with one jq program (in one pass, so
+whichever quote opens first wins), splits the command into subcommands, and acts only when one
+starts with `git commit`, after optional `VAR=value` words or `then`/`else`/`do`/`{`/`!`/`env`/
+`command`/`time`. The words of every same-call `git add`/`git rm`/`git mv` go into the file list
+beside `git diff --cached`; the existing `.md` filter decides, so a flag, `.`, a directory or a
+quoted path runs the suite. A doc-only accept commit still skips it. `.claude/settings.json` did
+not change. New `.claude/hooks/test-gate.test.ts` runs the hook in a temp git repo with `npx`/`npm`
+stubbed (14 rows); its fixture commit turns gpg signing off. The final review found that the
+first draft stripped `"..."` before `'...'` and matched only a bare `git commit` start, so a `"`
+inside single quotes, a quoted `VAR=` prefix, `then git commit`, `{ ...; git commit; }` and
+`env ... git commit` let a red commit through; five rows cover them. Known gaps, filed as #90:
+`git -C dir commit`, `git -c k=v commit`, `git commit -- path`, and same-call index changes the
+hook cannot see (`git stash pop --index`, `reset --soft`, `merge --squash`, `apply --cached`,
+edit then `commit -am`). Commit fcb8516. Full check on main: tsc clean, 302/302 tests.
+
 ## Chat tool cards keep their height in a long thread — #51 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
 
 Once the chat thread grew long enough to scroll, every tool card (the cards with Undo) collapsed
