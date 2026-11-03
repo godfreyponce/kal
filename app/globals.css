@@ -1049,6 +1049,15 @@ button.cal-cell:active {
   background: var(--sm-band);
   color: var(--sm-red);
 }
+.bub-ai ul {
+  list-style: disc;
+  margin: 4px 0;
+  padding-left: 18px;
+}
+.bub-ai code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
 
 /* tool card */
 .tool-card {
