@@ -9,8 +9,7 @@
 // absolute amounts (chicken 1.7 × 100 g = 170 g) — nothing ever renders a
 // bare multiplier.
 //
-// Shared by db/seed.ts (full wipe reseed) and db/apply-seed-v2.ts (surgical
-// in-place update of the live DB).
+// Used by db/seed.ts (full wipe reseed).
 // ---------------------------------------------------------------------------
 
 export type SeedFood = {

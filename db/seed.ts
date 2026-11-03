@@ -7,8 +7,9 @@ import { FOODS_V2, MEALS_V2, MEAL_ITEMS_V2, computeTargets } from "./seed-data";
 // Kal — Seed v2 (unit-resolution fix). Data lives in ./seed-data.ts.
 //
 // ⚠️ FULL WIPE: deletes log history, meal statuses, and ALL foods (including
-// owner-added groceries). For updating a live DB in place, use
-// db/apply-seed-v2.ts instead.
+// owner-added groceries). To change live data, write a one-off script that
+// writes rows by id behind a guard and runs dry by default, as
+// db/apply-label-data.ts does.
 // ---------------------------------------------------------------------------
 
 const PROFILE = {

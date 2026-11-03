@@ -13,8 +13,6 @@ import { LABEL_FOODS, perBasis } from "./label-data";
 // targets lag the new plan sum until the next plan edit (owner's call).
 // Aborts before any write if a row's name or serving_desc no longer matches LABEL_FOODS.
 // Safe to rerun: the guard accepts a row's new name.
-//
-// NEVER run db/apply-seed-v2.ts to "sync" these numbers: it replaces the live plan and targets.
 // ---------------------------------------------------------------------------
 
 type Macros = { kcal: number; p: number; c: number; f: number };
