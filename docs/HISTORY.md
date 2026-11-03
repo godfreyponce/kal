@@ -71,6 +71,21 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## apply-seed-v2.ts removed — #78 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
+
+`db/apply-seed-v2.ts` is deleted. It was the one-time Seed v2 migration, and it already ran
+against live Neon. Run again today, it would replace the live `meal_items` and `profile` targets
+with the stale seed template and undo the #10 label macros. The owner chose delete over a guard
+at gate 1: the only safe run left was a no-op. The `RENAMES` map stays in git history. The
+pointers to it changed: the `db/seed.ts` header now sends live-data changes to a one-off script
+that writes rows by id behind a guard and runs dry by default (`db/apply-label-data.ts` is the
+pattern), `db/seed-data.ts` says only `db/seed.ts` uses it, and the `NEVER run` line in
+`db/apply-label-data.ts` is gone. `npm run db:seed` (full wipe) is unchanged. STATE.md's gotcha
+no longer calls the script the live-data path. Archive mentions in this file and under
+`docs/superpowers/` stay as written. Full check on main: tsc clean, 288/288 tests.
+
+---
+
 ## Undo restores what a replacing meal write deleted — #85 (2026-11-02) — COMMITTED & pushed to main; owner-accepted
 
 Undo on a chat card for a meal adjustment or a status change used to delete that write's rows
