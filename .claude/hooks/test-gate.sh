@@ -12,13 +12,20 @@ set -uo pipefail
 INPUT=$(cat)
 COMMAND=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // ""')
 
-# The `if` field in settings.json should already have narrowed this to git commit.
-# Re-check anyway: the matcher fires on every Bash call, and a hook that guesses wrong here
-# either blocks unrelated commands or lets a red commit through.
-case "$COMMAND" in
-  *"git commit"*) ;;
-  *) exit 0 ;;
-esac
+# The `if` filter in settings.json still runs this hook on any command with `$VAR`, `$()`, or
+# backticks, and quoted text can name `git commit` without running it. So strip quoted strings
+# (in one pass, so whichever quote opens first wins, as in the shell), split into subcommands,
+# and act only when one of them starts with `git commit`.
+SEGMENTS_JQ='.tool_input.command // ""
+  | gsub("\"(\\\\.|[^\"\\\\])*\"|\\x27[^\\x27]*\\x27"; "QUOTED")
+  | gsub("&&|\\|\\||[;|&()`\n]"; "\n")
+  | split("\n")[]
+  | sub("^\\s+"; "")'
+SEGMENTS=$(printf '%s' "$INPUT" | jq -r "$SEGMENTS_JQ")
+ENV_PREFIX='^((then|else|do|[{!]|env|command|time)[[:space:]]+|[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
+if ! printf '%s\n' "$SEGMENTS" | grep -Eq "${ENV_PREFIX}git[[:space:]]+commit([[:space:]]|$)"; then
+  exit 0
+fi
 
 cd "${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}" || exit 0
 
@@ -29,6 +36,15 @@ FILES=$(git diff --cached --name-only)
 if printf '%s' "$COMMAND" | grep -Eq 'git commit[^;&|]*(-[a-zA-Z]*a|--all)'; then
   FILES=$(printf '%s\n%s' "$FILES" "$(git diff --name-only)")
 fi
+
+# This hook runs before the command, so a `git add` in this same call is not in the index yet.
+# Count its words as staged paths. A word that is not a `.md` path (a flag, `.`, a directory,
+# QUOTED) runs the suite on purpose: a wrong guess should cost a suite run, not a red commit.
+SAME_CALL=$(printf '%s\n' "$SEGMENTS" \
+  | sed -nE "s/${ENV_PREFIX}git[[:space:]]+(add|rm|mv)([[:space:]]+|$)//p" \
+  | tr -s ' \t' '\n\n' \
+  | grep -vx -- '--' || true)
+FILES=$(printf '%s\n%s' "$FILES" "$SAME_CALL")
 
 CODE_FILES=$(printf '%s\n' "$FILES" | grep -v '^[[:space:]]*$' | grep -v '\.md$' || true)
 if [ -z "$CODE_FILES" ]; then
