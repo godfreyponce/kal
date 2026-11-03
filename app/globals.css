@@ -991,6 +991,7 @@ button.cal-cell:active {
   flex-direction: column;
   gap: 14px;
 }
+.chat-thread > * { flex-shrink: 0; }
 .chat-empty {
   margin: auto;
   text-align: center;
