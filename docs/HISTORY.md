@@ -71,6 +71,24 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Groceries delete refuses a food a saved Undo copy needs — #88 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
+
+`replaced_writes.food_ids` (#85) has no foreign key, so a grocery could be deleted while a saved
+Undo copy still named it, and Undo of the write that replaced it then failed on the missing food.
+`deleteGrocery` (`lib/groceries.ts`) now first looks for any `replaced_writes` row with the id in
+`food_ids` (the same `= ANY(food_ids)` form as the one-off GC in `lib/undo.ts`) and throws a new
+`FoodInUseError` (`lib/errors.ts`) when one exists. `DELETE /api/groceries/:id` maps it to the
+existing 409 and the existing "used by your meal plan or past logs" message, beside the FK
+`23503` case. One check covers override copies and status copies, because `saveReplaced` fills
+`food_ids` for both. Every copy blocks, including Today-untap copies (`batch_id` null), which no
+Undo can use; pruning those is #89. Planner pick at gate 1: refuse the delete, not skip missing
+foods in Undo, so Undo restores the replaced list in full. New test in `lib/overrides.test.ts`:
+the delete gets 409 while the copy exists, Undo restores the grocery's line, and after both
+writes are undone the grocery deletes. No schema change, no migration, `lib/undo.ts` unchanged.
+Deferred from the final review: the check and the delete are two statements (no transaction on
+neon-http); copies orphaned before this fix still fail on Undo; the test asserts the 409 status,
+not the body. Commit ab7d7e7. Full check on main: tsc clean, 303/303 tests.
+
 ## Test gate counts same-call staging and ignores quoted text — #87 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
 
 `.claude/hooks/test-gate.sh` runs before the Bash command, so `git add x.ts && git commit` in one
