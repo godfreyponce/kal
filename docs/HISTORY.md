@@ -71,6 +71,20 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Chat tool cards keep their height in a long thread — #51 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
+
+Once the chat thread grew long enough to scroll, every tool card (the cards with Undo) collapsed
+to zero height. `.chat-thread` is a fixed-height flex column with `overflow-y: auto`, and
+`.tool-card` has `overflow: hidden`, so its automatic minimum height is 0; when the items
+overflowed, flex shrank them, and only the tool cards could shrink all the way. One rule after
+the `.chat-thread` block in `app/globals.css`, `.chat-thread > * { flex-shrink: 0; }`, stops every
+thread item from shrinking. CSS only; no component changed. Proof: a one-off Playwright check
+(not committed) logged in at iPhone 13 width, added three groups of bubbles, a remaining-today
+strip, and tool cards to `/chat` until the thread overflowed, and measured each card: 0 px
+(clipped) before the fix, 137.4 px with chip, title, detail, and Undo after. The empty-chat
+state stays centered (screenshot pass). Commit 9088e80. Full check on main: tsc clean, 288/288
+tests.
+
 ## apply-seed-v2.ts removed — #78 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
 
 `db/apply-seed-v2.ts` is deleted. It was the one-time Seed v2 migration, and it already ran
