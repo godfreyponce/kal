@@ -2,6 +2,7 @@ import "../db/env";
 import { randomUUID } from "node:crypto";
 import { describe, it, expect, afterEach, afterAll } from "vitest";
 import { and, asc, eq } from "drizzle-orm";
+import { NextRequest } from "next/server";
 import { db } from "../db";
 import {
   foods,
@@ -15,6 +16,8 @@ import { getOverridesForDate, setMealOverride } from "./overrides";
 import { getTodayView } from "./today";
 import { revertWriteBatch } from "./undo";
 import { setMealStatus } from "./meal-status";
+import { createGrocery, deleteGrocery } from "./groceries";
+import { DELETE } from "../app/api/groceries/[id]/route";
 
 // Own sentinel per test FILE — vitest runs files in parallel against live Neon.
 const DATE = "2099-05-05";
@@ -200,6 +203,37 @@ describe("undo", () => {
     } finally {
       await cleanup();
       await db.delete(foods).where(eq(foods.id, oneOff.id));
+    }
+  });
+
+  it("a grocery that only a saved copy references can't be deleted, so Undo restores it", async () => {
+    const [f1] = await anyTwoFoods();
+    const meal = await firstMeal();
+    const x = await createGrocery({
+      name: "ZZDEV undo grocery", servingGrams: 100, kcal: 100,
+      proteinG: 10, carbsG: 10, fatG: 1,
+    });
+    try {
+      const a = await setMealOverride(DATE, meal.id, [{ foodId: x.id, quantity: 1 }]);
+      const b = await setMealOverride(DATE, meal.id, [{ foodId: f1.id, quantity: 1 }]);
+
+      const res = await DELETE(
+        new NextRequest(`http://localhost/api/groceries/${x.id}`, { method: "DELETE" }),
+        { params: Promise.resolve({ id: String(x.id) }) },
+      );
+      expect(res.status).toBe(409);
+      expect(await db.select().from(foods).where(eq(foods.id, x.id))).toHaveLength(1);
+
+      expect(await revertWriteBatch(b.writeBatchId)).toMatchObject({ reverted: true });
+      expect(await linesFor(meal.id)).toEqual([[x.id, 1]]);
+
+      // Once Undo has used the copy and A is gone too, X deletes.
+      expect(await revertWriteBatch(a.writeBatchId)).toMatchObject({ reverted: true });
+      await deleteGrocery(x.id);
+      expect(await db.select().from(foods).where(eq(foods.id, x.id))).toHaveLength(0);
+    } finally {
+      await cleanup();
+      await db.delete(foods).where(eq(foods.id, x.id));
     }
   });
 });

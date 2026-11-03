@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { updateGrocery, deleteGrocery, type GroceryInput } from "@/lib/groceries";
+import { FoodInUseError } from "@/lib/errors";
 
 // PATCH /api/groceries/:id — partial update.
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -43,7 +44,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   return Response.json(updated);
 }
 
-// DELETE /api/groceries/:id — fails with 409 if the food is used by a meal or log.
+// DELETE /api/groceries/:id — fails with 409 if the food is used by a meal, a log, or a saved Undo copy.
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const groceryId = Number(id);
@@ -54,12 +55,13 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     await deleteGrocery(groceryId);
     return Response.json({ ok: true });
   } catch (err) {
-    // Only an FK-restrict violation (food still referenced) is an expected 409;
-    // anything else is a real failure and should surface as a 500. Drizzle wraps
+    // The food still being referenced is an expected 409: an FK-restrict violation
+    // (a live meal, override, or log) or a FoodInUseError (a saved Undo copy).
+    // Anything else is a real failure and should surface as a 500. Drizzle wraps
     // the neon/Postgres error, so the "23503" code lives on err.cause.
     const e = err as { code?: string; cause?: { code?: string } };
     const isForeignKey = e?.code === "23503" || e?.cause?.code === "23503";
-    if (isForeignKey) {
+    if (isForeignKey || err instanceof FoodInUseError) {
       return Response.json(
         { error: "This food is used by your meal plan or past logs and can't be deleted." },
         { status: 409 },

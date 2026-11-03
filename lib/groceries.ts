@@ -1,6 +1,7 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { db } from "../db";
-import { foods, mealItems, meals } from "../db/schema";
+import { foods, mealItems, meals, replacedWrites } from "../db/schema";
+import { FoodInUseError } from "./errors";
 
 export type GroceryInput = {
   name: string;
@@ -183,7 +184,17 @@ export async function updateGrocery(
   return row ? toView(row) : null;
 }
 
-/** Throws if the food is referenced by meal_items or log_entries (FK restrict). */
+/**
+ * Throws if the food is still referenced: by meal_items, meal_overrides, or
+ * log_entries (FK restrict), or by a saved Undo copy in replaced_writes, whose
+ * food_ids array has no FK (FoodInUseError), so that Undo can still restore it.
+ */
 export async function deleteGrocery(id: number): Promise<void> {
+  const [saved] = await db
+    .select({ id: replacedWrites.id })
+    .from(replacedWrites)
+    .where(sql`${id} = ANY(${replacedWrites.foodIds})`)
+    .limit(1);
+  if (saved) throw new FoodInUseError(`food ${id} is in a saved Undo copy`);
   await db.delete(foods).where(eq(foods.id, id));
 }
