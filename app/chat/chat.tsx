@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { fileToScaledJpeg } from "@/app/image-scale";
+import { ChatMarkdown } from "./chat-markdown";
 
 type Remaining = { kcal: number; proteinG: number; carbsG: number; fatG: number };
 type Card = { label: string; title: string; detail: string };
@@ -223,7 +224,13 @@ export function Chat({ model }: { model: string }) {
           if (it.kind === "ai")
             return (
               <div key={it.id} className={`bub-ai anim${it.error ? " err" : ""}`}>
-                {it.text || <span className="typing"><i /><i /><i /></span>}
+                {!it.text ? (
+                  <span className="typing"><i /><i /><i /></span>
+                ) : it.error ? (
+                  it.text
+                ) : (
+                  <ChatMarkdown text={it.text} />
+                )}
               </div>
             );
           if (it.kind === "rstrip")
