@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# The suite writes live rows and restores them at the end; a cancelled run can skip the restore.
+concurrency:
+  group: ci-live-db
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      HAS_DATABASE_URL: ${{ secrets.DATABASE_URL != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npx tsc --noEmit
+      - name: vitest run
+        if: env.HAS_DATABASE_URL == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm test
+      - name: vitest skipped
+        if: env.HAS_DATABASE_URL != 'true'
+        run: echo "::warning::vitest skipped, no DATABASE_URL secret (Dependabot and fork pull requests get none). Run npm test locally before merging."
