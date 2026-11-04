@@ -71,6 +71,34 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## One CI workflow + Dependabot — #42 (2026-11-04) — COMMITTED & pushed to main; owner-accepted
+
+Kal had no CI, and `npm audit --audit-level=high` failed on main with 30 findings (1 critical,
+13 high). The critical one was in `next@16.2.9`: GHSA-6gpp-xcg3-4w24, a proxy bypass in App
+Router apps built with Turbopack, and `proxy.ts` is Kal's only auth gate. `next` and
+`eslint-config-next` now pin `16.4.5`, `npm audit fix` (no `--force`) fixed the transitive
+findings and moved `@vercel/blob` 2.5.0 to 2.8.2 inside its `^2.5.0` range, and a top-level
+`"overrides": { "zod": "^4.6.6" }` covers `@vercel/blob` → `@vercel/oidc` → `@vercel/cli-config`,
+which pins `zod 4.1.11` exactly and has no fixed release. Drop the override when that pin moves.
+12 moderate dev-only findings remain (drizzle-kit's esbuild, typescript-eslint's minimatch); their
+only fixes are majors or downgrades. `.github/workflows/ci.yml` runs on pull requests, pushes to
+main and by hand: `npm ci`, `npm audit --audit-level=high`, `npx tsc --noEmit`, then `npm test`
+with the `DATABASE_URL` repo secret set only on that step. With no secret (Dependabot and fork
+pull requests get none) the test step is skipped and the job prints a warning; Dependabot gets no
+database secret on purpose, because its pull requests run unreviewed package code. One
+concurrency group, `ci-live-db`, with `cancel-in-progress: false`, keeps a run from stopping
+between a test's snapshot and restore of live rows. `.github/dependabot.yml` opens one grouped
+npm update pull request a week. Next 16.4.5's `next dev` rewrites the managed block in
+`AGENTS.md` when it detects an agent: the rewrite is not committed yet, `AGENTS.md` stays as it
+was, and an agent-run `next dev` leaves it dirty until that lands. Proof: prod-build curls
+(`/` 307 to `/login`, `/api/profile` 401, `/login` 200), four phone-width screenshots, actionlint
+clean, and the CI steps run locally with `.env.local` moved aside and only `DATABASE_URL` set
+(315/315). Deferred minors from the final review: the concurrency group also queues the
+no-database runs, a new high advisory stops the job before tsc and tests, no `timeout-minutes`,
+actions v4 run on the deprecated Node 20 action runtime, and the Dependabot group also takes
+major bumps. Commits 96ec457, ce5fa2d, merge 4906b60. Full check on main: tsc clean, 315/315
+tests (worktree: 315/315).
+
 ## Assistant bubbles render markdown — #53 (2026-11-03) — COMMITTED & pushed to main; owner-accepted
 
 Assistant chat bubbles showed the model's markdown as literal characters, such as `**` around a
