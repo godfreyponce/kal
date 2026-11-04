@@ -71,6 +71,29 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Login rate limit + constant-time compare — #38 (2026-11-04) — COMMITTED & pushed to main; owner-accepted
+
+First item of the red-team track. `POST /api/auth/login` had unlimited tries at the one password
+and compared it with `!==`. `lib/rate-limit.ts` adds `LoginRateLimiter` on a small store interface
+(Upstash Redis at runtime via `KV_REST_API_URL`/`KV_REST_API_TOKEN`, an in-memory fake in tests;
+no `next/*` import). The route asks the limiter before it reads the password: 5 attempts per IP,
+then 429 with `Retry-After`, a 30 s lockout that doubles per lockout up to 1 h, the count cleared
+after 24 h of quiet or by a correct login. Every attempt is counted with `INCR` before the compare
+and a post-threshold guess must win `SET NX` on the lockout key, so a parallel burst gets at most
+5 guesses (the July draft counted after the compare and let a burst through). The compare is
+sha256 on both sides then `timingSafeEqual`; an unset `APP_PASSWORD` still fails closed. Missing
+or down Upstash fails closed too (login 500). IP is the first `x-forwarded-for` hop, which Vercel
+overwrites. `scripts/redteam/login-guesser.ts` before: `{"401":40}`, never blocked, 134.7/s. After:
+`{"401":5,"429":35}`, first 429 at attempt 6. Live against real Upstash, 20 parallel attempts from
+one IP gave 5 x 401 and 15 x 429. Store: the July Marketplace store was archived then deleted for
+inactivity, the Marketplace checkout offered no Free plan, and a Neon store was rejected because
+it would let a stranger keep Neon awake. So the store is a Free database on a separate Personal
+Upstash account, with its keys set by hand in Vercel, a departure from the ticket's "via the
+Marketplace". Tests: `lib/rate-limit.test.ts` (limiter on the fake store, incl. the burst) and
+`lib/login-route.test.ts` (route with `vi.mock` of the store and session, incl. the 6th attempt
+429). Follow-ups filed: #92, #93, #94. Commits d6c1b6a, 6bd133a, d4b11d9. Full check on main: tsc clean,
+332/332 tests.
+
 ## One CI workflow + Dependabot — #42 (2026-11-04) — COMMITTED & pushed to main; owner-accepted
 
 Kal had no CI, and `npm audit --audit-level=high` failed on main with 30 findings (1 critical,
