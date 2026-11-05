@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/media/hero.svg" alt="KAL: a fitness log i talk to" width="880"></p>
 
-<p align="center"><b>179</b> tests · <b>11</b> tools · <b>10</b> tables · <b>1</b> user · MIT · <a href="https://github.com/godfreyponce/">github</a> / <a href="https://www.linkedin.com/in/godfreyponce/">linkedin</a> / <a href="https://godfreyponce.dev/">personal website</a></p>
+<p align="center"><b>332</b> tests, <b>11</b> tools, <b>12</b> tables, <b>1</b> user, MIT, <a href="https://github.com/godfreyponce/">github</a> / <a href="https://www.linkedin.com/in/godfreyponce/">linkedin</a> / <a href="https://godfreyponce.dev/">personal website</a></p>
 
 <p align="center"><sub>short version without the code talk: <a href="https://godfreyponce.github.io/kal/">godfreyponce.github.io/kal</a></sub></p>
 
@@ -15,7 +15,7 @@ Kal is a Claude assistant with write access to my food log. It knows my profile,
 ## `the loop`
 
 ```
-phone (PWA) ──► POST /api/chat ──► claude haiku
+phone (PWA) ──► POST /api/chat ──► claude
                               │
                     tool loop, max 8 rounds
                               │
@@ -26,7 +26,7 @@ add_grocery          get_day_summary                 add_memory_fact
 search_foods                                         get_weight_trend
 └─────────────────────────────┼─────────────────────────────┘
                               ▼
-               neon postgres (drizzle, 10 tables)
+               neon postgres (drizzle, 12 tables)
                every write gets an Undo button
 ```
 
@@ -45,7 +45,7 @@ Numbers come from a curated grocery library of things I actually buy, with label
 1. No accounts. There is no signup because there is no second user.
 2. No UI library, no state library, no motion library. The sheets, springs, and rubber-band drags are hand-rolled CSS and pointer math. Reduced motion drops it all to fades.
 3. No memory heroics. The chat keeps its last 30 messages and forgets the rest.
-4. No CI yet. 179 tests across 25 files run locally as a commit gate.
+4. No database mocks. 332 tests across 38 files run locally as a commit gate, and CI runs them on main pushes and PRs when its database secret is set.
 5. No second timezone. Today is defined in mine.
 
 ## `run it`
