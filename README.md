@@ -30,7 +30,7 @@ search_foods                                         get_weight_trend
                every write gets an Undo button
 ```
 
-The frontend only speaks to that route and plain REST. Swap the model with one env var. Prompt caching cuts a turn from $0.0057 to $0.0009; a full off-plan conversation costs about three cents, and the chat shows me the running total while I type.
+The frontend only speaks to that route and plain REST. When this ran on Haiku 4.5, prompt caching cut a turn from $0.0057 to $0.0009 and a full off-plan conversation cost about three cents. It runs on Opus 5.5 now, and the chat shows me the running total while I type.
 
 ## `the one rule`
 
