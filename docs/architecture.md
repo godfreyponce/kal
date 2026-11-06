@@ -19,8 +19,8 @@ Unauthenticated API calls get a 401, pages redirect to `/login`. The login page 
    server-sent events.
 3. Prompt caching does the cost work: the static system block and the tail of the tool
    list carry `cache_control` markers, and stale markers get stripped from history each
-   turn so the cache stays byte-stable. A cached turn costs $0.0009 instead of $0.0057,
-   which is how a full conversation stays around three cents.
+   turn so the cache stays byte-stable. On Haiku 4.5, a cached turn cost $0.0009 instead of
+   $0.0057 and a full conversation stayed around three cents. The chat runs on Opus 5.5 now.
 
 `usageCostUsd` prices each turn from a small table in `lib/anthropic.ts` and the client
 shows the running total. The chat runs `claude-opus-5-5` with adaptive thinking at low effort, falls back to
