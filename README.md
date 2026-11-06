@@ -45,7 +45,7 @@ Numbers come from a curated grocery library of things I actually buy, with label
 1. No accounts. There is no signup because there is no second user.
 2. No UI library, no state library, no motion library. The sheets, springs, and rubber-band drags are hand-rolled CSS and pointer math. Reduced motion drops it all to fades.
 3. No memory heroics. The chat keeps its last 30 messages and forgets the rest.
-4. No database mocks. 332 tests across 38 files run locally as a commit gate, and CI runs them on main pushes and PRs when its database secret is set.
+4. No database mocks. 332 tests across 38 files run locally as a commit gate. CI skips them until its database secret is set.
 5. No second timezone. Today is defined in mine.
 
 ## `run it`
