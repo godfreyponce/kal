@@ -8,10 +8,14 @@
  *
  *   npx tsx scripts/redteam/login-guesser.ts
  *   TARGET=http://127.0.0.1:3100/api/auth/login ATTEMPTS=40 npx tsx scripts/redteam/login-guesser.ts
+ *   ROTATE=1 TARGET=http://127.0.0.1:3103/api/auth/login ATTEMPTS=40 npx tsx scripts/redteam/login-guesser.ts
  */
 
 const TARGET = process.env.TARGET ?? "http://127.0.0.1:3100/api/auth/login";
 const ATTEMPTS = Number(process.env.ATTEMPTS ?? 40);
+const ROTATE = process.env.ROTATE === "1";
+// TEST-NET-2 (RFC 5737): a documentation range, so no rotated address is a real client.
+const ROTATE_MAX = 254;
 
 // A tiny "wordlist". None of these is the real password — that's the point.
 const WORDS = [
@@ -24,7 +28,11 @@ function guessFor(i: number): string {
 }
 
 async function main() {
-  console.log(`[guesser] target=${TARGET} attempts=${ATTEMPTS}`);
+  if (ROTATE && ATTEMPTS > ROTATE_MAX) {
+    console.error(`[guesser] ROTATE=1 has ${ROTATE_MAX} addresses; ATTEMPTS=${ATTEMPTS} is too many`);
+    process.exit(1);
+  }
+  console.log(`[guesser] target=${TARGET} attempts=${ATTEMPTS} rotate=${ROTATE ? "on" : "off"}`);
   const start = Date.now();
   const counts: Record<number, number> = {};
   let firstBlockedAt = -1;
@@ -34,7 +42,10 @@ async function main() {
     try {
       const res = await fetch(TARGET, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...(ROTATE ? { "x-forwarded-for": `198.51.100.${i + 1}` } : {}),
+        },
         body: JSON.stringify({ password: guessFor(i) }),
       });
       status = res.status;
