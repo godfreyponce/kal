@@ -24,19 +24,29 @@ export const LOGIN_RATE_LIMIT: RateLimitConfig = {
   maxBackoffMs: 60 * 60_000,
 };
 
+export const GLOBAL_LOGIN_RATE_LIMIT: RateLimitConfig = {
+  threshold: 20,
+  windowMs: 24 * 60 * 60_000,
+  baseBackoffMs: 30_000,
+  maxBackoffMs: 60 * 60_000,
+};
+
+export const OWNER_PASS_MS = 30 * 24 * 60 * 60_000;
+
 export type AttemptVerdict = { allowed: true } | { allowed: false; retryAfterMs: number };
 
-export class LoginRateLimiter {
+class Counter {
   constructor(
     private readonly store: RateLimitStore,
-    private readonly cfg: RateLimitConfig = LOGIN_RATE_LIMIT,
+    private readonly cfg: RateLimitConfig,
+    private readonly prefix: string,
   ) {}
 
   private countKey(id: string) {
-    return `rl:login:count:${id}`;
+    return `${this.prefix}:count:${id}`;
   }
   private blockKey(id: string) {
-    return `rl:login:block:${id}`;
+    return `${this.prefix}:block:${id}`;
   }
 
   // Counts the attempt before the caller compares the password, and past the
@@ -62,6 +72,44 @@ export class LoginRateLimiter {
 
   async reset(id: string): Promise<void> {
     await this.store.del(this.countKey(id), this.blockKey(id));
+  }
+}
+
+export class LoginRateLimiter {
+  private readonly perIp: Counter;
+  private readonly global: Counter;
+
+  constructor(
+    private readonly store: RateLimitStore,
+    cfg: RateLimitConfig = LOGIN_RATE_LIMIT,
+    globalCfg: RateLimitConfig = GLOBAL_LOGIN_RATE_LIMIT,
+  ) {
+    this.perIp = new Counter(store, cfg, "rl:login");
+    this.global = new Counter(store, globalCfg, "rl:login:global");
+  }
+
+  private knownKey(ip: string) {
+    return `rl:login:known:${ip}`;
+  }
+
+  // Per-IP first, so the global count only sees attempts the per-IP count
+  // allowed: one noisy IP cannot use up the global count by itself.
+  async attempt(ip: string): Promise<AttemptVerdict> {
+    const perIp = await this.perIp.attempt(ip);
+    if (!perIp.allowed) return perIp;
+    // An attacker can trip the global count; a network that logged in before
+    // skips it so the owner is not locked out with them.
+    if ((await this.store.pttl(this.knownKey(ip))) > 0) return { allowed: true };
+    return this.global.attempt("all");
+  }
+
+  // The global count is left alone: clearing it would reset the attacker's
+  // backoff along with the owner's.
+  async reset(ip: string): Promise<void> {
+    await this.perIp.reset(ip);
+    const known = this.knownKey(ip);
+    await this.store.del(known);
+    await this.store.set(known, "1", { px: OWNER_PASS_MS, nx: true });
   }
 }
 

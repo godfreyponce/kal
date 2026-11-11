@@ -1,14 +1,17 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "../app/api/auth/login/route";
+import { fakeStore } from "./rate-limit-fake-store";
+import type { RateLimitStore } from "./rate-limit";
 
-// One fake store shared by every request, standing in for Upstash. cookies()
-// throws outside a real request, so the session is a stub.
-vi.mock("@/lib/rate-limit", async (importOriginal) => {
-  const { fakeStore } = await import("./rate-limit-fake-store");
-  const store = fakeStore({ now: 0 });
-  return { ...(await importOriginal<typeof import("./rate-limit")>()), upstashStore: () => store };
-});
+// A fake store standing in for Upstash, new for each test so the global count
+// does not carry over between tests. cookies() throws outside a real request,
+// so the session is a stub.
+let store: RateLimitStore;
+vi.mock("@/lib/rate-limit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./rate-limit")>()),
+  upstashStore: () => store,
+}));
 vi.mock("@/lib/auth", () => ({ getSession: async () => ({ loggedIn: false, save: async () => {} }) }));
 
 function login(ip: string, password: string) {
@@ -30,6 +33,10 @@ async function statuses(ip: string, passwords: string[]) {
 const wrong = (n: number) => Array.from({ length: n }, (_, i) => `wrong-${i}`);
 
 describe("POST /api/auth/login", () => {
+  beforeEach(() => {
+    store = fakeStore({ now: 0 });
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
   });
