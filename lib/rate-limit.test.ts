@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LOGIN_RATE_LIMIT, LoginRateLimiter, clientIp, upstashStore } from "./rate-limit";
+import { GLOBAL_LOGIN_RATE_LIMIT, LOGIN_RATE_LIMIT, LoginRateLimiter, clientIp, upstashStore } from "./rate-limit";
 import { fakeStore } from "./rate-limit-fake-store";
 
 function setup() {
@@ -84,6 +84,49 @@ describe("LoginRateLimiter", () => {
     clock.now += LOGIN_RATE_LIMIT.windowMs;
     expect(await attemptN(rl, ip, 5)).toEqual(Array(5).fill(ALLOWED));
     expect((await rl.attempt(ip)).allowed).toBe(false);
+  });
+});
+
+describe("LoginRateLimiter global count", () => {
+  function setupGlobal() {
+    return new LoginRateLimiter(fakeStore({ now: 0 }), LOGIN_RATE_LIMIT, GLOBAL_LOGIN_RATE_LIMIT);
+  }
+
+  async function oneEach(rl: LoginRateLimiter, ips: string[]) {
+    const out = [];
+    for (const ip of ips) out.push(await rl.attempt(ip));
+    return out;
+  }
+
+  const twentyIps = Array.from({ length: 20 }, (_, i) => `192.0.2.${i + 1}`);
+
+  it("attempts from many IPs share one global count", async () => {
+    const rl = setupGlobal();
+    expect(await oneEach(rl, twentyIps)).toEqual(Array(20).fill(ALLOWED));
+    expect(await rl.attempt("192.0.2.21")).toEqual({ allowed: false, retryAfterMs: 30_000 });
+  });
+
+  it("a network with an owner pass gets through while the global count is tripped", async () => {
+    const rl = setupGlobal();
+    await rl.reset("192.0.2.200");
+    await oneEach(rl, twentyIps);
+    expect((await rl.attempt("192.0.2.21")).allowed).toBe(false);
+    expect(await rl.attempt("192.0.2.200")).toEqual(ALLOWED);
+  });
+
+  it("an owner pass does not skip the per-IP limit", async () => {
+    const rl = setupGlobal();
+    const ip = "192.0.2.201";
+    await rl.reset(ip);
+    expect(await attemptN(rl, ip, 5)).toEqual(Array(5).fill(ALLOWED));
+    expect(await rl.attempt(ip)).toEqual({ allowed: false, retryAfterMs: 30_000 });
+  });
+
+  it("a correct password does not clear the global count", async () => {
+    const rl = setupGlobal();
+    await oneEach(rl, twentyIps);
+    await rl.reset("192.0.2.21");
+    expect((await rl.attempt("192.0.2.22")).allowed).toBe(false);
   });
 });
 
