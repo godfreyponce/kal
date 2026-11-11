@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { sessionOptions, type SessionData } from "@/lib/session";
 
 // Single-password gate: everything requires a logged-in session except the login
-// page and the auth API. Unauthenticated API calls get 401; pages redirect to /login.
+// page, the auth API, and the keep-alive cron (which checks its own CRON_SECRET).
+// Unauthenticated API calls get 401; pages redirect to /login.
 export async function proxy(req: NextRequest) {
   const res = NextResponse.next();
   const session = await getIronSession<SessionData>(req, res, sessionOptions);
@@ -11,13 +12,14 @@ export async function proxy(req: NextRequest) {
 
   const isLogin = pathname === "/login";
   const isAuthApi = pathname.startsWith("/api/auth");
+  const isKeepAlive = pathname === "/api/cron/keepalive";
 
   if (session.loggedIn) {
     if (isLogin) return NextResponse.redirect(new URL("/", req.url));
     return res;
   }
 
-  if (isLogin || isAuthApi) return res;
+  if (isLogin || isAuthApi || isKeepAlive) return res;
   if (pathname.startsWith("/api")) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
