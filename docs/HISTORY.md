@@ -71,6 +71,32 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Login limiter store keep-alive — #94 (2026-11-11) — COMMITTED & pushed to main; owner-accepted
+
+Since #38, new logins need the Upstash store and fail closed, and the store is a Free database
+that Upstash archives after at least 30 days with no command (the July store was archived, then
+deleted, this way). Decision: a daily ping (option A). Option B, a paid Pay as You Go plan with a
+budget, was not picked: it needs a card on the Personal Upstash account, Upstash does not say in
+plain words that paid stores are never archived, and a stranger who spams login can still burn the
+budget, which rate limits the store into the same fail-closed state. Option C, fail open, was
+rejected: Free is capped at 500K commands a month at 3 to 5 commands per login attempt, so a
+stranger could exhaust the store and then get unlimited guesses, the hole #38 closed. The ping:
+`vercel.json` adds a Vercel cron at 10:00 UTC daily that calls `GET /api/cron/keepalive`. The route
+returns 401 with no Upstash call unless `Authorization` matches `Bearer $CRON_SECRET` (sha256 on
+both sides then `timingSafeEqual`; an unset or empty secret always fails, so `Bearer undefined`
+does not pass). On a match it runs `INCR keepalive:kal` through the existing `upstashStore()` and
+returns `{ ok: true }`; store errors are not caught, so a 500 in the cron log is the signal.
+`proxy.ts` lets the exact path `/api/cron/keepalive` through without a session, because the cron
+request has no cookie; every other `/api/cron/*` path still gets 401. `lib/rate-limit.ts` is
+unchanged. One ping also keeps star's login limiter alive, since star shares the store.
+`CRON_SECRET` is set by the owner in Vercel Production before the push, because a deployment keeps
+the secret it was built with. Cron Jobs, not the Schedules beta; move when Schedules is GA.
+Live check on `next dev`: no header 401, wrong bearer 401, right bearer 200. Tests:
+`lib/keepalive-route.test.ts` (route on the fake store, incl. a 401 leaving no key) and
+`lib/proxy.test.ts` (the exemption, and 401 for `/api/cron/other` and `/api/profile`). Found while
+building: #99 (`next dev` rewrites the Next.js block in `AGENTS.md`). Commit 8829b6e. Full check on
+main: tsc clean, 339/339 tests.
+
 ## Login rate limit + constant-time compare — #38 (2026-11-04) — COMMITTED & pushed to main; owner-accepted
 
 First item of the red-team track. `POST /api/auth/login` had unlimited tries at the one password
