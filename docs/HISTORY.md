@@ -71,6 +71,31 @@ Today show the wrong day + 0 consumed after deploy; check the build route table 
 
 ---
 
+## Login limit across many IPs — #93 (2026-11-11) — COMMITTED & pushed to main; owner-accepted
+
+Red-team follow-up to #38. The per-IP limiter let a guesser who rotates IP addresses take 5
+guesses on each address. Decision (owner "go" at gate 1): a global limit with an owner pass; /64
+buckets for IPv6 skipped, because prod has no AAAA record (`dig AAAA kal-delta.vercel.app`,
+2026-11-11) and the global limit bounds IPv6 rotation the same way. `lib/rate-limit.ts` now holds
+a private `Counter` (the #38 per-IP logic, moved unchanged, keyed by a prefix) and
+`LoginRateLimiter` runs two of them: per-IP (`rl:login:count|block:<ip>`, unchanged) first, then a
+global one (`rl:login:global:count|block:all`) for attempts the per-IP count allowed.
+`GLOBAL_LOGIN_RATE_LIMIT` is threshold 20 (a guess, 4x per-IP) with the per-IP window and backoff.
+A correct password clears the per-IP keys, leaves the global count alone, and sets an owner pass
+`rl:login:known:<ip>` for 30 days (a guess, outlasts two 14-day iron-session sessions); an IP with
+a pass skips the global count but not its own per-IP count. Known cost: during an attack, a new
+network with no pass can get 429 for up to 1 h, and one IP on its own trips the global block after
+about 9 h (its ~24 a day per-IP allowance is above 20). Existing sessions keep working.
+`RateLimitStore`, `upstashStore()`, `clientIp()` and the route are unchanged, and the file still
+has no `next/*` or `@/` import, so star #33 can copy it byte for byte (it shares the store and the
+`rl:login:*` keys). `scripts/redteam/login-guesser.ts` gained `ROTATE=1`, which sends
+`x-forwarded-for: 198.51.100.<n>` (TEST-NET-2). Before: `{"401":40}`, never blocked. After:
+`{"401":20,"429":20}`, first 429 at attempt 21. Both runs' keys (40, then 42) were deleted from the
+live store by name and both key lists read `[]` after. Tests: four new cases in
+`lib/rate-limit.test.ts` (shared count, pass while tripped, pass keeps per-IP, reset keeps the
+global count); `lib/login-route.test.ts` gets a new fake store per test. Commits 86bab13, 7f1074a,
+9944ae3. Full check on main: tsc clean, 343/343 tests.
+
 ## Login limiter store keep-alive — #94 (2026-11-11) — COMMITTED & pushed to main; owner-accepted
 
 Since #38, new logins need the Upstash store and fail closed, and the store is a Free database
