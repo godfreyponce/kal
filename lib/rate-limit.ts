@@ -24,6 +24,8 @@ export const LOGIN_RATE_LIMIT: RateLimitConfig = {
   maxBackoffMs: 60 * 60_000,
 };
 
+// threshold 20 is a guess (4x the per-IP threshold, no traffic data behind it);
+// the other values copy LOGIN_RATE_LIMIT for the same reason as above.
 export const GLOBAL_LOGIN_RATE_LIMIT: RateLimitConfig = {
   threshold: 20,
   windowMs: 24 * 60 * 60_000,
@@ -31,6 +33,7 @@ export const GLOBAL_LOGIN_RATE_LIMIT: RateLimitConfig = {
   maxBackoffMs: 60 * 60_000,
 };
 
+// 30 days is a guess, chosen to outlast two 14-day sessions (iron-session's default ttl).
 export const OWNER_PASS_MS = 30 * 24 * 60 * 60_000;
 
 export type AttemptVerdict = { allowed: true } | { allowed: false; retryAfterMs: number };
@@ -93,7 +96,9 @@ export class LoginRateLimiter {
   }
 
   // Per-IP first, so the global count only sees attempts the per-IP count
-  // allowed: one noisy IP cannot use up the global count by itself.
+  // allowed: one IP spends only its own per-IP allowance of the global count.
+  // That allowance (about 24 a day) is above the global threshold, so one IP
+  // alone still trips the global block, after about 9 hours.
   async attempt(ip: string): Promise<AttemptVerdict> {
     const perIp = await this.perIp.attempt(ip);
     if (!perIp.allowed) return perIp;
